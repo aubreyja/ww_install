@@ -95,6 +95,7 @@ my @applicationsList = qw(
   mysql
   mysqldump
   svn
+  git
 );
 
 my @apache1ModulesList = qw(
@@ -287,7 +288,8 @@ sub configure_externalPrograms {
   $$apps{png2eps} = "$$apps{pngtopnm}"." | ".$$apps{ppmtopgm}." | " .$$apps{pnmtops} ." -noturn 2>/dev/null";
   $$apps{gif2png} = "$$apps{giftopnm}"." | "."$$apps{pnmtopng}";
 
-  return Data::Dumper->Dump([$netpbm_prefix,$apps],[qw(*netpbm_prefix *externalPrograms)]);
+  #return Data::Dumper->Dump([$netpbm_prefix,$apps],[qw(*netpbm_prefix *externalPrograms)]);
+  return $apps;
 }
 
 ############################################################################
@@ -413,7 +415,42 @@ sub configure_database {
 ############################################################################
 
 sub get_webwork {
+  my ($prefix,$apps) = @_;
+  create_prefix_path($prefix);
+  chdir $prefix or die "Can't chdir to $prefix";
+  my $ww2_cmd = $apps->{git}." clone https://github.com/openwebwork/webwork2.git";
+  my $buffer;
+  if( scalar run( command => $ww2_cmd,
+  verbose => 0,
+  buffer => \$buffer,
+  timeout => 200 )
+  ) {
+      print "fetched webwork2 successfully: $buffer\n";
+    }
+  my $pg_cmd = $apps->{git}." clone https://github.com/openwebwork/pg.git";
 
+  if( scalar run( command => $pg_cmd,
+  verbose => 0,
+  buffer => \$buffer,
+  timeout => 200 )
+  ) {
+      print "fetched pg successfully: $buffer\n";
+    }
+  make_path('libraries',{owner=>'root',group=>'root'});
+  make_path('courses',{owner=>'root',group=>'root'});
+  chdir "$prefix/libraries";
+  my $npl_cmd = $apps->{svn}." checkout http://svn.webwork.maa.org/npl/trunk/NationalProblemLibrary";
+  if( scalar run( command => $npl_cmd,
+  verbose => 0,
+  buffer => \$buffer,
+  timeout => 6000 )
+  ) {
+      print "fetched npl successfully: $buffer\n";
+    }
+    # cp *.lst /opt/webwork/courses/
+    # cp -r modelCourse/ /opt/webwork/courses/
+  copy("adminClasslist.lst","$prefix/courses/adminClasslist.lst");
+  copy("defaultClasslist.lst","$prefix/courses/defaultClasslist.lst");
 }
 
 sub create_prefix_path {
@@ -421,7 +458,7 @@ sub create_prefix_path {
   #Check that path given is an absolute path
   #Confirm that user wants this
   #Create path - can we create a new wwadmin group?
-  make_path($dir,{owner=>'root',group=>'root'});
+  make_path($dir);
 }
 
 
@@ -459,12 +496,18 @@ print<<EOF;
 # #################################################################
 EOF
 
+my $term = Term::ReadLine->new('');
+check_root();
 check_modules(@modulesList);
 check_modules(@apache2ModulesList);
-print configure_externalPrograms(@applicationsList);
+#check_apache();
+my $WW_PREFIX = get_WW_PREFIX('/opt/webwork');
+my $apps = configure_externalPrograms(@applicationsList);
+get_webwork($WW_PREFIX,$apps);
 
 
 
+sub check_apache {
 print<<EOF;
 ###################################################################
 #
@@ -473,45 +516,40 @@ print<<EOF;
 # #################################################################
 EOF
 
-my %apache;
-$apache{binary} = File::Spec->canonpath(can_run('apache2ctl') || can_run('apachectl')) or die "Can't find Apache!\n";
+  my %apache;
+  $apache{binary} = File::Spec->canonpath(can_run('apache2ctl') || can_run('apachectl')) or die "Can't find Apache!\n";
 
-open(HTTPD,"$apache{binary} -V |") or die "Can't do this: $!";
-print "Your apache start up script is at $apache{binary}\n";
+  open(HTTPD,"$apache{binary} -V |") or die "Can't do this: $!";
+  print "Your apache start up script is at $apache{binary}\n";
 
-while(<HTTPD>) {
-  if ($_ =~ /apache.(\d\.\d\.\d+)/i){
-    $apache{version} = $1;
-    print "Your apache version is $apache{version}\n";
-  } elsif ($_ =~ /HTTPD_ROOT\=\"((\/\w+)+)"$/) {
-    $apache{root} = File::Spec->canonpath($1);
-    print "Your apache server root is $apache{root}\n";
-  } elsif ($_=~ /SERVER_CONFIG_FILE\=\"((\w+\/)+(\w+\.?)+)\"$/) {
-    $apache{conf} = File::Spec->catfile($apache{root},$1);
-    print "Your apache config file is $apache{conf}\n";
+  while(<HTTPD>) {
+    if ($_ =~ /apache.(\d\.\d\.\d+)/i){
+      $apache{version} = $1;
+      print "Your apache version is $apache{version}\n";
+    } elsif ($_ =~ /HTTPD_ROOT\=\"((\/\w+)+)"$/) {
+      $apache{root} = File::Spec->canonpath($1);
+      print "Your apache server root is $apache{root}\n";
+    } elsif ($_=~ /SERVER_CONFIG_FILE\=\"((\w+\/)+(\w+\.?)+)\"$/) {
+      $apache{conf} = File::Spec->catfile($apache{root},$1);
+      print "Your apache config file is $apache{conf}\n";
+    }
   }
-}
-close(HTTPD);
+  close(HTTPD);
 
-open(HTTPDCONF,$apache{conf}) or die "Can't do this: $!";
-while(<HTTPDCONF>){
-  if (/^User/) {
-    (undef,$apache{user}) = split;
-    print "Apache runs as user $apache{user}\n";
-  } elsif (/^Group/){
-    (undef,$apache{group}) = split;
-    print "Apache runs in group $apache{group}\n";
+  open(HTTPDCONF,$apache{conf}) or die "Can't do this: $!";
+  while(<HTTPDCONF>){
+    if (/^User/) {
+      (undef,$apache{user}) = split;
+      print "Apache runs as user $apache{user}\n";
+    } elsif (/^Group/){
+      (undef,$apache{group}) = split;
+      print "Apache runs in group $apache{group}\n";
+    }
   }
+  close(HTTPDCONF);
 }
-close(HTTPDCONF);
-#configure_server();
-#check_perl(@apache2ModulesList);
-#configure_webworkURLS();
-#configure_courseURLs();
 
-#test_server();
 
-  my $term = Term::ReadLine->new('');
 sub get_WW_PREFIX {
   my $default = shift;
   my $print_me =<<END; 
@@ -568,10 +606,10 @@ END
   }
   if($confirmed && !$fix) {
     print "Got it, I'll create $dir and install webwork there.\n";
-    print "\$confirmed = $confirmed and \$fix = $fix\n";
+    #print "\$confirmed = $confirmed and \$fix = $fix\n";
     return $dir;
   } else {
-    print "Here!\n";
+    #print "Here!\n";
     get_WW_PREFIX('/opt/webwork');
   }
 }
@@ -597,8 +635,6 @@ sub confirm_answer {
 }
 
 
-
-my $WW_PREFIX = get_WW_PREFIX('/opt/webwork');
 
 #Make the path!
 #configure_webworkDirs();
