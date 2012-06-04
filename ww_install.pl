@@ -49,6 +49,7 @@ use File::Path qw(make_path);
 use File::Spec;
 use File::Copy;
 use File::CheckTree;
+use File::Glob ':bsd_glob';
 
 use IPC::Cmd qw(can_run run run_forked);
 use Term::UI;
@@ -170,6 +171,92 @@ my @modulesList = qw(
 	XMLRPC::Lite
 );
 
+# OK, Let's get started....
+##############################################################
+# Create a new Term::Readline object for interactivity
+#Don't worry people with spurious warnings.
+###############################################################
+$Term::UI::VERBOSE = 0;
+my $term = Term::ReadLine->new('');
+
+#(0) Check if user is ready to install webwork
+get_ready();
+
+#(1) Check if user is running script as root
+check_root();
+
+
+print<<EOF;
+###################################################################
+#
+# Checking for required perl modules and external programs...
+#
+# #################################################################
+EOF
+check_modules(@modulesList);
+check_modules(@apache2ModulesList);
+my $apps = configure_externalPrograms(@applicationsList);
+
+
+#(2) Get directory root PREFIX, download software, and configure filesystem locations for webwork software
+my $WW_PREFIX = get_WW_PREFIX('/opt/webwork');
+# Now get all of the webwork software
+get_webwork($WW_PREFIX,$apps);
+
+#System wide directories and files
+my %webworkDirs = configure_webworkDirs($WW_PREFIX);
+my %webworkFiles = configure_webworkFiles();
+#Course specific directories and files
+my %courseDirs = configure_courseDirs();
+my %courseFiles = configure_courseFiles();
+
+
+#(3) $server_root_url   = "";  # e.g.  http://webwork.yourschool.edu
+
+my $server_root_url = get_root_url('http://localhost');
+my $webwork_handler = get_webwork_handler('/webwork2');
+my %webworkURLs = configure_webworkURLs();
+
+#Configure mail settings
+#(4) $mail{smtpServer}            = 'mail.yourschool.edu';
+#(5) $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+configure_mail();
+
+
+#(6) database root password
+#(7) $database_dsn = "dbi:mysql:webwork";
+#(8) $database_username = "webworkWrite";
+#(9) $database_password = "";
+configure_database()
+
+#(10) $siteDefaults{timezone} = "America/New_York";
+###############################################################
+
+
+
+
+#check_apache();
+
+#####################################################
+#
+# Check if user is ready to install
+#
+# ###################################################
+
+sub get_ready {
+
+my $print_me=<<END;
+Welcome to the WeBWorK.  This installation script will ask you a few questions and then attempt to install 
+WeBWorK on your system. To complete the installation, you will need to be connected to the internet and have
+administrative privliges on this machine.  You will also need to know the root mysql password. 
+END
+ my $prefix = $term -> ask_yn(
+                    print_me => $print_me,
+                    prompt => 'Ready to install WeBWorK?',
+                    default => 1,
+                  );
+ die "Come back soon!" unless $ready;
+}
 
 ####################################################################
 #
@@ -180,7 +267,6 @@ my @modulesList = qw(
 # is held in the perl special variable $>.  In particular,
 # if $> = 0 user is root, works with sudo too.
 # run it like this at the top of the script:
-#check_root() or die "Please run this script as root or with sudo.\n";
 
 sub check_root {
   if($> == 0) {
@@ -292,121 +378,20 @@ sub configure_externalPrograms {
   return $apps;
 }
 
-############################################################################
+###########################################################################
 #
-#Configure the %webworkDirs hash
+# Create prefix path
 #
-############################################################################
+# ########################################################################
+# just merge into get_webwork?
 
-sub configure_webworkDirs {
-  my $prefix = shift;
-  my %webworkDirs;
-  my $webwork_dir;
-  my $webwork_courses_dir;
-  my $webwork_htdocs_dir;
-  $webworkDirs{root}          = "$webwork_dir";
-  $webworkDirs{bin}           = "$webworkDirs{root}/bin";
-  $webworkDirs{conf}          = "$webworkDirs{root}/conf";
-  $webworkDirs{logs}          = "$webworkDirs{root}/logs";
-  $webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
-  $webworkDirs{templates}     = "$webworkDirs{conf}/templates";
-  $webworkDirs{DATA}          = "$webworkDirs{root}/DATA";
-  $webworkDirs{uploadCache}   = "$webworkDirs{DATA}/uploads";
-  $webworkDirs{courses}       = "$webwork_courses_dir" || "$webworkDirs{root}/courses";
-  $webworkDirs{valid_symlinks}   = [];
-  $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
-  $webworkDirs{local_help}    = "$webworkDirs{htdocs}/helpFiles";
-  $webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
-  $webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
+sub create_prefix_path {
+  my $dir = shift;
+  #Check that path given is an absolute path
+  #Confirm that user wants this
+  #Create path - can we create a new wwadmin group?
+  make_path($dir);
 }
-
-############################################################################
-#
-#Configure the %webworkFiles hash
-#
-############################################################################
-
-sub configure_webworkFiles {
-}
-
-############################################################################
-#
-#Configure the %webworkURLs hash
-#
-############################################################################
-
-sub configure_webworkURLs {
-}
-
-############################################################################
-#
-#Configure the %courseDirs hash
-#
-############################################################################
-
-sub configure_courseDirs {
-}
-
-############################################################################
-#
-#Configure the %courseFiles hash
-#
-############################################################################
-
-sub configure_courseFiles {
-}
-
-############################################################################
-#
-#Configure the %courseURLS hash
-#
-############################################################################
-
-sub configure_courseURLs {
-}
-
-############################################################################
-#
-#Configure the %mail hash
-#
-############################################################################
-
-sub configure_mail {
-  #$mail{smtpServer}            = 'mail.yourschool.edu';
-  #$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
-  #$mail{smtpTimeout}           = 30;
-  #$mail{allowedRecipients}     = [
-    ##'prof1@yourserver.yourdomain.edu',
-    ##'prof2@yourserver.yourdomain.edu',
-  #];
-  #$mail{feedbackRecipients}    = [
-    ##'prof1@yourserver.yourdomain.edu',
-    ##'prof2@yourserver.yourdomain.edu',
-  #];
-
-}
-
-############################################################################
-#
-#Configure the database 
-#
-############################################################################
-
-sub configure_database {
-  #$database_dsn = "dbi:mysql:webwork";
-  #$database_username = "webworkWrite";
-  #$database_password = "";
-  #$database_debug = 0;
-  #$moodle_dsn = "dbi:mysql:moodle";
-  #$moodle_username = $database_username;
-  #$moodle_password = $database_password;
-  #$moodle_table_prefix = "mdl_";
-  #$moodle17 = 0;
-  #$dbLayoutName = "sql_single";
-  #*dbLayout     = $dbLayouts{$dbLayoutName};
-
-}
-
 
 ############################################################################
 #
@@ -453,57 +438,327 @@ sub get_webwork {
   copy("defaultClasslist.lst","$prefix/courses/defaultClasslist.lst");
 }
 
-sub create_prefix_path {
-  my $dir = shift;
-  #Check that path given is an absolute path
-  #Confirm that user wants this
-  #Create path - can we create a new wwadmin group?
-  make_path($dir);
+
+############################################################################
+#
+#Configure the %webworkDirs hash
+#
+############################################################################
+
+sub configure_webworkDirs {
+  my $prefix = shift;
+  my %webworkDirs;
+  my $webwork_dir;
+  my $webwork_courses_dir;
+  my $webwork_htdocs_dir;
+  # The root directory, set by webwork_root variable in Apache configuration.
+  $webworkDirs{root}          = "$webwork_dir";
+
+  # Location of system-wide data files.
+  $webworkDirs{DATA}          = "$webworkDirs{root}/DATA";
+
+  # Used for temporary storage of uploaded files.
+  $webworkDirs{uploadCache}   = "$webworkDirs{DATA}/uploads";
+
+  # Location of utility programs.
+  $webworkDirs{bin}           = "$webworkDirs{root}/bin";
+
+  # Location of configuration files, templates, snippets, etc.
+  $webworkDirs{conf}          = "$webworkDirs{root}/conf";
+
+  # Location of theme templates.
+  $webworkDirs{templates}     = "$webworkDirs{conf}/templates";
+
+  # Location of course directories.
+  $webworkDirs{courses}       = "$webwork_courses_dir" || "$webworkDirs{root}/courses";
+
+  # Contains log files.
+  $webworkDirs{logs}          = "$webworkDirs{root}/logs";
+
+  # Contains non-web-accessible temporary files, such as TeX working directories.
+  $webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
+
+  # The (absolute) destinations of symbolic links that are OK for the FileManager to follow.
+  #   (any subdirectory of these is a valid target for a symbolic link.)
+  # For example:
+  #    $webworkDirs{valid_symlinks} = ["$webworkDirs{courses}/modelCourse/templates","/ww2/common/sets"];
+  $webworkDirs{valid_symlinks}   = [];
+
+  $webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
+  $webworkDirs{local_help}    = "$webworkDirs{htdocs}/helpFiles";
+  $webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
+  $webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
+  $webworkDirs{local_help}    = "$webworkDirs{htdocs}/helpFiles";
+}
+
+############################################################################
+#
+#Configure the %webworkFiles hash
+#
+############################################################################
+
+sub configure_webworkFiles {
+  my %webworkFiles;
+  # Location of this file.
+  $webworkFiles{environment}                      = "$webworkDirs{conf}/global.conf";
+
+  # Flat-file database used to protect against MD5 hash collisions. TeX equations
+  # are hashed to determine the name of the image file. There is a tiny chance of
+  # a collision between two TeX strings. This file allows for that. However, this
+  # is slow, so most people chose not to worry about it. Set this to "" if you
+  # don't want to use the equation cache file.
+  $webworkFiles{equationCacheDB}                  = ""; # "$webworkDirs{DATA}/equationcache";
+
+  ################################################################################
+  # Hardcopy snippets are used in constructing a TeX file for hardcopy output.
+  # They should contain TeX code unless otherwise noted.
+  ################################################################################
+  # The preamble is the first thing in the TeX file.
+  $webworkFiles{hardcopySnippets}{preamble}       = "$webworkDirs{conf}/snippets/hardcopyPreamble.tex";
+
+  # The setHeader preceeds each set in hardcopy output. It is a PG file.
+  # This is the default file which is used if a specific files is not selected
+  $webworkFiles{hardcopySnippets}{setHeader}      = "$webworkDirs{conf}/snippets/setHeader.pg";  # hardcopySetHeader.pg",
+  #$webworkFiles{hardcopySnippets}{setHeader}     = "$courseDirs{templates}/ASimpleHardCopyHeaderFile.pg"; # An alternate default header file
+
+  # The problem divider goes between problems.
+  $webworkFiles{hardcopySnippets}{problemDivider} = "$webworkDirs{conf}/snippets/hardcopyProblemDivider.tex";
+
+  # The set footer goes after each set. Is is a PG file.
+  $webworkFiles{hardcopySnippets}{setFooter}      = "$webworkDirs{conf}/snippets/hardcopySetFooter.pg";
+
+  # The set divider goes between sets (in multiset output).
+  $webworkFiles{hardcopySnippets}{setDivider}     = "$webworkDirs{conf}/snippets/hardcopySetDivider.tex";
+
+  # The user divider does between users (in multiuser output).
+  $webworkFiles{hardcopySnippets}{userDivider}    = "$webworkDirs{conf}/snippets/hardcopyUserDivider.tex";
+
+  # The postabmle is the last thing in the TeX file.
+  $webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/hardcopyPostamble.tex";
+
+  ##### Screen snippets are used when displaying problem sets on the screen.
+
+  # The set header is displayed on the problem set page. It is a PG file.
+  # This is the default file which is used if a specific files is not selected
+  #$webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
+  $webworkFiles{screenSnippets}{setHeader}       = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg"; # An alternate default header file
+
+  # A PG template for creation of new problems.
+  $webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem2.pg"; # screenSetHeader.pg"
+
+  # A site info  "message of the day" file
+  $webworkFiles{site_info}                       = "$webworkDirs{htdocs}/site_info.txt";
+
+  # Logs data about how long it takes to process problems. (Do not confuse this
+  # with the /other/ timing log which can be set by WeBWorK::Timing and is used
+  # for benchmarking system performance in general. At some point, this timing
+  # mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
+  $webworkFiles{logs}{timing}         = "$webworkDirs{logs}/timing.log";
+
+  # Logs courses created via the web-based Course Administration module.
+  $webworkFiles{logs}{hosted_courses} = "$webworkDirs{logs}/hosted_courses.log";
+
+  # The transaction log contains data from each recorded answer submission. This
+  # is useful if the database becomes corrupted.
+  $webworkFiles{logs}{transaction}    = "$webworkDirs{logs}/${courseName}_transaction.log";
+
+  return %webworkFiles;
+}
+
+############################################################################
+#
+#Configure the %courseDirs hash
+#
+############################################################################
+
+sub configure_courseDirs {
+
+  my %courseDirs;
+  ################################################################################
+  # Defaults for course-specific locations (directories and URLs)
+  ################################################################################
+
+  # The root directory of the current course. (The ID of the current course is
+  # available in $courseName.)
+  $courseDirs{root}        = "$webworkDirs{courses}/$courseName";
+
+  # Location of course-specific data files.
+  $courseDirs{DATA}        = "$courseDirs{root}/DATA";
+
+  # Location of course HTML files, passed to PG.
+  $courseDirs{html}        = "$courseDirs{root}/html";
+
+  # Location of course image files, passed to PG.
+  $courseDirs{html_images} = "$courseDirs{html}/images";
+
+  # Location of web-accessible, course-specific temporary files, like static and
+  # dynamically-generated PG graphics.
+  $courseDirs{html_temp}   = "$courseDirs{html}/tmp";
+
+  # Location of course-specific logs, like the transaction log.
+  $courseDirs{logs}        = "$courseDirs{root}/logs";
+
+  # Location of scoring files.
+  $courseDirs{scoring}     = "$courseDirs{root}/scoring";
+
+  # Location of PG templates and set definition files.
+  $courseDirs{templates}   = "$courseDirs{root}/templates";
+
+  # Location of course-specific macro files.
+  $courseDirs{macros}      = "$courseDirs{templates}/macros";
+
+  # Location of mail-merge templates.
+  $courseDirs{email}       = "$courseDirs{templates}/email";
+
+  # Location of temporary editing files.
+  $courseDirs{tmpEditFileDir}  = "$courseDirs{templates}/tmpEdit";
+
+
+  # mail merge status directory
+  $courseDirs{mailmerge}   = "$courseDirs{DATA}/mailmerge";
+
+  return %courseDirs;
+}
+
+############################################################################
+#
+#Configure the %courseFiles hash
+#
+############################################################################
+
+sub configure_courseFiles {
+}
+
+############################################################################
+#
+#Configure the %webworkURLs hash
+#
+############################################################################
+
+sub configure_webworkURLs {
+  my %webworkURLs;
+  ################################################################################
+  ##### The following locations are web-accessible.
+  ################################################################################
+
+  # The root URL (usually /webwork2), set by <Location> in Apache configuration.
+  $webworkURLs{root}          = "$webwork_url";
+
+  # Location of system-wide web-accessible files, such as equation images, and
+  # help files.
+  $webworkURLs{htdocs}        = "$webwork_htdocs_url";
+
+  # Location of web-accessible temporary files, such as equation images.
+  $webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
+
+  # Location of cached equation images.
+  $webworkURLs{equationCache} = "$webworkURLs{htdocs_temp}/equations";
+
+  # Contains context-sensitive help files.
+  $webworkURLs{local_help}    = "$webworkURLs{htdocs}/helpFiles";
+
+  # URL of general WeBWorK documentation.
+  $webworkURLs{docs}          = "http://webwork.maa.org";
+
+  # URL of WeBWorK Bugzilla database.
+  $webworkURLs{bugReporter}   = "http://bugs.webwork.maa.org/enter_bug.cgi";
+
+  # Location of CSS
+  # $webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/${defaultTheme}.css";
+  # this is never used -- changing the theme from the config panel
+  # doesn't appear to reset the theme in time?
+  # It's better to refer directly to the .css file in the system.template
+  # <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math.css"/>
+
+  # Location of jsMath script, used for the jsMath display mode.
+  $webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath-ww.js";
+
+  # Location of MathJax script, used for the MathJax display mode.
+  $webworkURLs{MathJax}       = "$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-AMS_HTML-full";
+
+  # Location of Tabber script, used to generate tabbed widgets.
+  $webworkURLs{tabber}		= "$webworkURLs{htdocs}/js/tabber.js";
+
+  # Location of ASCIIMathML script, used for the asciimath display mode.
+  $webworkURLs{asciimath}     = "$webworkURLs{htdocs}/ASCIIMathML/ASCIIMathML.js";
+
+  # Location of LaTeXMathML script, used for the LaTeXMathML display mode.
+  $webworkURLs{LaTeXMathML}   = "$webworkURLs{htdocs}/LaTeXMathML/LaTeXMathML.js";
+  return %webworkURLs;
 }
 
 
-###############################################################
+############################################################################
 #
-# Ask user some configuation questions
-# This seeems to be the minimal set of questions the user needs
-# to answer to set up a standard, no frills, webwork installation.
+#Configure the %courseURLS hash
 #
-#(1) Check if script is being run as root user
-#(2) Directory root PREFIX
-#(3) $server_root_url   = "";  # e.g.  http://webwork.yourschool.edu
-#(4) $mail{smtpServer}            = 'mail.yourschool.edu';
-#(5) $mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
-#(6) database root password
-#(7) $database_dsn = "dbi:mysql:webwork";
-#(8) $database_username = "webworkWrite";
-#(9) $database_password = "";
-#(10) $siteDefaults{timezone} = "America/New_York";
-###############################################################
+############################################################################
 
-#Don't worry people with spurious warnings.
-$Term::UI::VERBOSE = 0;
+sub configure_courseURLs {
+  # Location of course HTML files, passed to PG.
+  $courseDirs{html}        = "$courseDirs{root}/html";
+  $courseURLs{html}        = "$webwork_courses_url/$courseName";
 
+  # If the variable below is set to a non-empty value (i.e. in course.conf), WeBWorK's usual
+  # email feedback mechanism  will be replaced with a link to the given URL.
+  # See also $feedback_button_name, above.
 
-print<<END;
-Welcome to the WeBWorK.  This installation script will ask you a few questions and then attempt to install WeBWorK on your system.
-END
+  $courseURLs{feedbackURL} = "";
 
-print<<EOF;
-###################################################################
+  # If the variable below is set to a non-empty value (i.e. in course.conf), 
+  # WeBWorK's usual email feedback mechanism  will be replaced with a link to the given URL and
+  # a POST request with information about the problem including the HTML rendering
+  # of the problem will be sent to that URL.
+  # See also $feedback_button_name, above.
+
+  #$courseURLs{feedbackFormURL} = "http://www.mathnerds.com/MathNerds/mmn/SDS/askQuestion.aspx";  #"http://www.tipjar.com/cgi-bin/test";
+  $courseURLs{feedbackFormURL} = "";
+}
+
+############################################################################
 #
-# Checking for required perl modules and external programs...
+#Configure the %mail hash
 #
-# #################################################################
-EOF
+############################################################################
 
-my $term = Term::ReadLine->new('');
-check_root();
-check_modules(@modulesList);
-check_modules(@apache2ModulesList);
-#check_apache();
-my $WW_PREFIX = get_WW_PREFIX('/opt/webwork');
-my $apps = configure_externalPrograms(@applicationsList);
-get_webwork($WW_PREFIX,$apps);
+sub configure_mail {
+  #$mail{smtpServer}            = 'mail.yourschool.edu';
+  #$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
+  #$mail{smtpTimeout}           = 30;
+  #$mail{allowedRecipients}     = [
+    ##'prof1@yourserver.yourdomain.edu',
+    ##'prof2@yourserver.yourdomain.edu',
+  #];
+  #$mail{feedbackRecipients}    = [
+    ##'prof1@yourserver.yourdomain.edu',
+    ##'prof2@yourserver.yourdomain.edu',
+  #];
+
+}
+
+############################################################################
+#
+#Configure the database 
+#
+############################################################################
+
+sub configure_database {
+  #$database_dsn = "dbi:mysql:webwork";
+  #$database_username = "webworkWrite";
+  #$database_password = "";
+  #$database_debug = 0;
+  #$moodle_dsn = "dbi:mysql:moodle";
+  #$moodle_username = $database_username;
+  #$moodle_password = $database_password;
+  #$moodle_table_prefix = "mdl_";
+  #$moodle17 = 0;
+  #$dbLayoutName = "sql_single";
+  #*dbLayout     = $dbLayouts{$dbLayoutName};
+
+}
+
+
+
 
 
 
@@ -669,35 +924,29 @@ my $server_root_url   = "http://localhost";  # e.g.  http://webwork.yourschool.e
 #$problemLibrary{root}        = "$WW_PREFIX/libraries/NationalProblemLibrary";
 #$webwork_htdocs_dir  = "$webwork_dir/htdocs";
 #my %mail;
-sub create_install_dir {
-  my $dir = shift;
-  #check that user entered absolute path
 
-  #create directory with mkdir -p
-}
-
+sub get_webwork_url {
 my $print_me=<<END;
-# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
+# Location of WeBWorK handler relative to the web server root. If WeBWorK is to be on the web server root, use "/". Note 
 # that using "" may not work so we suggest sticking with "/webwork2".
 END
-#my $webwork_url = $term-> get_reply(
-                        #print_me => $print_me,
-                        #prompt => "Relative URL of WeBWorK handler:",
-                        #default => "/webwork2"
-                      #);
+  my $url = $term-> get_reply(
+                        print_me => $print_me,
+                        prompt => "Location of WeBWorK handler:",
+                        default => "/webwork2"
+                      );
+  #has this been confirmed?
+  my $confirmed = 0;
+  $confirmed = confirm_answer($dir);
+  if($confirmed) {
+    print "Confirmed! We'll go with $url.";
+    return $url;
+  } else {
+    #print "Here!\n";
+    get_WW_PREFIX('/opt/webwork');
+  }
+}
 
-$print_me=<<END;
-# Root url of the webwork server.
-END
-#my $server_root_url-> get_reply(
-                        #print_me => $print_me,
-                        #prompt => "Root url of the webwork server:",
-                        #default => "/webwork2"
-                      #);;
-
-
-$print_me=<<END;
-END
 
 $print_me=<<END;
 # In the apache configuration file (often called httpd.conf) you will find
@@ -739,40 +988,6 @@ END
 #############################################################
 
 __DATA__
-#!perl
-################################################################################
-# WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/global.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
-# 
-# This program is free software; you can redistribute it and/or modify it under
-# the terms of either: (a) the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version, or (b) the "Artistic License" which comes with this package.
-# 
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-# Artistic License for more details.
-################################################################################
-
-# This file is used to set up the default WeBWorK course environment for all
-# requests. Values may be overwritten by the course.conf for a specific course.
-# All package variables set in this file are added to the course environment.
-# If you wish to set a variable here but omit it from the course environment,
-# use the "my" keyword. The $webwork_dir variable is set in the WeBWorK Apache
-# configuration file (webwork.apache-config) and is available for use here. In
-# addition, the $courseName variable holds the name of the current course.
-
-################################################################################
-# Seed variables
-################################################################################
-
-# Set these variables to correspond to your configuration and preferences. You
-# will need to restart the webserver to reset the variables in this section.
-
-# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
-# that using "" may not work so we suggest sticking with "/webwork2".
 $webwork_url         = "/webwork2";
 
 
@@ -926,20 +1141,6 @@ $feedback_button_name = "Email instructor";
 # section as the user initiating the feedback.
 $feedback_by_section = 0;
 
-# If the variable below is set to a non-empty value (i.e. in course.conf), WeBWorK's usual
-# email feedback mechanism  will be replaced with a link to the given URL.
-# See also $feedback_button_name, above.
-
-$courseURLs{feedbackURL} = "";
-
-# If the variable below is set to a non-empty value (i.e. in course.conf), 
-# WeBWorK's usual email feedback mechanism  will be replaced with a link to the given URL and
-# a POST request with information about the problem including the HTML rendering
-# of the problem will be sent to that URL.
-# See also $feedback_button_name, above.
-
-#$courseURLs{feedbackFormURL} = "http://www.mathnerds.com/MathNerds/mmn/SDS/askQuestion.aspx";  #"http://www.tipjar.com/cgi-bin/test";
-$courseURLs{feedbackFormURL} = "";
 
 ################################################################################
 # Theme
@@ -958,189 +1159,13 @@ $language = "en";   # tr = turkish,  en=english
 # System-wide locations (directories and URLs)
 ################################################################################
 
-# The root directory, set by webwork_root variable in Apache configuration.
-$webworkDirs{root}          = "$webwork_dir";
-
-# Location of system-wide data files.
-$webworkDirs{DATA}          = "$webworkDirs{root}/DATA";
-
-# Used for temporary storage of uploaded files.
-$webworkDirs{uploadCache}   = "$webworkDirs{DATA}/uploads";
-
-# Location of utility programs.
-$webworkDirs{bin}           = "$webworkDirs{root}/bin";
-
-# Location of configuration files, templates, snippets, etc.
-$webworkDirs{conf}          = "$webworkDirs{root}/conf";
-
-# Location of theme templates.
-$webworkDirs{templates}     = "$webworkDirs{conf}/templates";
-
-# Location of course directories.
-$webworkDirs{courses}       = "$webwork_courses_dir" || "$webworkDirs{root}/courses";
-
-# Contains log files.
-$webworkDirs{logs}          = "$webworkDirs{root}/logs";
-
-# Contains non-web-accessible temporary files, such as TeX working directories.
-$webworkDirs{tmp}           = "$webworkDirs{root}/tmp";
-
-# The (absolute) destinations of symbolic links that are OK for the FileManager to follow.
-#   (any subdirectory of these is a valid target for a symbolic link.)
-# For example:
-#    $webworkDirs{valid_symlinks} = ["$webworkDirs{courses}/modelCourse/templates","/ww2/common/sets"];
-$webworkDirs{valid_symlinks}   = [];
-
-################################################################################
-##### The following locations are web-accessible.
-################################################################################
-
-# The root URL (usually /webwork2), set by <Location> in Apache configuration.
-$webworkURLs{root}          = "$webwork_url";
-
-# Location of system-wide web-accessible files, such as equation images, and
-# help files.
-$webworkDirs{htdocs}        = "$webwork_htdocs_dir" || "$webworkDirs{root}/htdocs";
-$webworkURLs{htdocs}        = "$webwork_htdocs_url";
-
-# Location of web-accessible temporary files, such as equation images.
-$webworkDirs{htdocs_temp}   = "$webworkDirs{htdocs}/tmp";
-$webworkURLs{htdocs_temp}   = "$webworkURLs{htdocs}/tmp";
-
-# Location of cached equation images.
-$webworkDirs{equationCache} = "$webworkDirs{htdocs_temp}/equations";
-$webworkURLs{equationCache} = "$webworkURLs{htdocs_temp}/equations";
-
-# Contains context-sensitive help files.
-$webworkDirs{local_help}    = "$webworkDirs{htdocs}/helpFiles";
-$webworkURLs{local_help}    = "$webworkURLs{htdocs}/helpFiles";
-
-# URL of general WeBWorK documentation.
-$webworkURLs{docs}          = "http://webwork.maa.org";
-
-# URL of WeBWorK Bugzilla database.
-$webworkURLs{bugReporter}   = "http://bugs.webwork.maa.org/enter_bug.cgi";
-
-# Location of CSS
-# $webworkURLs{stylesheet}    = "$webworkURLs{htdocs}/css/${defaultTheme}.css";
-# this is never used -- changing the theme from the config panel
-# doesn't appear to reset the theme in time?
-# It's better to refer directly to the .css file in the system.template
-# <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/math.css"/>
-
-# Location of jsMath script, used for the jsMath display mode.
-$webworkURLs{jsMath}        = "$webworkURLs{htdocs}/jsMath/jsMath-ww.js";
-
-# Location of MathJax script, used for the MathJax display mode.
-$webworkURLs{MathJax}       = "$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-AMS_HTML-full";
-
-# Location of Tabber script, used to generate tabbed widgets.
-$webworkURLs{tabber}		= "$webworkURLs{htdocs}/js/tabber.js";
-
-# Location of ASCIIMathML script, used for the asciimath display mode.
-$webworkURLs{asciimath}     = "$webworkURLs{htdocs}/ASCIIMathML/ASCIIMathML.js";
-
-# Location of LaTeXMathML script, used for the LaTeXMathML display mode.
-$webworkURLs{LaTeXMathML}   = "$webworkURLs{htdocs}/LaTeXMathML/LaTeXMathML.js";
-
-################################################################################
-# Defaults for course-specific locations (directories and URLs)
-################################################################################
-
-# The root directory of the current course. (The ID of the current course is
-# available in $courseName.)
-$courseDirs{root}        = "$webworkDirs{courses}/$courseName";
-
-# Location of course-specific data files.
-$courseDirs{DATA}        = "$courseDirs{root}/DATA";
-
-# Location of course HTML files, passed to PG.
-$courseDirs{html}        = "$courseDirs{root}/html";
-$courseURLs{html}        = "$webwork_courses_url/$courseName";
-
-# Location of course image files, passed to PG.
-$courseDirs{html_images} = "$courseDirs{html}/images";
-
-# Location of web-accessible, course-specific temporary files, like static and
-# dynamically-generated PG graphics.
-$courseDirs{html_temp}   = "$courseDirs{html}/tmp";
-$courseURLs{html_temp}   = "$courseURLs{html}/tmp";
-
-# Location of course-specific logs, like the transaction log.
-$courseDirs{logs}        = "$courseDirs{root}/logs";
-
-# Location of scoring files.
-$courseDirs{scoring}     = "$courseDirs{root}/scoring";
-
-# Location of PG templates and set definition files.
-$courseDirs{templates}   = "$courseDirs{root}/templates";
-
-# Location of course-specific macro files.
-$courseDirs{macros}      = "$courseDirs{templates}/macros";
-
-# Location of mail-merge templates.
-$courseDirs{email}       = "$courseDirs{templates}/email";
-
-# Location of temporary editing files.
-$courseDirs{tmpEditFileDir}  = "$courseDirs{templates}/tmpEdit";
 
 
-# mail merge status directory
-$courseDirs{mailmerge}   = "$courseDirs{DATA}/mailmerge";
 
 ################################################################################
 # System-wide files
 ################################################################################
 
-# Location of this file.
-$webworkFiles{environment}                      = "$webworkDirs{conf}/global.conf";
-
-# Flat-file database used to protect against MD5 hash collisions. TeX equations
-# are hashed to determine the name of the image file. There is a tiny chance of
-# a collision between two TeX strings. This file allows for that. However, this
-# is slow, so most people chose not to worry about it. Set this to "" if you
-# don't want to use the equation cache file.
-$webworkFiles{equationCacheDB}                  = ""; # "$webworkDirs{DATA}/equationcache";
-
-################################################################################
-# Hardcopy snippets are used in constructing a TeX file for hardcopy output.
-# They should contain TeX code unless otherwise noted.
-################################################################################
-# The preamble is the first thing in the TeX file.
-$webworkFiles{hardcopySnippets}{preamble}       = "$webworkDirs{conf}/snippets/hardcopyPreamble.tex";
-
-# The setHeader preceeds each set in hardcopy output. It is a PG file.
-# This is the default file which is used if a specific files is not selected
-$webworkFiles{hardcopySnippets}{setHeader}      = "$webworkDirs{conf}/snippets/setHeader.pg";  # hardcopySetHeader.pg",
-#$webworkFiles{hardcopySnippets}{setHeader}     = "$courseDirs{templates}/ASimpleHardCopyHeaderFile.pg"; # An alternate default header file
-
-# The problem divider goes between problems.
-$webworkFiles{hardcopySnippets}{problemDivider} = "$webworkDirs{conf}/snippets/hardcopyProblemDivider.tex";
-
-# The set footer goes after each set. Is is a PG file.
-$webworkFiles{hardcopySnippets}{setFooter}      = "$webworkDirs{conf}/snippets/hardcopySetFooter.pg";
-
-# The set divider goes between sets (in multiset output).
-$webworkFiles{hardcopySnippets}{setDivider}     = "$webworkDirs{conf}/snippets/hardcopySetDivider.tex";
-
-# The user divider does between users (in multiuser output).
-$webworkFiles{hardcopySnippets}{userDivider}    = "$webworkDirs{conf}/snippets/hardcopyUserDivider.tex";
-
-# The postabmle is the last thing in the TeX file.
-$webworkFiles{hardcopySnippets}{postamble}      = "$webworkDirs{conf}/snippets/hardcopyPostamble.tex";
-
-##### Screen snippets are used when displaying problem sets on the screen.
-
-# The set header is displayed on the problem set page. It is a PG file.
-# This is the default file which is used if a specific files is not selected
-#$webworkFiles{screenSnippets}{setHeader}        = "$webworkDirs{conf}/snippets/setHeader.pg"; # screenSetHeader.pg"
-$webworkFiles{screenSnippets}{setHeader}       = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg"; # An alternate default header file
-
-# A PG template for creation of new problems.
-$webworkFiles{screenSnippets}{blankProblem}    = "$webworkDirs{conf}/snippets/blankProblem2.pg"; # screenSetHeader.pg"
-
-# A site info  "message of the day" file
-$webworkFiles{site_info}                       = "$webworkDirs{htdocs}/site_info.txt";
 
 ################################################################################
 # Course-specific files
@@ -1284,25 +1309,7 @@ $problemLibrary_db = {
         passwd   => $database_password,
 };
 
-################################################################################
-# Logs
-################################################################################
 
-# FIXME: take logs out of %webworkFiles/%courseFiles and give them their own
-# top-level hash.
-
-# Logs data about how long it takes to process problems. (Do not confuse this
-# with the /other/ timing log which can be set by WeBWorK::Timing and is used
-# for benchmarking system performance in general. At some point, this timing
-# mechanism will be deprecated in favor of the WeBWorK::Timing mechanism.)
-$webworkFiles{logs}{timing}         = "$webworkDirs{logs}/timing.log";
-
-# Logs courses created via the web-based Course Administration module.
-$webworkFiles{logs}{hosted_courses} = "$webworkDirs{logs}/hosted_courses.log";
-
-# The transaction log contains data from each recorded answer submission. This
-# is useful if the database becomes corrupted.
-$webworkFiles{logs}{transaction}    = "$webworkDirs{logs}/${courseName}_transaction.log";
 
 # The answer log stores a history of all users' submitted answers.
 $courseFiles{logs}{answer_log}      = "$courseDirs{logs}/answer_log";
