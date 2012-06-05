@@ -245,6 +245,7 @@ $mail{smtpSender} = get_smtp_sender('webwork@localhost');
 my $mysql_root_password = get_mysql_root_password();
 my $database_username = get_database_username('webworkWrite');
 my $database_password = get_database_password();
+my $ww_db = "webwork";
 my $database_dsn = "dbi:mysql:webwork";
 
 #Configuration done, now start doing things...
@@ -288,6 +289,16 @@ change_permissions($server_groupid, "$webwork_courses_dir", "$webwork_dir/DATA",
 #chgrp -R wwdata DATA ../courses htdocs/tmp logs tmp
 # chmod -R g+w DATA ../courses htdocs/tmp logs tmp
 # find DATA/ ../courses/ htdocs/tmp logs/ tmp/ -type d -a ! -name CVS -exec chmod g+s {}
+print<<EOF;
+#######################################################################
+#
+#  Now I'm going to create the webwork mysql database $ww_db. The webwork db
+#  user $database_username will have rights to modifiy tables of that database but
+#  no others.
+# 
+######################################################################
+EOF
+create_database($database_dsn,$mysql_root_password, $database_username, $database_password);
 
 
 
@@ -400,6 +411,12 @@ EOF
       print "Your apache server root is $apache{root}\n";
     } elsif ($_=~ /SERVER_CONFIG_FILE\=\"(\/(\w+\/)+(\w+\.?)+)\"$/) {
       $apache{conf} = File::Spec->canonpath($1);
+        my $is_absolute = File::Spec->file_name_is_absolute( $apache{conf} );
+        if($is_absolute) {
+          next;
+        } else {
+          $apache{conf} = File::Spec->rel2abs( $apache{conf} );
+        }
       print "Your apache config file is $apache{conf}\n";
     }
   }
@@ -725,7 +742,7 @@ END
     print "Thanks; I'll keep it secret.\n";
     return $answer;
   } else {
-    get_root_mysql_password();
+    get_mysql_root_password();
   }
 }
 
@@ -919,6 +936,14 @@ sub change_permissions {
 # Create webwork database...
 #
 ############################################################
+
+sub create_database {
+  my ($dsn, $root_pw, $ww_db, $ww_user, $ww_pw) = @_;
+  my $dbh = DBI->connect($dsn, 'root', $root_pw);
+  my $rc = $dbh->func("createdb", $ww_db, 'admin');
+  my $perms_statement = "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON $ww_db.* TO $ww_user\@localhost IDENTIFIED BY $ww_pw;";
+  my $rows = $dbh->do($perms_statement) or die $dbh->errstr;
+}
 
 #############################################################
 #
