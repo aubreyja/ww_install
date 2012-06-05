@@ -220,9 +220,6 @@ my $pg_dir              = "$WW_PREFIX/pg";
 my $webwork_courses_dir = "$WW_PREFIX/courses"; 
 my $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 
-# Now get all of the webwork software
-#get_webwork($WW_PREFIX,$apps);
-
 
 
 #(3) $server_root_url   = "";  # e.g.  http://webwork.yourschool.edu
@@ -246,9 +243,52 @@ $mail{smtpSender} = get_smtp_sender('webwork@localhost');
 #(8) $database_username = "webworkWrite";
 #(9) $database_password = "";
 my $mysql_root_password = get_mysql_root_password();
-my $database_username = get_database_username();
+my $database_username = get_database_username('webworkWrite');
 my $database_password = get_database_password();
 my $database_dsn = "dbi:mysql:webwork";
+
+#Configuration done, now start doing things...
+# Now get all of the webwork software
+print<<EOF;
+#######################################################################
+#
+#  Now I'm going to download the webwork code.  This will take a couple
+#  of minutes.
+# 
+######################################################################
+EOF
+#get_webwork($WW_PREFIX,$apps);
+
+print<<EOF;
+#######################################################################
+#
+#  Now I'm going to copy some classlist files and the modelCourse/ dir from
+#  webwork2/courses.dist to $webwork_courses_dir.  
+#  modelCourse/ will serve as a default template for WeBWorK courses you create.
+#   
+######################################################################
+EOF
+
+copy_classlist_files($webwork_dir,$webwork_courses_dir);
+copy_model_course($webwork_dir, $webwork_courses_dir);
+
+print<<EOF;
+#######################################################################
+#
+#  Now I'm going to change the ownship and permissions of some directories
+#  under $webwork_dir and $webwork_courses_dir that should be web accessible.  
+#  Faulty permissions is one of the most common cause of problems, especially
+#  after upgrades. 
+# 
+######################################################################
+EOF
+change_grp($server_groupid, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
+change_permissions($server_groupid, "$webwork_courses_dir", "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
+
+#chgrp -R wwdata DATA ../courses htdocs/tmp logs tmp
+# chmod -R g+w DATA ../courses htdocs/tmp logs tmp
+# find DATA/ ../courses/ htdocs/tmp logs/ tmp/ -type d -a ! -name CVS -exec chmod g+s {}
+
 
 
 
@@ -376,6 +416,7 @@ EOF
     }
   }
   close(HTTPDCONF);
+  return %apache;
 }
 
 
@@ -776,7 +817,7 @@ sub get_webwork {
   my $ww2_cmd = $apps->{git}." clone https://github.com/openwebwork/webwork2.git";
   my $buffer;
   if( scalar run( command => $ww2_cmd,
-  verbose => 0,
+  verbose => 1,
   buffer => \$buffer,
   timeout => 200 )
   ) {
@@ -785,7 +826,7 @@ sub get_webwork {
   my $pg_cmd = $apps->{git}." clone https://github.com/openwebwork/pg.git";
 
   if( scalar run( command => $pg_cmd,
-  verbose => 0,
+  verbose => 1,
   buffer => \$buffer,
   timeout => 200 )
   ) {
@@ -796,24 +837,83 @@ sub get_webwork {
   chdir "$prefix/libraries";
   my $npl_cmd = $apps->{svn}." checkout http://svn.webwork.maa.org/npl/trunk/NationalProblemLibrary";
   if( scalar run( command => $npl_cmd,
-  verbose => 0,
+  verbose => 1,
   buffer => \$buffer,
   timeout => 6000 )
   ) {
       print "fetched npl successfully: $buffer\n";
     }
-    # cp *.lst /opt/webwork/courses/
-    # cp -r modelCourse/ /opt/webwork/courses/
-  copy("adminClasslist.lst","$prefix/courses/adminClasslist.lst");
-  copy("defaultClasslist.lst","$prefix/courses/defaultClasslist.lst");
+  }
+
+sub copy_classlist_files {
+  my ($webwork_dir, $courses_dir) = @_;
+  my $full_path = can_run('cp'); 
+  my $cmd = [$full_path, "$webwork_dir/courses.dist/*.lst", "$courses_dir"];
+    if( scalar run( command => $cmd,
+                    verbose => 1,
+                    timeout => 20 )
+    ) {
+        print "copied classlist files to $courses_dir\n";
+    }
 }
 
+  #copy("adminClasslist.lst","$prefix/courses/adminClasslist.lst");
+  #copy("defaultClasslist.lst","$prefix/courses/defaultClasslist.lst");
+
+sub copy_model_course {
+  my ($webwork_dir, $courses_dir) = @_;
+  my $full_path = can_run('cp'); 
+  my $cmd = [$full_path, '-r', "$webwork_dir/courses.dist/modelCourse", "$courses_dir"];
+    if( scalar run( command => $cmd,
+                    verbose => 1,
+                    timeout => 20 )
+    ) {
+        print "copied modelCourse/ to $courses_dir/\n";
+    }
+}
 ##############################################################
 #
 # Adjust file owernship and permissions
 #
 #############################################################
+#change_grp($server_groupid, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
+#change_permissions($server_groupid, "$webwork_courses_dir", "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
 
+#chgrp -R wwdata DATA ../courses htdocs/tmp logs tmp
+# chmod -R g+w DATA ../courses htdocs/tmp logs tmp
+# find DATA/ ../courses/ htdocs/tmp logs/ tmp/ -type d -a ! -name CVS -exec chmod g+s {}
+
+sub change_grp {
+ my ($gid, $courses, $data, $htdocs_tmp, $logs, $tmp) = @_;
+  my $full_path = can_run('chgrp'); 
+  my $cmd = [$full_path, '-R',$gid, $courses, $data, $htdocs_tmp, $logs, $tmp];
+    if( scalar run( command => $cmd,
+                    verbose => 1,
+                    timeout => 20 )
+    ) {
+        print "Changed ownership of\n $courses,\n $data,\n $htdocs_tmp,\n $logs,\n $tmp\n to $gid.\n";
+    }
+}
+
+sub change_permissions {
+ my ($gid, $courses, $data, $htdocs_tmp, $logs, $tmp) = @_;
+  my $chmod = can_run('chmod'); 
+  my $cmd = [$chmod, '-R','g+w', $courses, $data, $htdocs_tmp, $logs, $tmp];
+    if( scalar run( command => $cmd,
+                    verbose => 1,
+                    timeout => 20 )
+    ) {
+        print "Made the directories \n $courses,\n $data,\n $htdocs_tmp,\n $logs,\n $tmp\n group writable.\n";
+    }
+  my $find = can_run('find'); 
+  $cmd = [$find, $courses, $data, $htdocs_tmp, $logs, $tmp, '-type', 'd','-and', '!', '(', '-name', '".git"','-prune', ')','-exec',$chmod,'g+s', '{}', ';'];
+    if( scalar run( command => $cmd,
+                    verbose => 1,
+                    timeout => 20 )
+    ) {
+        print "Added group sticky bit to \n $courses,\n $data,\n $htdocs_tmp,\n $logs,\n $tmp\n and subdirectories (except .git's).\n";
+    }
+}
 #############################################################
 #
 # Create webwork database...
