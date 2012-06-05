@@ -415,7 +415,7 @@ EOF
         if($is_absolute) {
           next;
         } else {
-          $apache{conf} = File::Spec->rel2abs( $apache{conf} );
+          $apache{conf} = File::Spec->canonpath( "$apache{root}/$apache{conf}" );
         }
       print "Your apache config file is $apache{conf}\n";
     }
