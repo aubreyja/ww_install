@@ -409,7 +409,7 @@ EOF
     } elsif ($_ =~ /HTTPD_ROOT\=\"((\/\w+)+)\"$/) {
       $apache{root} = File::Spec->canonpath($1);
       print "Your apache server root is $apache{root}\n";
-    } elsif ($_=~ /SERVER_CONFIG_FILE\=\"(\/(\w+\/)+(\w+\.?)+)\"$/) {
+    } elsif ($_=~ /SERVER_CONFIG_FILE\=\"((\/)?(\w+\/)+(\w+\.?)+)\"$/) {
       $apache{conf} = File::Spec->canonpath($1);
         my $is_absolute = File::Spec->file_name_is_absolute( $apache{conf} );
         if($is_absolute) {
