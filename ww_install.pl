@@ -962,6 +962,22 @@ sub create_database {
 #
 ############################################################
 
+sub write_database_conf {
+
+}
+
+sub write_prelocal_conf {
+
+}
+
+sub write_postlocal_conf {
+
+}
+
+sub write_webwork_apache2_config {
+
+}
+
 ##########################################################
 #
 #  Configure environment (symlink webwork-apache2.config,
@@ -969,15 +985,50 @@ sub create_database {
 #
 ##########################################################
 
+sub configure_shell {
+#export PATH=$PATH:/opt/webwork/webwork2/bin
+#export WEBWORK_ROOT=/opt/webwork/webwork2
+}
+
+sub symlink_webwork_apache2_config {
+# cd /etc/httpd/conf.d
+# ln -s /opt/webwork/webwork2/conf/webwork.apache2-config webwork.conf
+}
+
+sub setup_npl {
+#$ cd /opt/webwork/courses/modelCourse/templates/
+#$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
+#cd /opt/webwork/libraries/NationalProblemLibrary
+#$ NPL-update ## after write config files since must have $db_pass
+
+}
+
 #############################################################
 #
 # Create admin course
 #
 ############################################################
 
+sub create_admin_course {
+
+# cd /opt/webwork/courses
+# /opt/webwork/webwork2/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin
+
+}
+
 #############################################################
 #
-# Launch web-browser
+# Restart apache and launch web-browser!
 #
 #############################################################
+
+sub restart_apache {
+
+}
+
+
+sub launch_browser {
+
+}
+
 
