@@ -258,7 +258,7 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-#get_webwork($WW_PREFIX,$apps);
+get_webwork($WW_PREFIX,$apps);
 
 print<<EOF;
 #######################################################################
@@ -298,7 +298,7 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-create_database($database_dsn,$mysql_root_password, $database_username, $database_password);
+create_database($database_dsn,$mysql_root_password, $ww_db, $database_username, $database_password);
 
 
 
@@ -313,8 +313,15 @@ sub get_ready {
 
 my $print_me=<<EOF;
 Welcome to the WeBWorK.  This installation script will ask you a few questions and then attempt to install 
-WeBWorK on your system. To complete the installation, you will need to be connected to the internet and have
-administrative privliges on this machine.  You will also need to know the root mysql password. 
+WeBWorK on your system. To complete the installation
+(a) You must be connected to the internet.
+(b) You must have administrative privliges on this machine, and
+(c) The mysql server must be running, and you should have already gone through the process of setting up the
+root mysql account and securing your mysql server.  If you haven't done this or aren't sure if it has been done
+then exit this script and do
+'sudo service mysqld start' to start mysql, and then
+'mysql_secure_installation' to secure the server and set the root password.
+Once you know the root mysql password then you can come back to this script and install webwork.
 EOF
  my $ready = $term -> ask_yn(
                     print_me => $print_me,
@@ -940,9 +947,13 @@ sub change_permissions {
 sub create_database {
   my ($dsn, $root_pw, $ww_db, $ww_user, $ww_pw) = @_;
   my $dbh = DBI->connect($dsn, 'root', $root_pw);
-  my $rc = $dbh->func("createdb", $ww_db, 'admin');
-  my $perms_statement = "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON $ww_db.* TO $ww_user\@localhost IDENTIFIED BY $ww_pw;";
-  my $rows = $dbh->do($perms_statement) or die $dbh->errstr;
+  print "Connected to mysql as root...\n";
+  $dbh -> do("CREATE DATABASE $ww_db") or die "Could not create $ww_db database: $!\n";
+  print "Created $ww_db database...\n";
+  $dbh -> do("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON $ww_db.* TO $ww_user\@localhost IDENTIFIED BY '$ww_pw'")
+    or die "Could not grant privileges to $ww_user on $ww_db database: $!\n";
+  print "Granted privileges...\n";
+  $dbh -> disconnect();
 }
 
 #############################################################
