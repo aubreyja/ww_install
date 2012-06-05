@@ -970,6 +970,10 @@ sub write_prelocal_conf {
 
 }
 
+sub write_global_conf {
+
+}
+
 sub write_postlocal_conf {
 
 }
