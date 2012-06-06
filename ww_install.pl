@@ -353,7 +353,11 @@ create_admin_course();
 print<<EOF;
 #######################################################################
 #
-# Hey! I'm done!  Check it out at $server_root_url/webwork2.
+# Hey! I'm done!  Restart apache with 
+#
+# $ sudo $apache{binary} restart
+#
+# Then check it out at $server_root_url/webwork2!
 # 
 ######################################################################
 EOF
@@ -1113,8 +1117,9 @@ sub symlink_webwork_apache2_config {
 }
 
 sub setup_npl {
+  chdir("$WW_PREFIX/libraries/NationalProblemLibrary");
   symlink("$WW_PREFIX/libraries/NationalProblemLibrary","$WW_PREFIX/courses/modelCourse/templates/Library");
-  system("$WW_PREFIX/libraries/NationalProblemLibrary/NPL-UPDATE");
+  system("$webwork_dir/bin/NPL-UPDATE");
   #$ cd /opt/webwork/courses/modelCourse/templates/
   #$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
   #cd /opt/webwork/libraries/NationalProblemLibrary
