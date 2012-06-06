@@ -1136,7 +1136,7 @@ sub setup_npl {
 
 sub create_admin_course {
   # cd /opt/webwork/courses
-  chdir("$webwork_dir/courses");
+  chdir("$WW_PREFIX/courses");
   system("$webwork_dir/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin");
 }
 
