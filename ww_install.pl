@@ -902,7 +902,7 @@ sub get_webwork {
   my ($prefix,$apps) = @_;
   create_prefix_path($prefix);
   chdir $prefix or die "Can't chdir to $prefix";
-  my $ww2_cmd = $apps->{git}." clone https://github.com/openwebwork/webwork2.git";
+  my $ww2_cmd = $apps->{git}." clone https://github.com/mgage/webwork2.git";
   my $buffer;
   if( scalar run( command => $ww2_cmd,
   verbose => 1,
@@ -1047,7 +1047,7 @@ sub write_prelocal_conf {
     } elsif(/^\$server_groupID/) {
       print $out "\$server_groupID = \"$server_groupID\";\n";
     } elsif (/^\$database_dsn/) {
-      print $out "\$database_dsn = \"$database_dsn\";\n";
+      print $out "\$database_dsn = \"$database_dsn\";\n" if /^\$database_dsn/;
     } elsif (/^\$database_username/) {
       print $out "\$database_username = \"$database_username\";\n";
     } elsif (/^\#\$database_password/) {
@@ -1091,7 +1091,7 @@ sub write_webwork_apache2_config {
       } else {
         print $out $_;
       }
-  }
+    }
 }
 
 ##########################################################
