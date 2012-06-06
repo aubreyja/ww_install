@@ -298,7 +298,7 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-#create_database($database_dsn,$mysql_root_password, $ww_db, $database_username, $database_password);
+create_database($database_dsn,$mysql_root_password, $ww_db, $database_username, $database_password);
 
 print<<EOF;
 #######################################################################
@@ -942,12 +942,19 @@ sub get_webwork {
 sub copy_classlist_files {
   my ($webwork_dir, $courses_dir) = @_;
   my $full_path = can_run('cp'); 
-  my $cmd = [$full_path, "$webwork_dir/courses.dist/*.lst", "$courses_dir"];
+  my $cmd = [$full_path, "$webwork_dir/courses.dist/adminClasslist.lst", "$courses_dir"];
     if( scalar run( command => $cmd,
                     verbose => 1,
                     timeout => 20 )
     ) {
-        print "copied classlist files to $courses_dir\n";
+        print "copied adminClasslist.lst to $courses_dir\n";
+    }
+  $cmd = [$full_path, "$webwork_dir/courses.dist/defaultClasslist.lst", "$courses_dir"];
+    if( scalar run( command => $cmd,
+                    verbose => 1,
+                    timeout => 20 )
+    ) {
+        print "copied defaultClasslist.lst file to $courses_dir\n";
     }
 }
 
