@@ -322,6 +322,8 @@ write_global_conf("$webwork_dir/conf");
 
 write_postlocal_conf("$webwork_dir/conf");
 
+write_webwork_apache2_config("$webwork_dir/conf");
+
 print<<EOF;
 #######################################################################
 #
@@ -1134,7 +1136,7 @@ sub setup_npl {
 
 sub create_admin_course {
   # cd /opt/webwork/courses
-  chdir("$webwork_dir/courses");
+  chdir("$WW_PREFIX/courses");
   system("$webwork_dir/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin");
 }
 
