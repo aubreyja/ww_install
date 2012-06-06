@@ -86,7 +86,6 @@ my @applicationsList = qw(
 	latex
 	pdflatex
 	dvipng
-	tth
 	mysql
 	giftopnm
 	ppmtopgm
@@ -258,7 +257,7 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-#get_webwork($WW_PREFIX,$apps);
+get_webwork($WW_PREFIX,$apps);
 
 print<<EOF;
 #######################################################################
@@ -437,7 +436,7 @@ EOF
     } elsif ($_ =~ /HTTPD_ROOT\=\"((\/\w+)+)\"$/) {
       $apache{root} = File::Spec->canonpath($1);
       print "Your apache server root is $apache{root}\n";
-    } elsif ($_=~ /SERVER_CONFIG_FILE\=\"((\/)?(\w+\/)+(\w+\.?)+)\"$/) {
+    } elsif ($_=~ /SERVER_CONFIG_FILE\=\"((\/)?(\w+\/)*(\w+\.?)+)\"$/) {
       $apache{conf} = File::Spec->canonpath($1);
         my $is_absolute = File::Spec->file_name_is_absolute( $apache{conf} );
         if($is_absolute) {
@@ -450,17 +449,25 @@ EOF
   }
   close(HTTPD);
 
-  open(HTTPDCONF,$apache{conf}) or die "Can't do this: $!";
-  while(<HTTPDCONF>){
-    if (/^User/) {
-      (undef,$apache{user}) = split;
-      print "Apache runs as user $apache{user}\n";
-    } elsif (/^Group/){
-      (undef,$apache{group}) = split;
-      print "Apache runs in group $apache{group}\n";
-    }
+  if($ENV{APACHE_RUN_USER}) {
+    $apache{user} = $ENV{APACHE_RUN_USER};
+  } 
+  if ($ENV{APACHE_RUN_GROUP}) {
+    $apache{group} = $ENV{APACHE_RUN_GROUP};
   }
-  close(HTTPDCONF);
+  unless($apache{user} && $apache{group}) {
+    open(HTTPDCONF,$apache{conf}) or die "Can't do this: $!";
+    while(<HTTPDCONF>){
+      if (/^User/) {
+        (undef,$apache{user}) = split;
+        print "Apache runs as user $apache{user}\n";
+      } elsif (/^Group/){
+        (undef,$apache{group}) = split;
+        print "Apache runs in group $apache{group}\n";
+      }
+    }
+    close(HTTPDCONF);
+  }
   return %apache;
 }
 
@@ -516,7 +523,7 @@ sub configure_externalPrograms {
 			print "   $app found at ${$apps}{$app}\n";
       if($app eq 'lwp-request') {
         delete $apps -> {$app};
-        $apps -> {check_url} = "$app".' -d -mHEAD';
+        $apps -> {checkurl} = "$app".' -d -mHEAD';
       }
 		} else {
 			warn "** $app not found in \$PATH\n";
