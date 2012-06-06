@@ -322,6 +322,8 @@ write_global_conf("$webwork_dir/conf");
 
 write_postlocal_conf("$webwork_dir/conf");
 
+write_webwork_apache2_config("$webwork_dir/conf");
+
 print<<EOF;
 #######################################################################
 #
