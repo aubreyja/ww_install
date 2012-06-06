@@ -193,8 +193,8 @@ $siteDefaults{timezone} = $envir{timezone};
 
 #Get apache version, path to config file, server user and group;
 my %apache = check_apache();
-my $server_userid = $apache{user};
-my $server_groupid = $apache{group};
+my $server_userID = $apache{user};
+my $server_groupID = $apache{group};
 
 #Check perl prerequisites
 print<<EOF;
@@ -283,8 +283,8 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-change_grp($server_groupid, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
-change_permissions($server_groupid, "$webwork_courses_dir", "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
+change_grp($server_groupID, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
+change_permissions($server_groupID, "$webwork_courses_dir", "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
 
 #chgrp -R wwdata DATA ../courses htdocs/tmp logs tmp
 # chmod -R g+w DATA ../courses htdocs/tmp logs tmp
@@ -298,10 +298,31 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-create_database($database_dsn,$mysql_root_password, $database_username, $database_password);
+#create_database($database_dsn,$mysql_root_password, $ww_db, $database_username, $database_password);
 
+print<<EOF;
+#######################################################################
+#
+#
+# Alrighty, so far so good.  Let's see, where are we?  Oh, right: we've
+# got all of the code and all of the config information we need, and
+# we just now created the database.  Not too much left to do.
+#
+# Next up: We'll write the config files
+#
+# 
+######################################################################
+EOF
 
+write_database_conf("$webwork_dir/conf");
 
+write_prelocal_conf("$webwork_dir/conf");
+
+write_global_conf("$webwork_dir/conf");
+
+write_postlocal_conf("$webwork_dir/conf");
+
+write_webwork_apache2_config("$webwork_dir/conf");
 
 #####################################################
 #
@@ -313,8 +334,15 @@ sub get_ready {
 
 my $print_me=<<EOF;
 Welcome to the WeBWorK.  This installation script will ask you a few questions and then attempt to install 
-WeBWorK on your system. To complete the installation, you will need to be connected to the internet and have
-administrative privliges on this machine.  You will also need to know the root mysql password. 
+WeBWorK on your system. To complete the installation
+(a) You must be connected to the internet.
+(b) You must have administrative privliges on this machine, and
+(c) The mysql server must be running, and you should have already gone through the process of setting up the
+root mysql account and securing your mysql server.  If you haven't done this or aren't sure if it has been done
+then exit this script and do
+'sudo service mysqld start' to start mysql, and then
+'mysql_secure_installation' to secure the server and set the root password.
+Once you know the root mysql password then you can come back to this script and install webwork.
 EOF
  my $ready = $term -> ask_yn(
                     print_me => $print_me,
@@ -409,13 +437,13 @@ EOF
     } elsif ($_ =~ /HTTPD_ROOT\=\"((\/\w+)+)\"$/) {
       $apache{root} = File::Spec->canonpath($1);
       print "Your apache server root is $apache{root}\n";
-    } elsif ($_=~ /SERVER_CONFIG_FILE\=\"(\/(\w+\/)+(\w+\.?)+)\"$/) {
+    } elsif ($_=~ /SERVER_CONFIG_FILE\=\"((\/)?(\w+\/)+(\w+\.?)+)\"$/) {
       $apache{conf} = File::Spec->canonpath($1);
         my $is_absolute = File::Spec->file_name_is_absolute( $apache{conf} );
         if($is_absolute) {
           next;
         } else {
-          $apache{conf} = File::Spec->rel2abs( $apache{conf} );
+          $apache{conf} = File::Spec->canonpath( "$apache{root}/$apache{conf}" );
         }
       print "Your apache config file is $apache{conf}\n";
     }
@@ -940,9 +968,13 @@ sub change_permissions {
 sub create_database {
   my ($dsn, $root_pw, $ww_db, $ww_user, $ww_pw) = @_;
   my $dbh = DBI->connect($dsn, 'root', $root_pw);
-  my $rc = $dbh->func("createdb", $ww_db, 'admin');
-  my $perms_statement = "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON $ww_db.* TO $ww_user\@localhost IDENTIFIED BY $ww_pw;";
-  my $rows = $dbh->do($perms_statement) or die $dbh->errstr;
+  print "Connected to mysql as root...\n";
+  $dbh -> do("CREATE DATABASE $ww_db") or die "Could not create $ww_db database: $!\n";
+  print "Created $ww_db database...\n";
+  $dbh -> do("GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON $ww_db.* TO $ww_user\@localhost IDENTIFIED BY '$ww_pw'")
+    or die "Could not grant privileges to $ww_user on $ww_db database: $!\n";
+  print "Granted privileges...\n";
+  $dbh -> disconnect();
 }
 
 #############################################################
@@ -951,6 +983,72 @@ sub create_database {
 #
 ############################################################
 
+sub write_database_conf {
+  my $conf_dir = shift;
+  copy("$conf_dir/database.conf.dist","$conf_dir/database.conf") or die "Can't copy database.conf.dist to database.conf: $!";
+}
+
+sub write_prelocal_conf {
+  my $conf_dir = shift;
+  open(my $in, "<","$conf_dir/prelocal.conf.dist")
+    or die "Can't open $conf_dir/prelocal.conf.dist for reading: $!";
+  open(my $out, ">", "$conf_dir/prelocal.conf")
+    or die "Can't open $conf_dir/prelocal.conf for writing: $!";
+  while( <$in> ) {
+    if(/^\$webwork_url/) {
+      print $out "\$webwork_url = \"$webwork_url\";\n";
+    } elsif(/^\$server_root_url/) {
+      print $out "\$server_root_url = \"$server_root_url\";\n";
+    } elsif(/^\$server_userID/) {
+      print $out "\$server_userID = \"$server_userID\";\n";
+    } elsif(/^\$server_groupID/) {
+      print $out "\$server_groupID = \"$server_groupID\";\n";
+    } elsif () {
+      print $out "\$database_dsn = \"$database_dsn\";\n" if /^\$database_dsn/;
+    } elsif (/^\$database_username/) {
+      print $out "\$database_username = \"$database_username\";\n";
+    } elsif (/^\#\$database_password/) {
+      print $out "\$database_password = \"$database_password\";\n";
+    } elsif (/^$externalPrograms/) {
+        print $out "\$externalPrograms{$_} = \"$$apps{$_}\";\n" if /^\$externalPrograms{$_}/;
+    } else {
+      print $out $_;
+    }
+  }
+}
+
+sub write_global_conf {
+  my $conf_dir = shift;
+  copy("$conf_dir/global.conf.dist","$conf_dir/global.conf") or die "Can't copy global.conf.dist to global.conf: $!";
+}
+
+sub write_postlocal_conf {
+  my $conf_dir = shift;
+  open(my $in,"<","$conf_dir/postlocal.conf.dist")
+    or die "Can't open $conf_dir/postlocal.conf.dist for reading: $!";
+  open(my $out,">","$conf_dir/postlocal.conf")
+    or die "Can't open $conf_dir/postlocal.conf for writing: $!";
+    while( <$in> ) {
+      print $out $_;
+    }
+}
+
+
+sub write_webwork_apache2_config {
+  my $conf_dir = shift;
+  open(my $in,"<","$conf_dir/webwork.apache2-config.dist")
+    or die "Can't open $conf_dir/webwork.apache2-config.dist for reading: $!";
+  open(my $out,">","$conf_dir/webwork.apache2-config")
+    or die "Can't open $conf_dir/webwork.apache2-config for writing: $!";
+    while( <$in> ) {
+      next if /^\#/;
+      if(/^my\s\$webwork_dir/) {
+        print $out "my \$webwork_dir = \"$webwork_dir\";\n" if ;
+      } else {
+        print $out $_;
+    }
+}
+
 ##########################################################
 #
 #  Configure environment (symlink webwork-apache2.config,
@@ -958,15 +1056,50 @@ sub create_database {
 #
 ##########################################################
 
+sub configure_shell {
+#export PATH=$PATH:/opt/webwork/webwork2/bin
+#export WEBWORK_ROOT=/opt/webwork/webwork2
+}
+
+sub symlink_webwork_apache2_config {
+# cd /etc/httpd/conf.d
+# ln -s /opt/webwork/webwork2/conf/webwork.apache2-config webwork.conf
+}
+
+sub setup_npl {
+#$ cd /opt/webwork/courses/modelCourse/templates/
+#$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
+#cd /opt/webwork/libraries/NationalProblemLibrary
+#$ NPL-update ## after write config files since must have $db_pass
+
+}
+
 #############################################################
 #
 # Create admin course
 #
 ############################################################
 
+sub create_admin_course {
+
+# cd /opt/webwork/courses
+# /opt/webwork/webwork2/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin
+
+}
+
 #############################################################
 #
-# Launch web-browser
+# Restart apache and launch web-browser!
 #
 #############################################################
+
+sub restart_apache {
+
+}
+
+
+sub launch_browser {
+
+}
+
 
