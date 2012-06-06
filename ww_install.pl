@@ -218,6 +218,7 @@ my $webwork_dir = "$WW_PREFIX/webwork2";
 my $pg_dir              = "$WW_PREFIX/pg";
 my $webwork_courses_dir = "$WW_PREFIX/courses"; 
 my $webwork_htdocs_dir  = "$webwork_dir/htdocs";
+$ENV{WEBWORK_ROOT} = $webwork_dir;
 
 
 
@@ -1070,16 +1071,18 @@ sub configure_shell {
 }
 
 sub symlink_webwork_apache2_config {
+  symlink("$webwork_dir/conf/webwork.apache2-config","$apache{root}/conf.d/webwork.conf");
 # cd /etc/httpd/conf.d
 # ln -s /opt/webwork/webwork2/conf/webwork.apache2-config webwork.conf
 }
 
 sub setup_npl {
-#$ cd /opt/webwork/courses/modelCourse/templates/
-#$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
-#cd /opt/webwork/libraries/NationalProblemLibrary
-#$ NPL-update ## after write config files since must have $db_pass
-
+  symlink("$WW_PREFIX/libraries/NationalProblemLibrary","$WW_PREFIX/courses/modelCourse/templates/Library");
+  system("$WW_PREFIX/libraries/NationalProblemLibrary/NPL-UPDATE");
+  #$ cd /opt/webwork/courses/modelCourse/templates/
+  #$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
+  #cd /opt/webwork/libraries/NationalProblemLibrary
+  #$ NPL-update ## after write config files since must have $db_pass
 }
 
 #############################################################
@@ -1089,10 +1092,9 @@ sub setup_npl {
 ############################################################
 
 sub create_admin_course {
-
-# cd /opt/webwork/courses
-# /opt/webwork/webwork2/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin
-
+  # cd /opt/webwork/courses
+  chdir("$webwork_dir/courses");
+  system("$webwork_dir/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin");
 }
 
 #############################################################
