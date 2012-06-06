@@ -908,7 +908,7 @@ sub get_webwork {
   my ($prefix,$apps) = @_;
   create_prefix_path($prefix);
   chdir $prefix or die "Can't chdir to $prefix";
-  my $ww2_cmd = $apps->{git}." clone https://github.com/mgage/webwork2.git";
+  my $ww2_cmd = $apps->{git}." clone https://github.com/openwebwork/webwork2.git";
   my $buffer;
   if( scalar run( command => $ww2_cmd,
   verbose => 1,
