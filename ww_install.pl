@@ -322,7 +322,42 @@ write_global_conf("$webwork_dir/conf");
 
 write_postlocal_conf("$webwork_dir/conf");
 
-write_webwork_apache2_config("$webwork_dir/conf");
+print<<EOF;
+#######################################################################
+#
+# Well, that was easy.  Now i'm going to symlink webwork.apache2-config
+# to your apache conf.d dir as webwork.conf. 
+#
+# 
+######################################################################
+EOF
+
+symlink_webwork_apache2_config(); 
+
+print<<EOF;
+#######################################################################
+#
+# Kay. Now I'm going to update the NPL.  This could take a few...
+# 
+######################################################################
+EOF
+setup_npl();
+print<<EOF;
+#######################################################################
+#
+# Creating admin course...
+# 
+######################################################################
+EOF
+create_admin_course();
+print<<EOF;
+#######################################################################
+#
+# Hey! I'm done!  Check it out at $server_root_url/webwork2.
+# 
+######################################################################
+EOF
+
 
 #####################################################
 #
@@ -1018,6 +1053,7 @@ sub write_prelocal_conf {
     } elsif (/^\#\$database_password/) {
       print $out "\$database_password = \"$database_password\";\n";
     } elsif (/^\$externalPrograms{(\w+)}/) {
+      next if ($1 =~ /tth/);
         print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
     } else {
       print $out $_;
