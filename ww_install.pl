@@ -218,6 +218,7 @@ my $webwork_dir = "$WW_PREFIX/webwork2";
 my $pg_dir              = "$WW_PREFIX/pg";
 my $webwork_courses_dir = "$WW_PREFIX/courses"; 
 my $webwork_htdocs_dir  = "$webwork_dir/htdocs";
+$ENV{WEBWORK_ROOT} = $webwork_dir;
 
 
 
@@ -321,7 +322,42 @@ write_global_conf("$webwork_dir/conf");
 
 write_postlocal_conf("$webwork_dir/conf");
 
-write_webwork_apache2_config("$webwork_dir/conf");
+print<<EOF;
+#######################################################################
+#
+# Well, that was easy.  Now i'm going to symlink webwork.apache2-config
+# to your apache conf.d dir as webwork.conf. 
+#
+# 
+######################################################################
+EOF
+
+symlink_webwork_apache2_config(); 
+
+print<<EOF;
+#######################################################################
+#
+# Kay. Now I'm going to update the NPL.  This could take a few...
+# 
+######################################################################
+EOF
+setup_npl();
+print<<EOF;
+#######################################################################
+#
+# Creating admin course...
+# 
+######################################################################
+EOF
+create_admin_course();
+print<<EOF;
+#######################################################################
+#
+# Hey! I'm done!  Check it out at $server_root_url/webwork2.
+# 
+######################################################################
+EOF
+
 
 #####################################################
 #
@@ -1016,8 +1052,9 @@ sub write_prelocal_conf {
       print $out "\$database_username = \"$database_username\";\n";
     } elsif (/^\#\$database_password/) {
       print $out "\$database_password = \"$database_password\";\n";
-    } elsif (/^\$externalPrograms/) {
-        print $out "\$externalPrograms{$_} = \"$$apps{$_}\";\n" if /^\$externalPrograms{$_}/;
+    } elsif (/^\$externalPrograms{(\w+)}/) {
+      next if ($1 =~ /tth/);
+        print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
     } else {
       print $out $_;
     }
@@ -1070,16 +1107,18 @@ sub configure_shell {
 }
 
 sub symlink_webwork_apache2_config {
+  symlink("$webwork_dir/conf/webwork.apache2-config","$apache{root}/conf.d/webwork.conf");
 # cd /etc/httpd/conf.d
 # ln -s /opt/webwork/webwork2/conf/webwork.apache2-config webwork.conf
 }
 
 sub setup_npl {
-#$ cd /opt/webwork/courses/modelCourse/templates/
-#$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
-#cd /opt/webwork/libraries/NationalProblemLibrary
-#$ NPL-update ## after write config files since must have $db_pass
-
+  symlink("$WW_PREFIX/libraries/NationalProblemLibrary","$WW_PREFIX/courses/modelCourse/templates/Library");
+  system("$WW_PREFIX/libraries/NationalProblemLibrary/NPL-UPDATE");
+  #$ cd /opt/webwork/courses/modelCourse/templates/
+  #$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
+  #cd /opt/webwork/libraries/NationalProblemLibrary
+  #$ NPL-update ## after write config files since must have $db_pass
 }
 
 #############################################################
@@ -1089,10 +1128,9 @@ sub setup_npl {
 ############################################################
 
 sub create_admin_course {
-
-# cd /opt/webwork/courses
-# /opt/webwork/webwork2/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin
-
+  # cd /opt/webwork/courses
+  chdir("$webwork_dir/courses");
+  system("$webwork_dir/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin");
 }
 
 #############################################################
