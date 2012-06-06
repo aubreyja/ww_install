@@ -355,7 +355,7 @@ print<<EOF;
 #
 # Hey! I'm done!  Restart apache with 
 #
-# \$ sudo $apache{binary} restart
+# sudo $apache{binary} restart
 #
 # Then check it out at $server_root_url/webwork2!
 # 
