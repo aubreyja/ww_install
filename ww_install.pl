@@ -258,7 +258,7 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-#get_webwork($WW_PREFIX,$apps);
+get_webwork($WW_PREFIX,$apps);
 
 print<<EOF;
 #######################################################################
@@ -1003,13 +1003,13 @@ sub write_prelocal_conf {
       print $out "\$server_userID = \"$server_userID\";\n";
     } elsif(/^\$server_groupID/) {
       print $out "\$server_groupID = \"$server_groupID\";\n";
-    } elsif () {
+    } elsif (/^\$database_dsn/) {
       print $out "\$database_dsn = \"$database_dsn\";\n" if /^\$database_dsn/;
     } elsif (/^\$database_username/) {
       print $out "\$database_username = \"$database_username\";\n";
     } elsif (/^\#\$database_password/) {
       print $out "\$database_password = \"$database_password\";\n";
-    } elsif (/^$externalPrograms/) {
+    } elsif (/^\$externalPrograms/) {
         print $out "\$externalPrograms{$_} = \"$$apps{$_}\";\n" if /^\$externalPrograms{$_}/;
     } else {
       print $out $_;
@@ -1043,9 +1043,10 @@ sub write_webwork_apache2_config {
     while( <$in> ) {
       next if /^\#/;
       if(/^my\s\$webwork_dir/) {
-        print $out "my \$webwork_dir = \"$webwork_dir\";\n" if ;
+        print $out "my \$webwork_dir = \"$webwork_dir\";\n";
       } else {
         print $out $_;
+      }
     }
 }
 
