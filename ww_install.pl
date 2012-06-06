@@ -1051,7 +1051,7 @@ sub write_prelocal_conf {
     } elsif(/^\$server_groupID/) {
       print $out "\$server_groupID = \"$server_groupID\";\n";
     } elsif (/^\$database_dsn/) {
-      print $out "\$database_dsn = \"$database_dsn\";\n" if /^\$database_dsn/;
+      print $out "\$database_dsn = \"$database_dsn\";\n";
     } elsif (/^\$database_username/) {
       print $out "\$database_username = \"$database_username\";\n";
     } elsif (/^\#\$database_password/) {
@@ -1095,7 +1095,7 @@ sub write_webwork_apache2_config {
       } else {
         print $out $_;
       }
-    }
+  }
 }
 
 ##########################################################
