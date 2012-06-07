@@ -339,6 +339,22 @@ symlink_webwork_apache2_config();
 print<<EOF;
 #######################################################################
 #
+#
+# Now we will unpack the jsMath font files.
+#
+# This may take awhile
+#
+# 
+######################################################################
+EOF
+
+unpack_jsMath_fonts();
+
+
+
+print<<EOF;
+#######################################################################
+#
 # Kay. Now I'm going to update the NPL.  This could take a few...
 # 
 ######################################################################
@@ -1137,6 +1153,18 @@ sub setup_npl {
 
 #############################################################
 #
+# Unpack jsMath fonts
+#
+#############################################################
+
+sub unpack_jsMath_fonts {
+  # cd /opt/webwork/webwork2/htdocs/jsMath
+  chdir("$webwork_dir/htdocs/jsMath");
+  system("tar vfxz jsMath-fonts.tar.gz");
+}
+
+#############################################################
+#
 # Create admin course
 #
 ############################################################
@@ -1144,7 +1172,7 @@ sub setup_npl {
 sub create_admin_course {
   # cd /opt/webwork/courses
   chdir("$WW_PREFIX/courses");
-  system("$webwork_dir/bin/addcourse admin --db-layout=sql_single --users=adminClasslist.lst --professors=admin");
+  system("$webwork_dir/bin/addcourse admin --db-layout=sql_single --users=$WW_PREFIX/courses/adminClasslist.lst --professors=admin");
 }
 
 #############################################################
