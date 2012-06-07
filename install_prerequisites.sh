@@ -8,7 +8,7 @@ then
     sudo /usr/bin/mysql_secure_installation
 elif [ -e "/etc/debian_version" ]
 then
-    sudo apt-get install apache2 apache2-mpm-prefork dvipng gcc libapache2-request-perl libdatetime-perl libdbd-mysql-perl libemail-address-perl libexception-class-perl libextutils-xsbuilder-perl libgd-gd2-perl liblocale-maketext-lexicon-perl libmail-sender-perl libmime-perl libnet-ip-perl libnet-ldap-perl libossp-uuid-perl libpadwalker-perl libphp-serialization-perl libsoap-lite-perl libsql-abstract-perl libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl libxml-writer-perl make mysql-server netpbm openssh-server preview-latex-style subversion texlive unzip
+    sudo apt-get install apache2 apache2-mpm-prefork dvipng gcc libapache2-request-perl libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl libexception-class-perl libextutils-xsbuilder-perl libgd-gd2-perl liblocale-maketext-lexicon-perl libmail-sender-perl libmime-perl libnet-ip-perl libnet-ldap-perl libossp-uuid-perl libpadwalker-perl libphp-serialization-perl libsoap-lite-perl libsql-abstract-perl libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl libxml-writer-perl make mysql-server netpbm openssh-server preview-latex-style subversion texlive unzip
 else
     echo "I don't know what packages you need.  Fork me to fix this!"
 fi
