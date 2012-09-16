@@ -186,7 +186,7 @@ get_ready();
 check_root();
 
 #Get os, host, perl version, timezone
-my %envir = get_environment();
+my %envir = check_environment();
 my %siteDefaults;
 $siteDefaults{timezone} = $envir{timezone}; 
 
@@ -450,7 +450,7 @@ EOF
 # - maybe warn against perl versions that are too old; version specific perl bugs?
 # - maybe process timezone separately?
 
-sub get_environment {
+sub check_environment {
 print<<EOF;
 ###################################################################
 #
@@ -458,15 +458,22 @@ print<<EOF;
 #
 # #################################################################
 EOF
- my %envir;
- $envir{OS} = $^O;
+  my %envir;
+  $envir{OS} = $^O;
+  print "Looks like you're running ". ucfirst($_->{OS})."\n";
+ if(-e "/etc/redhat-release") {
+   $envir{distro} = "redhat";
+   print "And you are on a Red Hat/Fedora/CentOS system.\n";
+ } elsif(-e "/etc/debian_version") {
+     $envir{distro} = "debian") {
+     print "And you are on a Red Hat/Fedora/CentOS system.\n";
+ }
  $envir{host} = hostname;
+ print "And your hostname is ". $_->{host} ."\n";
  $envir{perl} = $^V;
+ print "You're running Perl $_->{perl}\n";
  my $timezone = DateTime::TimeZone -> new(name=>'local');
  $envir{timezone} = $timezone->name;
-  print "Looks like you're on ". ucfirst($_->{OS})."\n";
-  print "And your hostname is ". $_->{host} ."\n";
-  print "You're running Perl $_->{perl}\n";
   print "Your timezone is $_->{timezone}\n";
   return %envir;
 }
@@ -480,6 +487,98 @@ print<<EOF;
 #
 # #################################################################
 EOF
+
+#Apache 2.2 locations for various operating systems
+#From http://wiki.apache.org/httpd/DistrosDefaultLayout
+#Note that the above url may not contain current information
+#double checking it with the docs for your favorite distro would
+#be helpful
+
+  my %apache22_layouts = (
+    httpd22 => ( #Apache 2.2 default layout
+      MPMDir => 'server/mpm/prefork',
+      ServerRoot => '/usr/local/apache2',
+      DocumentRoot => '/usr/local/apache2/htdocs',
+      ConfigFile => '/usr/local/apache2/conf/httpd.conf',
+      OtherConfig => '/usr/local/apache2/conf/extra',
+      SSLConfig => '/usr/local/apache2/conf/extra/httpd-ssl.conf',
+      ErrorLog => '/usr/local/apache2/logs/error_log',
+      AccessLog => '/usr/local/apache2/logs/access_log',
+      ctl => '/usr/local/apache2/bin/apachectl',
+      User => '',
+      Group => '',
+    ),
+      ubuntu => (  #Checked 12.04
+        MPMDir => 'server/mpm/prefork',
+        ServerRoot => '/etc/apache2',
+        DocumentRoot => '/var/www',
+        ConfigFile => '/etc/apache2/apache2.conf',
+        OtherConfig => '/etc/apache2/conf.d',
+        SSLConfig => '',
+        Modules => '/etc/apache2/mods_enabled',
+        ErrorLog => '/var/log/apache2/error.log',
+        AccessLog => '/var/log/access.log',
+        Binary => '/usr/sbin/apache2ctl',
+        User => 'www-data',
+        Group => 'www-data',
+      ),
+      rhel => ( #And Fedora Core, CentOS...checked Fedora 17, CentOS 6
+        MPMDir => 'server/mpm/prefork',
+        ServerRoot => '/etc/httpd',
+        DocumentRoot => '/var/www/html',
+        ConfigFile => '/etc/httpd/conf/httpd.conf',
+        OtherConfig => '/etc/httpd/conf.d',
+        SSLConfig => '',
+        Modules => '/etc/httpd/modules', #symlink
+        ErrorLog => '/var/log/httpd/error_log',
+        AccessLog => '/var/log/httpd/access_log',
+        Binary => '/usr/sbin/apachectl',
+        User => 'apache',
+        Group => 'apache',
+      ),
+      freebsd => ( #Checked on freebsd 8.2
+        MPMDir => '',
+        ServerRoot => '/usr/local',
+        DocumentRoot => '/usr/local/www/apache22/data',
+        ConfigFile => '/usr/local/etc/apache22/httpd.conf',
+        OtherConfig => '/usr/local/etc/apache22/extra',
+        SSLConfig => '/usr/local/etc/apache22/extra/httpd-ssl.conf',
+        Modules => '',
+        ErrorLog => '/var/log/httpd-error.log',
+        AccessLog => '/var/log/httpd-access.log',
+        Binary => '/usr/sbin/apachectl',
+        User => 'www',
+        Group => 'www',
+      ),
+      osx => ( #Checked on OSX 10.7
+        MPMDir => 'server/mpm/prefork',
+        ServerRoot => '/usr',
+        DocumentRoot => '/Library/WebServer/Documents',
+        ConfigFile => '/etc/apache2/httpd.conf',
+        OtherConfig => '/etc/apache2/extra',
+        SSLConfig => '/etc/apache2/extra/httpd-ssl.conf',
+        Modules => '/usr/libexec/apache2',
+        ErrorLog => '/var/log/apache2/error_log',
+        AccessLog => '/var/log/apache2/access_log',
+        Binary => '/usr/sbin/apachectl',
+        User => '_www',
+        Group => '_www',
+
+      ),
+      suse => (
+        MPMDir => '',
+        ServerRoot => '/srv/www',
+        DocumentRoot => '/srv/www/htdocs',
+        ConfigFile => '/etc/apache2/httpd.conf',
+        OtherConfig => '/etc/sysconfig/apache2',
+        SSLConfig => '/etc/apache2/ssl-global.conf',
+        ErrorLog => '/var/log/apache2/httpd-error.log',
+        AccessLog => '/var/log/apache2/httpd-access.log',
+        Binary => '/usr/sbin/apachectl',
+        User => '',
+        Group => '',
+      );
+    );
 
   my %apache;
   $apache{binary} = File::Spec->canonpath(can_run('apache2ctl') || can_run('apachectl')) or die "Can't find Apache!\n";
@@ -1144,7 +1243,7 @@ sub symlink_webwork_apache2_config {
 sub setup_npl {
   chdir("$WW_PREFIX/libraries/NationalProblemLibrary");
   symlink("$WW_PREFIX/libraries/NationalProblemLibrary","$WW_PREFIX/courses/modelCourse/templates/Library");
-  system("$webwork_dir/bin/NPL-UPDATE");
+  system("$webwork_dir/bin/NPL-update");
   #$ cd /opt/webwork/courses/modelCourse/templates/
   #$ sudo ln -s /opt/webwork/libraries/NationalProblemLibrary Library
   #cd /opt/webwork/libraries/NationalProblemLibrary
