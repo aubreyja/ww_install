@@ -70,18 +70,17 @@ use POSIX;
 
 #Non-core
 use DateTime::TimeZone;
-use Linux::Distribution; #package file below
 
 my @apacheBinaries = qw(
-  apache2
-  apachectl
+	  apache2
+	  apachectl
 );
 
 my @applicationsList = qw(
 	mv
-  cp
-  rm
-  mkdir
+	cp
+	rm
+	mkdir
 	tar
 	gzip
 	latex
@@ -91,13 +90,13 @@ my @applicationsList = qw(
 	giftopnm
 	ppmtopgm
 	pnmtops
-  pnmtopng
-  pngtopnm
-  lwp-request
-  mysql
-  mysqldump
-  svn
-  git
+	pnmtopng
+	pngtopnm
+	lwp-request
+	mysql
+	mysqldump
+	svn
+	git
 );
 
 my @apache1ModulesList = qw(
@@ -165,12 +164,57 @@ my @modulesList = qw(
 	Time::HiRes
 	Time::Zone
 	URI::Escape
-  UUID::Tiny
+	UUID::Tiny
 	XML::Parser
 	XML::Parser::EasyTree
 	XML::Writer
 	XMLRPC::Lite
 );
+
+my %release_files = (
+    'gentoo-release'        => 'gentoo',
+    'fedora-release'        => 'fedora',
+    'centos-release'        => 'centos',
+    'enterprise-release'    => 'oracle enterprise linux',
+    'turbolinux-release'    => 'turbolinux',
+    'mandrake-release'      => 'mandrake',
+    'mandrakelinux-release' => 'mandrakelinux',
+    'debian_version'        => 'debian',
+    'debian_release'        => 'debian',
+    'SuSE-release'          => 'suse',
+    'knoppix-version'       => 'knoppix',
+    'yellowdog-release'     => 'yellowdog',
+    'slackware-version'     => 'slackware',
+    'slackware-release'     => 'slackware',
+    'redflag-release'       => 'redflag',
+    'redhat-release'        => 'redhat',
+    'redhat_version'        => 'redhat',
+    'conectiva-release'     => 'conectiva',
+    'immunix-release'       => 'immunix',
+    'tinysofa-release'      => 'tinysofa',
+    'trustix-release'       => 'trustix',
+    'adamantix_version'     => 'adamantix',
+    'yoper-release'         => 'yoper',
+    'arch-release'          => 'arch',
+    'libranet_version'      => 'libranet',
+    'va-release'            => 'va-linux',
+    'pardus-release'        => 'pardus',
+);
+
+my %version_match = (
+    'gentoo'                => 'Gentoo Base System release (.*)',
+    'debian'                => '(.+)',
+    'suse'                  => 'VERSION = (.*)',
+    'fedora'                => 'Fedora(?: Core)? release (\d+) \(',
+    'redflag'               => 'Red Flag (?:Desktop|Linux) (?:release |\()(.*?)(?: \(.+)?\)',
+    'redhat'                => 'Red Hat(?: Enterprise)? Linux(?: Server)? release (.*) \(',
+    'oracle enterprise linux' => 'Enterprise Linux Server release (.+) \(',
+    'slackware'             => '^Slackware (.+)$',
+    'pardus'                => '^Pardus (.+)$',
+    'centos'                => '^CentOS(?: Linux)? release (.+)(?:\s\(Final\))',
+    'scientific'            => '^Scientific Linux release (.+) \(',
+);
+
 
 # OK, Let's get started....
 ##############################################################
@@ -440,6 +484,105 @@ EOF
   }
 }
 
+my %linux = (
+          'DISTRIB_ID'          => '',
+          'DISTRIB_RELEASE'     => '',
+          'DISTRIB_CODENAME'    => '',
+          'DISTRIB_DESCRIPTION' => '',
+          'release_file'        => '',
+          'pattern'             => ''
+         );
+
+sub distribution_name {
+    my $release_files_directory='/etc';
+    my $standard_release_file = 'lsb-release';
+
+    my $distro = get_lsb_info();
+    if ($distro){
+        return $distro if ($distro);
+    }
+
+    foreach (qw(enterprise-release fedora-release)) {
+        if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+            if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+                $linux{'DISTRIB_ID'} = $release_files{$_};
+                $linux{'release_file'} = $_;
+                return $linux{'DISTRIB_ID'};
+            }
+        }
+    }
+
+    foreach (keys %release_files) {
+        if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+            if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+                if ( $release_files{$_} eq 'redhat' ) {
+                    foreach my $rhel_deriv ('centos','scientific',) {
+                        $linux{'pattern'} = $version_match{$rhel_deriv};
+                        $linux{'release_file'}='redhat-release';
+                        my $file_info = get_file_info();
+                        if ($file_info) {
+                            $linux{'DISTRIB_ID'} = $rhel_deriv;
+                            $linux{'release_file'} = $_;
+                            return $linux{'DISTRIB_ID'};
+                        }
+                    }
+                    $linux{'pattern'}='';
+                }
+                $linux{'release_file'} = $_;
+                $linux{'DISTRIB_ID'} = $release_files{$_};
+                return $linux{'DISTRIB_ID'};
+            }
+        }
+    }
+    undef 
+}
+
+sub distribution_version {
+    my $release_files_directory='/etc';
+    my $standard_release_file = 'lsb-release';
+    my $release;
+    return $release if ($release = get_lsb_info('DISTRIB_RELEASE'));
+    if (! $linux{'DISTRIB_ID'}){
+         distribution_name() or die 'No version because no distro.';
+    }
+    $linux{'pattern'} = $version_match{$linux{'DISTRIB_ID'}};
+    $release = get_file_info();
+    $linux{'DISTRIB_RELEASE'} = $release;
+    return $release;
+}
+
+sub get_lsb_info {
+    my $field = shift || 'DISTRIB_ID';
+    my $release_files_directory='/etc';
+    my $standard_release_file = 'lsb-release';
+    my $tmp = $linux{'release_file'};
+    if ( -r "$release_files_directory/" . $standard_release_file ) {
+        $linux{'release_file'} = $standard_release_file;
+        $linux{'pattern'} = $field . '=(.+)';
+        my $info = get_file_info();
+        if ($info){
+            $linux{$field} = $info;
+            return $info
+        }
+    } 
+    $linux{'release_file'} = $tmp;
+    $linux{'pattern'} = '';
+    undef;
+}
+
+sub get_file_info {
+    my $release_files_directory='/etc';
+    my $standard_release_file = 'lsb-release';
+    open my $fh, '<', "$release_files_directory/" . $linux{'release_file'} or die 'Cannot open file: '.$release_files_directory.'/' . $linux{'release_file'};
+    my $info = '';
+    local $_;
+    while (<$fh>){
+        chomp $_;
+        ($info) = $_ =~ m/$linux{'pattern'}/;
+        return "\L$info" if $info;
+    }
+    undef;
+}
 
 ####################################################################
 #
@@ -460,6 +603,10 @@ print<<EOF;
 #
 # #################################################################
 EOF
+
+
+
+
   my %envir;
   $envir{OS} = $^O;
   if($envir{OS} eq "darwin") {
@@ -470,22 +617,18 @@ EOF
     #print "Looks like you're running ". ucfirst($_->{OS})."\n";
   } elsif($envir{OS} eq "linux") { #Now we're going to have to look more closely to get specific distro 
     #e.g. /etc/issue, /etc/lsb_release
-    print "Looks like you're running ". ucfirst($_->{OS})."\n";
-     if(-e "/etc/redhat-release") {
-       $envir{distro} = "redhat";
-       print "And you are on a Red Hat/Fedora/CentOS system.\n";
-     } elsif(-e "/etc/debian_version") {
-         $envir{distro} = "debian";
-         print "And you are on a Red Hat/Fedora/CentOS system.\n";
-     }
+    print "Looks like you're running Linux\n";
+    $envir{distro} = distribution_name();
+    $envir{dist_ver} = distribution_version();
+    print "In particular, $envir{distro} version $envir{dist_ver}\n";
   }
  $envir{host} = hostname;
- print "And your hostname is ". $_->{host} ."\n";
+ print "And your hostname is ". $envir{host} ."\n";
  $envir{perl} = $^V;
- print "You're running Perl $_->{perl}\n";
+ print "You're running Perl $envir{perl}\n";
  my $timezone = DateTime::TimeZone -> new(name=>'local');
  $envir{timezone} = $timezone->name;
-  print "Your timezone is $_->{timezone}\n";
+  print "Your timezone is $envir{timezone}\n";
   return %envir;
 }
 
@@ -1346,206 +1489,5 @@ sub launch_browser {
 }
 
 
-
-our $release_files_directory='/etc';
-our $standard_release_file = 'lsb-release';
-
-our %release_files = (
-    'gentoo-release'        => 'gentoo',
-    'fedora-release'        => 'fedora',
-    'centos-release'        => 'centos',
-    'enterprise-release'    => 'oracle enterprise linux',
-    'turbolinux-release'    => 'turbolinux',
-    'mandrake-release'      => 'mandrake',
-    'mandrakelinux-release' => 'mandrakelinux',
-    'debian_version'        => 'debian',
-    'debian_release'        => 'debian',
-    'SuSE-release'          => 'suse',
-    'knoppix-version'       => 'knoppix',
-    'yellowdog-release'     => 'yellowdog',
-    'slackware-version'     => 'slackware',
-    'slackware-release'     => 'slackware',
-    'redflag-release'       => 'redflag',
-    'redhat-release'        => 'redhat',
-    'redhat_version'        => 'redhat',
-    'conectiva-release'     => 'conectiva',
-    'immunix-release'       => 'immunix',
-    'tinysofa-release'      => 'tinysofa',
-    'trustix-release'       => 'trustix',
-    'adamantix_version'     => 'adamantix',
-    'yoper-release'         => 'yoper',
-    'arch-release'          => 'arch',
-    'libranet_version'      => 'libranet',
-    'va-release'            => 'va-linux',
-    'pardus-release'        => 'pardus',
-);
-
-our %version_match = (
-    'gentoo'                => 'Gentoo Base System release (.*)',
-    'debian'                => '(.+)',
-    'suse'                  => 'VERSION = (.*)',
-    'fedora'                => 'Fedora(?: Core)? release (\d+) \(',
-    'redflag'               => 'Red Flag (?:Desktop|Linux) (?:release |\()(.*?)(?: \(.+)?\)',
-    'redhat'                => 'Red Hat(?: Enterprise)? Linux(?: Server)? release (.*) \(',
-    'oracle enterprise linux' => 'Enterprise Linux Server release (.+) \(',
-    'slackware'             => '^Slackware (.+)$',
-    'pardus'                => '^Pardus (.+)$',
-    'centos'                => '^CentOS(?: Linux)? release (.+)(?:\s\(Final\))',
-    'scientific'            => '^Scientific Linux release (.+) \(',
-);
-
-
-my %linux = (
-        'DISTRIB_ID'          => '',
-        'DISTRIB_RELEASE'     => '',
-        'DISTRIB_CODENAME'    => '',
-        'DISTRIB_DESCRIPTION' => '',
-        'release_file'        => '',
-        'pattern'             => ''
-      );
-
-sub distribution_name {
-    my $distro;
-    if ($distro = _get_lsb_info()){
-        return $distro if ($distro);
-    }
-
-    foreach (qw(enterprise-release fedora-release)) {
-        if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
-            if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
-                $linux{'DISTRIB_ID'} = $release_files{$_};
-                $linux{'release_file'} = $_;
-                return $linux{'DISTRIB_ID'};
-            }
-        }
-    }
-
-    foreach (keys %release_files) {
-        if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
-            if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
-                if ( $release_files{$_} eq 'redhat' ) {
-                    foreach my $rhel_deriv ('centos','scientific',) {
-                        $linux{'pattern'} = $version_match{$rhel_deriv};
-                        $linux{'release_file'}='redhat-release';
-                        my $file_info = _get_file_info();
-                        if ($file_info) {
-                            $linux{'DISTRIB_ID'} = $rhel_deriv;
-                            $linux{'release_file'} = $_;
-                            return $linux{'DISTRIB_ID'};
-                        }
-                    }
-                    $linux{'pattern'}='';
-                }
-                $linux{'release_file'} = $_;
-                $linux{'DISTRIB_ID'} = $release_files{$_};
-                return $linux{'DISTRIB_ID'};
-            }
-        }
-    }
-    undef 
-}
-
-sub distribution_version {
-    my $self = shift || new();
-    my $release;
-    return $release if ($release = _get_lsb_info('DISTRIB_RELEASE'));
-    if (! $linux{'DISTRIB_ID'}){
-         $distribution_name() or die 'No version because no distro.';
-    }
-    $linux{'pattern'} = $version_match{$linux{'DISTRIB_ID'}};
-    $release = _get_file_info();
-    $linux{'DISTRIB_RELEASE'} = $release;
-    return $release;
-}
-
-sub _get_lsb_info {
-    my $field = shift || 'DISTRIB_ID';
-    my $tmp = $linux{'release_file'};
-    if ( -r "$release_files_directory/" . $standard_release_file ) {
-        $linux{'release_file'} = $standard_release_file;
-        $linux{'pattern'} = $field . '=(.+)';
-        my $info = _get_file_info();
-        if ($info){
-            $linux{$field} = $info;
-            return $info
-        }
-    } 
-    $linux{'release_file'} = $tmp;
-    $linux{'pattern'} = '';
-    undef;
-}
-
-sub _get_file_info {
-    open my $fh, '<', "$release_files_directory/" . $self->{'release_file'} or die 'Cannot open file: '.$release_files_directory.'/' . $linux{'release_file'};
-    my $info = '';
-    local $_;
-    while (<$fh>){
-        chomp $_;
-        ($info) = $_ =~ m/$linux{'pattern'}/;
-        return "\L$info" if $info;
-    }
-    undef;
-}
-
-1;
-__END__
-
-
-=head1 NAME
-
-Linux::Distribution - Perl extension to detect on which Linux distribution we are running.
-
-=head1 SYNOPSIS
-
-  use Linux::Distribution qw(distribution_name distribution_version);
-
-  if(my $distro = distribution_name) {
-        my $version = distribution_version();
-  	print "you are running $distro, version $version\n";
-  } else {
-  	print "distribution unknown\n";
-  }
-
-  Or else do it OO:
-
-  use Linux::Distribution qw(distribution_name distribution_version);
-
-  my $linux = Linux::Distribution->new;
-  if(my $distro = $linux->distribution_name()) {
-        my $version = $linux->distribution_version();
-        print "you are running $distro, version $version\n";
-  } else {
-        print "distribution unknown\n";
-  }
-
-=head1 DESCRIPTION
-
-This is a simple module that tries to guess on what linux distribution we are running by looking for release's files in /etc.  It now looks for 'lsb-release' first as that should be the most correct and adds ubuntu support.  Secondly, it will look for the distro specific files.
-
-It currently recognizes slackware, debian, suse, fedora, redhat, turbolinux, yellowdog, knoppix, mandrake, conectiva, immunix, tinysofa, va-linux, trustix, adamantix, yoper, arch-linux, libranet, gentoo, ubuntu, scientific, oracle enterprise linux and redflag.
-
-It has function to get the version for debian, suse, fedora, redhat, gentoo, slackware, scientific, oracle enterprise linux, redflag and ubuntu(lsb). People running unsupported distro's are greatly encouraged to submit patches :-)
-
-=head2 EXPORT
-
-None by default.
-
-=head1 TODO
-
-Add the capability of recognize the version of the distribution for all recognized distributions.
-
-=head1 AUTHORS
-
-Alexandr Ciornii E<lt>alexchorny@gmail.comE<gt>, L<http://chorny.net>
-Alberto Re, E<lt>alberto@accidia.netE<gt>
-Judith Lebzelter, E<lt>judith@osdl.orgE<gt>
-
-=head1 COPYRIGHT AND LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.5 or,
-at your option, any later version of Perl 5 you may have available.
-
-=cut
 
 
