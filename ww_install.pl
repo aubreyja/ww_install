@@ -70,6 +70,7 @@ use POSIX;
 
 #Non-core
 use DateTime::TimeZone;
+use Linux::Distribution; #package file below
 
 my @apacheBinaries = qw(
   apache2
@@ -283,7 +284,8 @@ print<<EOF;
 # 
 ######################################################################
 EOF
-change_grp($server_groupID, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
+my $groupID = get_group($server_groupID);
+change_grp($groupID, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
 change_permissions($server_groupID, "$webwork_courses_dir", "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
 
 #chgrp -R wwdata DATA ../courses htdocs/tmp logs tmp
@@ -460,14 +462,23 @@ print<<EOF;
 EOF
   my %envir;
   $envir{OS} = $^O;
-  print "Looks like you're running ". ucfirst($_->{OS})."\n";
- if(-e "/etc/redhat-release") {
-   $envir{distro} = "redhat";
-   print "And you are on a Red Hat/Fedora/CentOS system.\n";
- } elsif(-e "/etc/debian_version") {
-     $envir{distro} = "debian") {
-     print "And you are on a Red Hat/Fedora/CentOS system.\n";
- }
+  if($envir{OS} eq "darwin") {
+    print "Great, you're on a Mac.\n";
+    #print "Looks like you're running ". ucfirst($_->{OS})."\n";
+  } elsif($envir{OS} eq "freebsd") {
+    print "I see - rocking it on FreeBSD\n";
+    #print "Looks like you're running ". ucfirst($_->{OS})."\n";
+  } elsif($envir{OS} eq "linux") { #Now we're going to have to look more closely to get specific distro 
+    #e.g. /etc/issue, /etc/lsb_release
+    print "Looks like you're running ". ucfirst($_->{OS})."\n";
+     if(-e "/etc/redhat-release") {
+       $envir{distro} = "redhat";
+       print "And you are on a Red Hat/Fedora/CentOS system.\n";
+     } elsif(-e "/etc/debian_version") {
+         $envir{distro} = "debian";
+         print "And you are on a Red Hat/Fedora/CentOS system.\n";
+     }
+  }
  $envir{host} = hostname;
  print "And your hostname is ". $_->{host} ."\n";
  $envir{perl} = $^V;
@@ -577,7 +588,7 @@ EOF
         Binary => '/usr/sbin/apachectl',
         User => '',
         Group => '',
-      );
+      ),
     );
 
   my %apache;
@@ -1087,6 +1098,51 @@ sub copy_model_course {
         print "copied modelCourse/ to $courses_dir/\n";
     }
 }
+
+sub get_group {
+  my $server_group = shift;
+  my $print_me =<<END; 
+####################################################################################
+# Certain data directories need to be writable by the webserver.  These are the 
+# webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, webwork2/tmp, and 
+# $WW_PREFIX/courses directories.
+#
+# It is convenient to give WeBWorK system administrators access to these directories
+# as well, so they can permform admiistrative tasks such as removing temporary files,
+# creating and editing courses from the command line, managing logs, and so on.
+#
+# The default approach to this is to add a new system group called wwdata containing
+# both the WeBWorK administrators and the web server. This can be convenient for allowing
+# the WeBWorK administrator(s) to manipulate the webwork files writable by the webserver
+# without giving him or her rights to manipulate other files writable by the webserver.
+# 
+# If you choose to create the wwdata group, I will create the group add the webserver to the 
+# group and ask you for the usernames of webwork administrators who should be added to this 
+# group. Later I will put the directories listed above into this group, and change their 
+# permissions to have g+ws.
+#
+# If you choose not to create the wwdata group, the webwork directories that need to be 
+# writable by the webserver will be put into the same group as the webserver with permissions
+# g+ws, rather than the wwdata group.
+######################################################################################
+END
+  my $prompt = "Shall I create a wwdata group?";
+  my $answer = $term -> ask_yn(
+              print_me => $print_me,
+              prompt => $prompt,
+              default => 1,
+            );
+
+  #has this been confirmed?
+  my $confirmed = confirm_answer($answer);
+  if($confirmed) {
+    print "Great. Thanks. I'm now going to create the wwwdata group and add the webserver user to it.";
+    return $answer;
+  } else {
+    get_group($server_group);
+  }
+}
+
 ##############################################################
 #
 # Adjust file owernship and permissions
@@ -1288,5 +1344,208 @@ sub restart_apache {
 sub launch_browser {
 
 }
+
+
+
+our $release_files_directory='/etc';
+our $standard_release_file = 'lsb-release';
+
+our %release_files = (
+    'gentoo-release'        => 'gentoo',
+    'fedora-release'        => 'fedora',
+    'centos-release'        => 'centos',
+    'enterprise-release'    => 'oracle enterprise linux',
+    'turbolinux-release'    => 'turbolinux',
+    'mandrake-release'      => 'mandrake',
+    'mandrakelinux-release' => 'mandrakelinux',
+    'debian_version'        => 'debian',
+    'debian_release'        => 'debian',
+    'SuSE-release'          => 'suse',
+    'knoppix-version'       => 'knoppix',
+    'yellowdog-release'     => 'yellowdog',
+    'slackware-version'     => 'slackware',
+    'slackware-release'     => 'slackware',
+    'redflag-release'       => 'redflag',
+    'redhat-release'        => 'redhat',
+    'redhat_version'        => 'redhat',
+    'conectiva-release'     => 'conectiva',
+    'immunix-release'       => 'immunix',
+    'tinysofa-release'      => 'tinysofa',
+    'trustix-release'       => 'trustix',
+    'adamantix_version'     => 'adamantix',
+    'yoper-release'         => 'yoper',
+    'arch-release'          => 'arch',
+    'libranet_version'      => 'libranet',
+    'va-release'            => 'va-linux',
+    'pardus-release'        => 'pardus',
+);
+
+our %version_match = (
+    'gentoo'                => 'Gentoo Base System release (.*)',
+    'debian'                => '(.+)',
+    'suse'                  => 'VERSION = (.*)',
+    'fedora'                => 'Fedora(?: Core)? release (\d+) \(',
+    'redflag'               => 'Red Flag (?:Desktop|Linux) (?:release |\()(.*?)(?: \(.+)?\)',
+    'redhat'                => 'Red Hat(?: Enterprise)? Linux(?: Server)? release (.*) \(',
+    'oracle enterprise linux' => 'Enterprise Linux Server release (.+) \(',
+    'slackware'             => '^Slackware (.+)$',
+    'pardus'                => '^Pardus (.+)$',
+    'centos'                => '^CentOS(?: Linux)? release (.+)(?:\s\(Final\))',
+    'scientific'            => '^Scientific Linux release (.+) \(',
+);
+
+
+my %linux = (
+        'DISTRIB_ID'          => '',
+        'DISTRIB_RELEASE'     => '',
+        'DISTRIB_CODENAME'    => '',
+        'DISTRIB_DESCRIPTION' => '',
+        'release_file'        => '',
+        'pattern'             => ''
+      );
+
+sub distribution_name {
+    my $distro;
+    if ($distro = _get_lsb_info()){
+        return $distro if ($distro);
+    }
+
+    foreach (qw(enterprise-release fedora-release)) {
+        if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+            if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+                $linux{'DISTRIB_ID'} = $release_files{$_};
+                $linux{'release_file'} = $_;
+                return $linux{'DISTRIB_ID'};
+            }
+        }
+    }
+
+    foreach (keys %release_files) {
+        if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+            if (-f "$release_files_directory/$_" && !-l "$release_files_directory/$_"){
+                if ( $release_files{$_} eq 'redhat' ) {
+                    foreach my $rhel_deriv ('centos','scientific',) {
+                        $linux{'pattern'} = $version_match{$rhel_deriv};
+                        $linux{'release_file'}='redhat-release';
+                        my $file_info = _get_file_info();
+                        if ($file_info) {
+                            $linux{'DISTRIB_ID'} = $rhel_deriv;
+                            $linux{'release_file'} = $_;
+                            return $linux{'DISTRIB_ID'};
+                        }
+                    }
+                    $linux{'pattern'}='';
+                }
+                $linux{'release_file'} = $_;
+                $linux{'DISTRIB_ID'} = $release_files{$_};
+                return $linux{'DISTRIB_ID'};
+            }
+        }
+    }
+    undef 
+}
+
+sub distribution_version {
+    my $self = shift || new();
+    my $release;
+    return $release if ($release = _get_lsb_info('DISTRIB_RELEASE'));
+    if (! $linux{'DISTRIB_ID'}){
+         $distribution_name() or die 'No version because no distro.';
+    }
+    $linux{'pattern'} = $version_match{$linux{'DISTRIB_ID'}};
+    $release = _get_file_info();
+    $linux{'DISTRIB_RELEASE'} = $release;
+    return $release;
+}
+
+sub _get_lsb_info {
+    my $field = shift || 'DISTRIB_ID';
+    my $tmp = $linux{'release_file'};
+    if ( -r "$release_files_directory/" . $standard_release_file ) {
+        $linux{'release_file'} = $standard_release_file;
+        $linux{'pattern'} = $field . '=(.+)';
+        my $info = _get_file_info();
+        if ($info){
+            $linux{$field} = $info;
+            return $info
+        }
+    } 
+    $linux{'release_file'} = $tmp;
+    $linux{'pattern'} = '';
+    undef;
+}
+
+sub _get_file_info {
+    open my $fh, '<', "$release_files_directory/" . $self->{'release_file'} or die 'Cannot open file: '.$release_files_directory.'/' . $linux{'release_file'};
+    my $info = '';
+    local $_;
+    while (<$fh>){
+        chomp $_;
+        ($info) = $_ =~ m/$linux{'pattern'}/;
+        return "\L$info" if $info;
+    }
+    undef;
+}
+
+1;
+__END__
+
+
+=head1 NAME
+
+Linux::Distribution - Perl extension to detect on which Linux distribution we are running.
+
+=head1 SYNOPSIS
+
+  use Linux::Distribution qw(distribution_name distribution_version);
+
+  if(my $distro = distribution_name) {
+        my $version = distribution_version();
+  	print "you are running $distro, version $version\n";
+  } else {
+  	print "distribution unknown\n";
+  }
+
+  Or else do it OO:
+
+  use Linux::Distribution qw(distribution_name distribution_version);
+
+  my $linux = Linux::Distribution->new;
+  if(my $distro = $linux->distribution_name()) {
+        my $version = $linux->distribution_version();
+        print "you are running $distro, version $version\n";
+  } else {
+        print "distribution unknown\n";
+  }
+
+=head1 DESCRIPTION
+
+This is a simple module that tries to guess on what linux distribution we are running by looking for release's files in /etc.  It now looks for 'lsb-release' first as that should be the most correct and adds ubuntu support.  Secondly, it will look for the distro specific files.
+
+It currently recognizes slackware, debian, suse, fedora, redhat, turbolinux, yellowdog, knoppix, mandrake, conectiva, immunix, tinysofa, va-linux, trustix, adamantix, yoper, arch-linux, libranet, gentoo, ubuntu, scientific, oracle enterprise linux and redflag.
+
+It has function to get the version for debian, suse, fedora, redhat, gentoo, slackware, scientific, oracle enterprise linux, redflag and ubuntu(lsb). People running unsupported distro's are greatly encouraged to submit patches :-)
+
+=head2 EXPORT
+
+None by default.
+
+=head1 TODO
+
+Add the capability of recognize the version of the distribution for all recognized distributions.
+
+=head1 AUTHORS
+
+Alexandr Ciornii E<lt>alexchorny@gmail.comE<gt>, L<http://chorny.net>
+Alberto Re, E<lt>alberto@accidia.netE<gt>
+Judith Lebzelter, E<lt>judith@osdl.orgE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.5 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut
 
 
