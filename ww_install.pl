@@ -231,6 +231,7 @@ get_ready();
 check_root();
 
 #Get os, host, perl version, timezone
+my %os = get_os();
 my %envir = check_environment();
 my %siteDefaults;
 $siteDefaults{timezone} = $envir{timezone}; 
@@ -362,11 +363,11 @@ EOF
 
 write_database_conf("$webwork_dir/conf");
 
-write_prelocal_conf("$webwork_dir/conf");
+write_site_conf("$webwork_dir/conf");
 
-write_global_conf("$webwork_dir/conf");
+#write_defaults_config("$webwork_dir/conf");
 
-write_postlocal_conf("$webwork_dir/conf");
+write_localOverrides_conf("$webwork_dir/conf");
 
 write_webwork_apache2_config("$webwork_dir/conf");
 
@@ -405,6 +406,7 @@ print<<EOF;
 # 
 ######################################################################
 EOF
+#TODO: Switch from NPL to OPL
 setup_npl();
 print<<EOF;
 #######################################################################
@@ -484,6 +486,54 @@ EOF
   }
 }
 
+
+####################################################################
+#
+# Environment Data
+#
+####################################################################
+# What use is this information? 
+# - any reason to get the hostname?
+# - maybe use OS to do OS specific processing?
+# - maybe warn against perl versions that are too old; version specific perl bugs?
+# - maybe process timezone separately?
+
+sub get_os {
+  my %os;
+  if($^O eq "darwin") {
+    $os{type} = "unix";
+    $os{name} = "darwin";
+    chomp($os{version} =`sw_vers -productVersion`);
+    chomp($os{arch} = `uname -p`);
+    print "Great, you're on Mac running OS X $os{version} on $os{arch} hardware.\n";
+  } elsif($^O eq "freebsd") {
+    $os{type} = "unix";
+    $os{name} = "freebsd";
+    chomp($os{version} = `uname -r`);
+    chomp($os{arch} = `uname -p`);
+    print "I see - rocking it on FreeBSD $os{version} on $os{arch} hardware.\n";
+  } elsif($^O eq "linux") { #Now we're going to have to look more closely to get specific distro 
+    print "Looks like you're running Linux\n";
+    $os{type} = "linux";
+    $os{name} = distribution_name();
+    $os{version} = distribution_version();
+    chomp($os{arch} = `uname -p`);
+    print "Linux, yay! That's my favorite. I see you're running $os{name} 
+	version $os{version} on $os{arch} hardware. This will be easy.\n";
+  } elsif($^O eq "MSWin32") {
+    print "Installing WeBWorK on Windows is, afaik, currently impossible.\n"; 
+    die "If you get it working, please let us know. Good luck!";
+  } else {
+    $os{type} = $^O;
+    $os{name} = distribution_name();
+    $os{version} = distribution_version();
+    chomp($os{arch} = `uname -p`);
+    print "I see you're running $os{name} version $os{version} on $os{arch} 
+    	hardware. This will be easy.\n";
+  }
+}
+
+#Subroutines to find linux distribution and version
 my %linux = (
           'DISTRIB_ID'          => '',
           'DISTRIB_RELEASE'     => '',
@@ -584,16 +634,7 @@ sub get_file_info {
     undef;
 }
 
-####################################################################
-#
-# Environment Data
-#
-####################################################################
-# What use is this information? 
-# - any reason to get the hostname?
-# - maybe use OS to do OS specific processing?
-# - maybe warn against perl versions that are too old; version specific perl bugs?
-# - maybe process timezone separately?
+#End of linux-finding subroutines.
 
 sub check_environment {
 print<<EOF;
@@ -608,20 +649,6 @@ EOF
 
 
   my %envir;
-  $envir{OS} = $^O;
-  if($envir{OS} eq "darwin") {
-    print "Great, you're on a Mac.\n";
-    #print "Looks like you're running ". ucfirst($_->{OS})."\n";
-  } elsif($envir{OS} eq "freebsd") {
-    print "I see - rocking it on FreeBSD\n";
-    #print "Looks like you're running ". ucfirst($_->{OS})."\n";
-  } elsif($envir{OS} eq "linux") { #Now we're going to have to look more closely to get specific distro 
-    #e.g. /etc/issue, /etc/lsb_release
-    print "Looks like you're running Linux\n";
-    $envir{distro} = distribution_name();
-    $envir{dist_ver} = distribution_version();
-    print "In particular, $envir{distro} version $envir{dist_ver}\n";
-  }
  $envir{host} = hostname;
  print "And your hostname is ". $envir{host} ."\n";
  $envir{perl} = $^V;
@@ -1173,6 +1200,8 @@ sub create_prefix_path {
 #
 ############################################################################
 
+#TODO: Allow user to change to different git repo
+#TODO: Switch from NPL to OPL
 sub get_webwork {
   my ($prefix,$apps) = @_;
   create_prefix_path($prefix);
@@ -1198,6 +1227,7 @@ sub get_webwork {
   make_path('libraries',{owner=>'root',group=>'root'});
   make_path('courses',{owner=>'root',group=>'root'});
   chdir "$prefix/libraries";
+#TODO: Switch from NPL to OPL
   my $npl_cmd = $apps->{svn}." checkout http://svn.webwork.maa.org/npl/trunk/NationalProblemLibrary";
   if( scalar run( command => $npl_cmd,
   verbose => 1,
@@ -1358,7 +1388,8 @@ sub write_database_conf {
   copy("$conf_dir/database.conf.dist","$conf_dir/database.conf") or die "Can't copy database.conf.dist to database.conf: $!";
 }
 
-sub write_prelocal_conf {
+#TODO: Check if these are in site.conf or not
+sub write_site_conf {
   my $conf_dir = shift;
   open(my $in, "<","$conf_dir/prelocal.conf.dist")
     or die "Can't open $conf_dir/prelocal.conf.dist for reading: $!";
@@ -1388,17 +1419,19 @@ sub write_prelocal_conf {
   }
 }
 
-sub write_global_conf {
+sub write_defaults_config {
   my $conf_dir = shift;
-  copy("$conf_dir/global.conf.dist","$conf_dir/global.conf") or die "Can't copy global.conf.dist to global.conf: $!";
+  #should be nothing to do here. Maybe check to make sure defaults.config exists
+  #copy("$conf_dir/global.conf.dist","$conf_dir/global.conf") or die "Can't copy global.conf.dist to global.conf: $!";
 }
 
-sub write_postlocal_conf {
+#TODO: write proper variables to this file
+sub write_localOverrides_conf {
   my $conf_dir = shift;
-  open(my $in,"<","$conf_dir/postlocal.conf.dist")
-    or die "Can't open $conf_dir/postlocal.conf.dist for reading: $!";
-  open(my $out,">","$conf_dir/postlocal.conf")
-    or die "Can't open $conf_dir/postlocal.conf for writing: $!";
+  open(my $in,"<","$conf_dir/localOverrides.conf.dist")
+    or die "Can't open $conf_dir/localOverrides.conf.dist for reading: $!";
+  open(my $out,">","$conf_dir/localOverrides.conf")
+    or die "Can't open $conf_dir/localOverrides.conf for writing: $!";
     while( <$in> ) {
       print $out $_;
     }
@@ -1433,12 +1466,14 @@ sub configure_shell {
 #export WEBWORK_ROOT=/opt/webwork/webwork2
 }
 
+#TODO: Select apache conf.d dir location based on %os and apache data
 sub symlink_webwork_apache2_config {
   symlink("$webwork_dir/conf/webwork.apache2-config","$apache{root}/conf.d/webwork.conf");
 # cd /etc/httpd/conf.d
 # ln -s /opt/webwork/webwork2/conf/webwork.apache2-config webwork.conf
 }
 
+#TODO: Switch from NPL to OPL
 sub setup_npl {
   chdir("$WW_PREFIX/libraries/NationalProblemLibrary");
   symlink("$WW_PREFIX/libraries/NationalProblemLibrary","$WW_PREFIX/courses/modelCourse/templates/Library");
@@ -1461,12 +1496,16 @@ sub unpack_jsMath_fonts {
   system("tar vfxz jsMath-fonts.tar.gz");
 }
 
+sub get_MathJax {
+}
+
 #############################################################
 #
 # Create admin course
 #
 ############################################################
 
+#TODO: Why isn't this working more often...
 sub create_admin_course {
   # cd /opt/webwork/courses
   chdir("$WW_PREFIX/courses");
@@ -1487,7 +1526,5 @@ sub restart_apache {
 sub launch_browser {
 
 }
-
-
 
 
