@@ -276,8 +276,8 @@ my %version_match = (
 #double checking it with the docs for your favorite distro would
 #be helpful
 
-my %apache22_layouts = (
-  httpd22 => ( #Apache 2.2 default layout
+my $apache22Layouts = {
+  httpd22 => { #Apache 2.2 default layout
     MPMDir => 'server/mpm/prefork',
     ServerRoot => '/usr/local/apache2',
     DocumentRoot => '/usr/local/apache2/htdocs',
@@ -289,8 +289,8 @@ my %apache22_layouts = (
     ctl => '/usr/local/apache2/bin/apachectl',
     User => '',
     Group => '',
-  ),
-    ubuntu => (  #Checked 12.04
+  },
+    ubuntu => {  #Checked 12.04
       MPMDir => 'server/mpm/prefork',
       ServerRoot => '/etc/apache2',
       DocumentRoot => '/var/www',
@@ -303,8 +303,8 @@ my %apache22_layouts = (
       Binary => '/usr/sbin/apache2ctl',
       User => 'www-data',
       Group => 'www-data',
-    ),
-    rhel => ( #And Fedora Core, CentOS...checked Fedora 17, CentOS 6
+    },
+    rhel => { #And Fedora Core, CentOS...checked Fedora 17, CentOS 6
       MPMDir => 'server/mpm/prefork',
       ServerRoot => '/etc/httpd',
       DocumentRoot => '/var/www/html',
@@ -317,8 +317,8 @@ my %apache22_layouts = (
       Binary => '/usr/sbin/apachectl',
       User => 'apache',
       Group => 'apache',
-    ),
-    freebsd => ( #Checked on freebsd 8.2
+    },
+    freebsd => { #Checked on freebsd 8.2
       MPMDir => '',
       ServerRoot => '/usr/local',
       DocumentRoot => '/usr/local/www/apache22/data',
@@ -331,8 +331,8 @@ my %apache22_layouts = (
       Binary => '/usr/sbin/apachectl',
       User => 'www',
       Group => 'www',
-    ),
-    osx => ( #Checked on OSX 10.7
+    },
+    osx => { #Checked on OSX 10.7
       MPMDir => 'server/mpm/prefork',
       ServerRoot => '/usr',
       DocumentRoot => '/Library/WebServer/Documents',
@@ -345,8 +345,8 @@ my %apache22_layouts = (
       Binary => '/usr/sbin/apachectl',
       User => '_www',
       Group => '_www',
-      ),
-    suse => (
+      },
+    suse => {
       MPMDir => '',
       ServerRoot => '/srv/www',
       DocumentRoot => '/srv/www/htdocs',
@@ -358,8 +358,8 @@ my %apache22_layouts = (
       Binary => '/usr/sbin/apachectl',
       User => '',
       Group => '',
-    ),
-);
+    },
+};
 
 my %linux = (
 	  'DISTRIB_ID'          => '',
@@ -504,6 +504,29 @@ sub get_file_info {
 }
 
 #End of linux-finding subroutines.
+
+sub get_existing_users {
+  my $envir = shift;
+  my $passwd_file = $envir -> {passwd_file};
+  my $users;
+  open(my $in,'<',$passwd_file);
+  while(<$in>) {
+   push @$users,(split(':',$_))[0];
+  }
+  close($in);
+  return $users;
+}
+
+sub get_existing_groups {
+  my $envir = shift;
+  my $group_file = $envir -> {group_file}; 
+  my $groups;
+  open(my $in,'<',$group_file);
+  while(<$in>) {
+   push @$groups,(split(':',$_))[0];
+  }
+  return $groups;
+}
 
 ############################################################################################
 #
@@ -829,24 +852,37 @@ sub check_environment {
 print<<EOF;
 ###################################################################
 #
-# Getting basic information about your environment
+# Getting basic information about your environment 
 #
 # #################################################################
 EOF
 
-  my %envir;
- $envir{host} = hostname;
- print "And your hostname is ". $envir{host} ."\n";
- $envir{perl} = $^V;
- print "You're running Perl $envir{perl}\n";
+  my $envir;
+ $envir->{host} = hostname;
+ print "And your hostname is ".$envir->{host}."\n";
+ $envir->{perl} = $^V;
+ print "You're running Perl ".$envir->{perl}."\n";
  my $timezone = DateTime::TimeZone -> new(name=>'local');
- $envir{timezone} = $timezone->name;
-  print "Your timezone is $envir{timezone}\n";
-  return %envir;
+ $envir->{timezone} = $timezone->name;
+  print "Your timezone is ".$envir->{timezone}."\n";
+ $envir->{os} = get_os();
+ $envir->{passwd_file} = "/etc/passwd" if -e "/etc/passwd";
+ $envir->{group_file} = "/etc/group" if -e "/etc/group";
+
+
+ #we're going to get a list of users and groups on the system
+ #for use later when we create our own users and groups. Also
+ #to double check information, such as user and group for apache 
+ $envir->{existing_users} = get_existing_users($envir);
+ $envir->{existing_groups} = get_existing_groups($envir);
+
+  return $envir;
 }
 
 
 sub check_apache {
+  my ($envir,$apache22Layouts) = @_;
+
 print<<EOF;
 ###################################################################
 #
@@ -882,25 +918,24 @@ EOF
   }
   close(HTTPD);
 
-  if($ENV{APACHE_RUN_USER}) {
-    $apache->{user} = $ENV{APACHE_RUN_USER};
-  } 
-  if ($ENV{APACHE_RUN_GROUP}) {
-    $apache->{group} = $ENV{APACHE_RUN_GROUP};
-  }
-  unless($apache->{user} && $apache->{group}) {
     open(HTTPDCONF,$apache->{conf}) or die "Can't do this: $!";
     while(<HTTPDCONF>){
       if (/^User/) {
         (undef,$apache->{user}) = split;
-        print "Apache runs as user ".$apache->{user}."\n";
       } elsif (/^Group/){
         (undef,$apache->{group}) = split;
-        print "Apache runs in group ".$apache->{group}."\n";
       }
     }
     close(HTTPDCONF);
+    my $os_name = $envir->{os}->{name};
+    my %users = map{ $_ => 1 } @{$envir->{existing_users}};
+    my %groups = map{ $_ => 1 } @{$envir->{existing_groups}};
+    unless($users{$apache->{user}} && $groups{$apache->{group}}) {
+	$apache->{user} = $apache22Layouts->{$os_name}->{User};
+	$apache->{group} = $apache22Layouts->{$os_name}->{Group};
   }
+        print "Apache runs as user ".$apache->{user}."\n";
+        print "Apache runs in group ".$apache->{group}."\n";
   return $apache;
 }
 
@@ -1650,13 +1685,12 @@ get_ready();
 check_root();
 
 #Get os, host, perl version, timezone
-my $os = get_os();
-my %envir = check_environment();
+my $envir = check_environment();
 my %siteDefaults;
-$siteDefaults{timezone} = $envir{timezone}; 
+$siteDefaults{timezone} = $envir->{timezone}; 
 
 #Get apache version, path to config file, server user and group;
-my $apache = check_apache();
+my $apache = check_apache($envir,$apache22Layouts);
 my $server_userID = $apache->{user};
 my $server_groupID = $apache->{group};
 
