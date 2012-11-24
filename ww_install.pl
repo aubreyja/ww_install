@@ -356,8 +356,8 @@ my $apache22Layouts = {
       ErrorLog => '/var/log/apache2/httpd-error.log',
       AccessLog => '/var/log/apache2/httpd-access.log',
       Binary => '/usr/sbin/apachectl',
-      User => '',
-      Group => '',
+      User => 'wwwrun',
+      Group => 'www',
     },
 };
 
@@ -898,6 +898,7 @@ EOF
   open(HTTPD,$apache->{binary}." -V |") or die "Can't do this: $!";
   print "Your apache start up script is at ".$apache->{binary}."\n";
 
+  #Get some information from apache2 -V
   while(<HTTPD>) {
     if ($_ =~ /apache.(\d\.\d\.\d+)/i){
       $apache->{version} = $1;
@@ -918,18 +919,25 @@ EOF
   }
   close(HTTPD);
 
-    open(HTTPDCONF,$apache->{conf}) or die "Can't do this: $!";
-    while(<HTTPDCONF>){
-      if (/^User/) {
-        (undef,$apache->{user}) = split;
-      } elsif (/^Group/){
-        (undef,$apache->{group}) = split;
-      }
+  #Determining apache user/group is hard. Sometimes it's in the main conf file.
+  #Here we check that, but maybe we should check all conf files under /etc/apache2?  
+  open(HTTPDCONF,$apache->{conf}) or die "Can't do this: $!";
+  while(<HTTPDCONF>){
+    if (/^User/) {
+      (undef,$apache->{user}) = split;
+    } elsif (/^Group/){
+      (undef,$apache->{group}) = split;
     }
+  }
     close(HTTPDCONF);
+
+    #Make sure we didn't get a bogus user/group from httpd.conf
     my $os_name = $envir->{os}->{name};
     my %users = map{ $_ => 1 } @{$envir->{existing_users}};
     my %groups = map{ $_ => 1 } @{$envir->{existing_groups}};
+
+    #if the apache user/group from httpd.conf doesn't make sense, then
+    #get a hard-coded value from %apache22Layouts.
     unless($users{$apache->{user}} && $groups{$apache->{group}}) {
 	$apache->{user} = $apache22Layouts->{$os_name}->{User};
 	$apache->{group} = $apache22Layouts->{$os_name}->{Group};
@@ -1953,5 +1961,3 @@ Check it out at $server_root_url/webwork2! You can login to the admin course wit
 username and password 'admin'.  Have fun! :-)
 EOF
 }
-
-
