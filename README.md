@@ -11,4 +11,4 @@ Ubuntu 12.04 (11/20/2012)
 
 where it did in fact install webwork. If your system does not have all of the prerequisites installed,
 then the install_prerequisites.sh script might help.  It will install many of the prerequisites on
-Fedora and Ubuntu. We're working on getting it to install prereqs on other systems also.
+systems based on Debian (Ubuntu,etc.), Red Hat Linux (Fedora, CentOS, Scientific Linux) and SUSE. We're working on getting it to install prereqs on other systems also, but for now other systems will need to have thes prerequisites already installed.
