@@ -553,6 +553,17 @@ sub confirm_answer {
   }
 }
 
+sub user_exists {
+    my ($envir,$user) = shift;
+    my %users = map{ $_ => 1 } @{$envir->{existing_users}};
+    return 1 if $users{$user};
+}
+
+sub group_exists {
+    my ($envir,$group) = shift;
+    my %users = map{ $_ => 1 } @{$envir->{existing_groups}};
+    return 1 if $users{$group};
+}
 
 #####################################################
 #
@@ -577,7 +588,7 @@ EOF
  my $ready = $term -> ask_yn(
                     print_me => $print_me,
                     prompt => 'Ready to install WeBWorK?',
-                    default => 1,
+                    default => 'y',
                   );
  die "Come back soon!" unless $ready;
 }
@@ -598,19 +609,20 @@ sub check_root {
   } else {
     #my $term = Term::ReadLine->new('');
 my $print_me =<<EOF;
-IMPORTANT: This script is not running as root. Typically root privliges are
-needed to install WeBWorK. You should probably quit now and run the script
-as root or with sudo.
+IMPORTANT: I see that you are not running this script as root. Some elevated system
+privliges are needed to install WeBWorK.  If you run the script without sufficient privilges then
+it will fail in ways that might be hard to track down.    
 EOF
     my $prefix = $term -> ask_yn(
                   print_me => $print_me,
-                  prompt => 'Continue without root privliges?',
-                  default => 0,
+                  prompt => 'Are you sure you\'re running the script with the privilges you\'ll need to complete the installation?',
+                  default => 'n',
                 );
   }
 }
 
 sub get_wwadmin_user {
+  my $envir = shift;
   my $print_me =<<END; 
 ####################################################################################
 #
@@ -642,34 +654,58 @@ sub get_wwadmin_user {
 ######################################################################################
 END
   my $prompt = "Shall I create a webwork admin user?";
-  my $answer = $term -> ask_yn(
-              print_me => $print_me,
-              prompt => $prompt,
-              default => 1,
-            );
-
+  my $answer = $term->get_reply(
+                print_me => $print_me,
+                prompt  => $prompt,
+                choices => ["Yes, let's do it!", "No, the root user will administer webwork", "No, a separate webwork admin user already exists"]
+                );
   #has this been confirmed?
   my $confirmed = confirm_answer($answer);
-  if($confirmed && $answer) {
-    my $ww_admin = create_wwadmin_user();
+  if($answer eq "Yes, let's do it!" && $confirmed) {
+    my $ww_admin = create_wwadmin_user($envir);
     return $ww_admin if $ww_admin;
-    get_wwadmin_user(); #Try again if not
-  } elsif($confirmed && !$answer) {
-    print "Sounds good. We will not create a webwork admin user\n";
+    get_wwadmin_user($envir); #Try again if not
+  } elsif($answer eq "No, the root user will administer webwork." && $confirmed) {
+    print "Sounds good. We will not create a separate webwork admin user. The root user will administer webwork\n";
     return "root";
+  } elsif($answer eq "No, a separate webwork admin user already exists." && $confirmed) {
+    my $current_user = $envir->{username};
+    my $ww_admin = $term -> get_reply(
+        print_me => 'Please enter the userid of the webwork admin user. Note that this user
+        must already exist on the system.',
+        default => $current_user,
+        );
+    my $confirmed = confirm_answer($answer);
+    my $exists = user_exists($envir,$ww_admin);
+    if($confirmed && $exists) {
+        return $ww_admin;
+    } elsif(!$exists) {
+        print "Hey, silly goose, that user doesn't exist!\n";
+        get_wwadmin_user($envir);
+    } else {
+        print "You didn't cofirm your last answer so let's try again.\n";
+        get_wwadmin_user($envir);
+    }
   } else {
     print "Let's try again.\n";
-    get_wwadmin_user();
+    get_wwadmin_user($envir);
   }
 }
 
 
 sub create_wwadmin_user {
+    my $envir = shift;
     my $wwadmin = $term -> get_reply(
 		print_me => "You chose to create a webwork admin user.",
-		prompt => "Please enter a userid for the webwork admin user.",
+		prompt => "Please enter a username for the webwork admin user.",
 		default => "wwadmin",
 	);
+    my $exists_already = user_exists($envir,$wwadmin);
+    if ($exists_already) {
+        print "Sorry, that user already exists. Try again.\n";
+        create_wwadmin_user($envir);
+    }
+    
     my $wwadmin_pw = $term -> get_reply(
 		prompt => "Please enter an initial password for the webwork admin user.",
 		default => "wwadmin",
@@ -679,9 +715,9 @@ sub create_wwadmin_user {
 		default => $ENV{SHELL},
 	);
     my $confirm = $term -> ask_yn(
-		prompt => "Shall I create a webwork admin user with userid $wwadmin, initial password"
+		prompt => "Shall I create a webwork admin user with username $wwadmin, initial password"
 			  ." $wwadmin_pw and default shell $wwadmin_shell?",
-		default => 1,
+		default => 'y',
 	);
     if($confirm) {
      #useradd  -s /usr/bin/bash -c "WeBWorK Administrator" -p $wwadmin_pw $wwadmin
@@ -696,11 +732,11 @@ sub create_wwadmin_user {
 	  return $wwadmin;
 	} else {
    	  print "Let's try again.\n";
-   	  get_wwadmin_user();
+   	  get_wwadmin_user($envir);
 	}
     } else {
    	print "Let's try again.\n";
-   	get_wwadmin_user();
+   	get_wwadmin_user($envir);
     }
 
 }
@@ -708,12 +744,12 @@ sub create_wwadmin_user {
 
 
 sub get_wwdata_group {
-  my ($apache,$WW_PREFIX,$wwadmin) = @_;
+  my ($envir,$apache,$wwadmin) = @_;
   my $print_me =<<END; 
 ####################################################################################
 # Certain data directories need to be writable by the webserver.  These are the 
 # webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, webwork2/tmp, and 
-# $WW_PREFIX/courses directories.
+# the courses/ directories.
 #
 # It can convenient to give WeBWorK system administrators access to these directories
 # as well, so they can permform admiistrative tasks such as removing temporary files,
@@ -734,60 +770,77 @@ sub get_wwdata_group {
 ######################################################################################
 END
   my $prompt = "Shall I create a webwork data group?";
-  my $answer = $term -> ask_yn(
-              print_me => $print_me,
-              prompt => $prompt,
-              default => 1,
-            );
-
+  my $answer = $term->get_reply(
+                print_me => $print_me,
+                prompt  => $prompt,
+                choices => ["Yes, let's do it!", "No, we'll just use the webserver's group", "No, a separate webwork data group already exists"]
+                );
   #has this been confirmed?
-  my $confirmed = confirm_answer($answer);
-  if($confirmed && $answer) {
+    my $confirmed = confirm_answer($answer);
+    if($answer eq "Yes, let's do it!" && $confirmed) {
+        my $group = create_wwdata_group($envir,$apache,$wwadmin);
+        return $group if $group;
+        get_wwdata_group($envir,$apache,$wwadmin); #Try again if not
+  } elsif($answer eq "No, we'll just use the webserver's group." && $confirmed) {
+    print "Sounds good. We will not create a separate webwork data group. Instead we'lljust use the webserver's group.";
+    return $apache->{group};
+  } elsif($answer eq "No, a separate webwork data group already exists" && $confirmed) {
+    my $current_user= $envir->{username};
     my $group = $term -> get_reply(
-		print_me => "You chose to create a webwork data group.",
-		prompt => "What would you like to call the group?",
-		default => "wwdata",
-	);
-    if($group eq $apache->{group}) {
-	print $apache->{group}." already exists. Let's try again.\n",
-	get_wwdata_group($apache,$WW_PREFIX,$wwadmin);
-    } 
-    my $confirm_name = confirm_answer($group);
-    if($confirm_name) {
-	print "Great, I'll create a webwork data group called $group.\n";
-	create_wwdata_group($apache,$group,$wwadmin);
-	return $group;
+        print_me => 'Please enter the group name of the webwork data group. Note that this group
+        must already exist on the system.',
+        default => $current_user,
+        );
+    my $confirmed = confirm_answer($answer);
+    my $exists = group_exists($envir,$group);
+    if($confirmed && $exists) {
+        return $group;
+    } elsif(!$exists) {
+        print "Hey, silly goose, that user doesn't exist!\n";
+        get_wwdata_group($envir,$apache,$wwadmin); #Try again if not;
     } else {
-	print "Looks like you changed your mind. Let's start over.\n";
-	get_wwdata_group($apache,$WW_PREFIX,$wwadmin);
+        print "You didn't cofirm your last answer so let's try again.\n";
+        get_wwdata_group($envir,$apache,$wwadmin); #Try again if not
     }
-  } elsif($confirmed && !$answer) {
-	print "Sounds good. We will not create a webwork data group";
-	return $apache->{group};
   } else {
-   	 get_wwdata_group($apache,$WW_PREFIX,$wwadmin);
+    print "Let's try again.\n";
+    get_wwdata_group($envir,$apache,$wwadmin); #Try again if not
   }
 }
 
+
 #Create webwork data group and add webserver and wwadmin (if user is not root)
 sub create_wwdata_group {
-  my ($apache,$group,$wwadmin) = @_;
-  copy("/etc/group","/etc/group.bak");
-  open(my $in, "<","/etc/group.bak")
-    or die "Can't open /etc/group.bak for reading: $!";
-  open(my $out, ">", "/etc/group")
-    or die "Can't open /etc/group for writing: $!";
-  my @gids;
-  while(<$in>) {
-    push @gids,(split(':',$_))[2];
-    print $out $_;
-  }
-  my $new_gid = max(@gids)+1;
-  if($wwadmin eq 'root') {
-   print $out "$group:*:$new_gid:".$apache->{user}."\n";
-  } else {
-   print $out "$group:*:$new_gid:".$apache->{user}.",$wwadmin\n";
-  }
+    my ($envir,$apache,$wwadmin) = @_;
+    my $group = $term -> get_reply(
+	    print_me => "You chose to create a webwork data group.",
+	    prompt => "What would you like to call the group?",
+	    default => "wwdata",
+	);
+  #does this group exist?
+    my $already_exists = group_exists($envir,$group);
+    if ($already_exists) {
+        print "Oops - that group already exists. Try something else.";
+        create_wwdata_group($envir,$apache,$wwadmin);
+    }
+    #group doesn't exist so now confirm answer
+    my $confirmed = confirm_answer($group);
+    copy("/etc/group","/etc/group.bak");
+    open(my $in, "<","/etc/group.bak")
+        or die "Can't open /etc/group.bak for reading: $!";
+    open(my $out, ">", "/etc/group")
+        or die "Can't open /etc/group for writing: $!";
+    my @gids;
+    while(<$in>) {
+        push @gids,(split(':',$_))[2];
+        print $out $_;
+    }
+    my $new_gid = max(@gids)+1;
+    if($wwadmin eq 'root') {
+        print $out "$group:*:$new_gid:".$apache->{user}."\n";
+    } else {
+        print $out "$group:*:$new_gid:".$apache->{user}.",$wwadmin\n";
+    }
 }
 
 ##############################################################
@@ -868,6 +921,7 @@ EOF
  $envir->{os} = get_os();
  $envir->{passwd_file} = "/etc/passwd" if -e "/etc/passwd";
  $envir->{group_file} = "/etc/group" if -e "/etc/group";
+ $envir ->{username} = $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
 
 
  #we're going to get a list of users and groups on the system
@@ -1056,7 +1110,7 @@ sub get_pg_repo {
               #print_me => $print_me,
               prompt => 'Where would you like to download pg from?',
               default => $default, #constant defined at top
-            );
+    );
   #has this been confirmed?
   my $confirmed = 0;
   $confirmed = confirm_answer($repo);
