@@ -539,7 +539,7 @@ sub get_existing_groups {
 sub confirm_answer {
   my $answer = shift;   
   my $confirm = $term -> get_reply(
-    print_me => "Ok, you entered $answer. Please confirm.",
+    print_me => "Ok, you entered: $answer. Please confirm.",
     prompt => "Well? ",
     choices => ["Looks good.","Change my answer.","Quit."],
     default => "Looks good."
@@ -554,15 +554,15 @@ sub confirm_answer {
 }
 
 sub user_exists {
-    my ($envir,$user) = shift;
+    my ($envir,$user) = @_;
     my %users = map{ $_ => 1 } @{$envir->{existing_users}};
     return 1 if $users{$user};
 }
 
 sub group_exists {
-    my ($envir,$group) = shift;
-    my %users = map{ $_ => 1 } @{$envir->{existing_groups}};
-    return 1 if $users{$group};
+    my ($envir,$group) = @_;
+    my %groups = map{ $_ => 1 } @{$envir->{existing_groups}};
+    return 1 if $groups{$group};
 }
 
 #####################################################
@@ -653,30 +653,34 @@ sub get_wwadmin_user {
 #
 ######################################################################################
 END
+  my $answer = undef;
+  my $confirmed = undef;
+  my $exists = undef;
+  my $ww_admin = undef;
+
   my $prompt = "Shall I create a webwork admin user?";
-  my $answer = $term->get_reply(
+  $answer = $term->get_reply(
                 print_me => $print_me,
                 prompt  => $prompt,
-                choices => ["Yes, let's do it!", "No, the root user will administer webwork", "No, a separate webwork admin user already exists"]
+                choices => ["Yes, let's do it", "No, the root user will administer webwork", "No, a separate webwork admin user already exists"]
                 );
   #has this been confirmed?
-  my $confirmed = confirm_answer($answer);
-  if($answer eq "Yes, let's do it!" && $confirmed) {
-    my $ww_admin = create_wwadmin_user($envir);
+  $confirmed = confirm_answer($answer);
+  if($answer eq "Yes, let's do it" && $confirmed) {
+    $ww_admin = create_wwadmin_user($envir);
     return $ww_admin if $ww_admin;
     get_wwadmin_user($envir); #Try again if not
-  } elsif($answer eq "No, the root user will administer webwork." && $confirmed) {
-    print "Sounds good. We will not create a separate webwork admin user. The root user will administer webwork\n";
+  } elsif($answer eq "No, the root user will administer webwork" && $confirmed) {
+    print "Sounds good. We will not create a separate webwork admin user. The root user will administer webwork.\n";
     return "root";
-  } elsif($answer eq "No, a separate webwork admin user already exists." && $confirmed) {
-    my $current_user = $envir->{username};
-    my $ww_admin = $term -> get_reply(
-        print_me => 'Please enter the userid of the webwork admin user. Note that this user
-        must already exist on the system.',
-        default => $current_user,
+  } elsif($answer eq "No, a separate webwork admin user already exists" && $confirmed) {
+    $ww_admin = $term -> get_reply(
+        print_me => 'Please enter the username of the webwork admin user. Note that this user must already exist on the system.',
+	prompt => 'webwork admin username:',
+        default => 'wwadmin',
         );
-    my $confirmed = confirm_answer($answer);
-    my $exists = user_exists($envir,$ww_admin);
+    $confirmed = confirm_answer($ww_admin);
+    $exists = user_exists($envir,$ww_admin);
     if($confirmed && $exists) {
         return $ww_admin;
     } elsif(!$exists) {
@@ -703,7 +707,7 @@ sub create_wwadmin_user {
     my $exists_already = user_exists($envir,$wwadmin);
     if ($exists_already) {
         print "Sorry, that user already exists. Try again.\n";
-        create_wwadmin_user($envir);
+        get_wwadmin_user($envir);
     }
     
     my $wwadmin_pw = $term -> get_reply(
@@ -769,30 +773,34 @@ sub get_wwdata_group {
 #
 ######################################################################################
 END
+  my $answer = undef;
+  my $confirmed = undef;
+  my $exists = undef;
+  my $group = undef;
+
   my $prompt = "Shall I create a webwork data group?";
-  my $answer = $term->get_reply(
+  $answer = $term->get_reply(
                 print_me => $print_me,
                 prompt  => $prompt,
-                choices => ["Yes, let's do it!", "No, we'll just use the webserver's group", "No, a separate webwork data group already exists"]
+                choices => ["Yes, let's do it", "No, we'll just use the webserver's group", "No, a separate webwork data group already exists"]
                 );
   #has this been confirmed?
-    my $confirmed = confirm_answer($answer);
-    if($answer eq "Yes, let's do it!" && $confirmed) {
-        my $group = create_wwdata_group($envir,$apache,$wwadmin);
+    $confirmed = confirm_answer($answer);
+    if($answer eq "Yes, let's do it" && $confirmed) {
+        $group = create_wwdata_group($envir,$apache);
         return $group if $group;
         get_wwdata_group($envir,$apache,$wwadmin); #Try again if not
-  } elsif($answer eq "No, we'll just use the webserver's group." && $confirmed) {
-    print "Sounds good. We will not create a separate webwork data group. Instead we'lljust use the webserver's group.";
-    return $apache->{group};
+  } elsif($answer eq "No, we'll just use the webserver's group" && $confirmed) {
+    	print "Sounds good. We will not create a separate webwork data group. Instead we'lljust use the webserver's group.\n";
+    	return $apache->{group};
   } elsif($answer eq "No, a separate webwork data group already exists" && $confirmed) {
-    my $current_user= $envir->{username};
-    my $group = $term -> get_reply(
-        print_me => 'Please enter the group name of the webwork data group. Note that this group
-        must already exist on the system.',
-        default => $current_user,
+    	$group = $term->get_reply(
+        	print_me => 'Please enter the group name of the webwork data group. Note that this group must already exist on the system.',
+		prompt => 'webwork data group name: ',
+        	default => 'wwdata',
         );
-    my $confirmed = confirm_answer($answer);
-    my $exists = group_exists($envir,$group);
+    	$confirmed = confirm_answer($group);
+    	$exists = group_exists($envir,$group);
     if($confirmed && $exists) {
         return $group;
     } elsif(!$exists) {
@@ -820,8 +828,8 @@ sub create_wwdata_group {
   #does this group exist?
     my $already_exists = group_exists($envir,$group);
     if ($already_exists) {
-        print "Oops - that group already exists. Try something else.";
-        create_wwdata_group($envir,$apache,$wwadmin);
+        print "Oops - that group already exists. Let's try this again.\n";
+    	get_wwdata_group($envir,$apache,$wwadmin); #Try again if not
     }
     #group doesn't exist so now confirm answer
     my $confirmed = confirm_answer($group);
@@ -1800,8 +1808,8 @@ print<<EOF;
 ########################################################################################
 EOF
 
-my $wwadmin = get_wwadmin_user();
-my $wwdata = get_wwdata_group($apache,$WW_PREFIX,$wwadmin);
+my $wwadmin = get_wwadmin_user($envir);
+my $wwdata = get_wwdata_group($envir,$apache,$wwadmin);
 
 
 
