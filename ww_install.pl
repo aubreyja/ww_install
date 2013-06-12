@@ -861,6 +861,7 @@ sub create_wwdata_group {
 	    } else {
 		print $out "$group:*:$new_gid:".$apache->{user}.",$wwadmin\n";
 	    }
+      return $group;
     }
 }
 
