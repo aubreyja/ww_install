@@ -1590,6 +1590,23 @@ sub copy_model_course {
   }
 }
 
+sub symlink_model_course {
+  my ($webwork_dir, $courses_dir) = @_;
+  my $full_path = can_run('ln'); 
+  my $dist_path = File::Spec->canonpath($webwork_dir.'/courses.dist/modelCourse');
+  my $link_path = File::Spec->canonpath($courses_dir.'/modelCourse');
+  my $cmd = [$full_path, '-s', $dist_path, $link_path];
+  if( scalar run( command => $cmd,
+            verbose => IPC_CMD_VERBOSE,
+            timeout => IPC_CMD_TIMEOUT)
+    ) {
+      print "Symlinked $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse\n";
+    } else {
+      warn "Could not symlink $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse.  You'll have to do this manually: $!";
+      warn "Could not copy modelCourse/ to $courses_dir/. You'll have to copy this over manually: $!";
+    }
+}
+
 #############################################################
 #
 # Create webwork database...
