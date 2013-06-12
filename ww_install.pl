@@ -708,40 +708,41 @@ sub create_wwadmin_user {
     if ($exists_already) {
         print "Sorry, that user already exists. Try again.\n";
         get_wwadmin_user($envir);
-    }
-    
-    my $wwadmin_pw = $term -> get_reply(
-		prompt => "Please enter an initial password for the webwork admin user.",
-		default => "wwadmin",
-	);
-    my $wwadmin_shell = $term -> get_reply(
-		prompt => "Please enter a default shell for the webwork admin user.",
-		default => $ENV{SHELL},
-	);
-    my $confirm = $term -> ask_yn(
-		prompt => "Shall I create a webwork admin user with username $wwadmin, initial password"
-			  ." $wwadmin_pw and default shell $wwadmin_shell?",
-		default => 'y',
-	);
-    if($confirm) {
-     #useradd  -s /usr/bin/bash -c "WeBWorK Administrator" -p $wwadmin_pw $wwadmin
-	#TODO: FreeBSD, MacOSX don't have useradd!!!
-	my $full_path = can_run("useradd");
-        my $cmd = [$full_path, '-s',$wwadmin_shell,'-c',"WeBWorK Administrator",'-p',$wwadmin_pw,$wwadmin];
-        if( scalar run( command => $cmd,
-                    verbose => IPC_CMD_VERBOSE,
-                    timeout => IPC_CMD_TIMEOUT))
-	{
-	  print "Created webwork admin user $wwadmin with initial password $wwadmin_pw and default shell $wwadmin_shell.\n";
-	  return $wwadmin;
-	} else {
-   	  print "Let's try again.\n";
-   	  get_wwadmin_user($envir);
-	}
     } else {
-   	print "Let's try again.\n";
-   	get_wwadmin_user($envir);
-    }
+    
+	    my $wwadmin_pw = $term -> get_reply(
+			prompt => "Please enter an initial password for the webwork admin user.",
+			default => "wwadmin",
+		);
+	    my $wwadmin_shell = $term -> get_reply(
+			prompt => "Please enter a default shell for the webwork admin user.",
+			default => $ENV{SHELL},
+		);
+	    my $confirm = $term -> ask_yn(
+			prompt => "Shall I create a webwork admin user with username $wwadmin, initial password"
+				  ." $wwadmin_pw and default shell $wwadmin_shell?",
+			default => 'y',
+		);
+	    if($confirm) {
+	     #useradd  -s /usr/bin/bash -c "WeBWorK Administrator" -p $wwadmin_pw $wwadmin
+		#TODO: FreeBSD, MacOSX don't have useradd!!!
+		my $full_path = can_run("useradd");
+		my $cmd = [$full_path, '-s',$wwadmin_shell,'-c',"WeBWorK Administrator",'-p',$wwadmin_pw,$wwadmin];
+		if( scalar run( command => $cmd,
+			    verbose => IPC_CMD_VERBOSE,
+			    timeout => IPC_CMD_TIMEOUT))
+		{
+		  print "Created webwork admin user $wwadmin with initial password $wwadmin_pw and default shell $wwadmin_shell.\n";
+		  return $wwadmin;
+		} else {
+		  print "Let's try again.\n";
+		  get_wwadmin_user($envir);
+		}
+	    } else {
+		print "Let's try again.\n";
+		get_wwadmin_user($envir);
+	    }
+	}
 
 }
 
@@ -778,7 +779,7 @@ END
   my $exists = undef;
   my $group = undef;
 
-  my $prompt = "Shall I create a webwork data group?";
+  my $prompt = "Shall I create a webwork data group? ";
   $answer = $term->get_reply(
                 print_me => $print_me,
                 prompt  => $prompt,
@@ -787,7 +788,7 @@ END
   #has this been confirmed?
     $confirmed = confirm_answer($answer);
     if($answer eq "Yes, let's do it" && $confirmed) {
-        $group = create_wwdata_group($envir,$apache);
+        $group = create_wwdata_group($envir,$apache,$wwadmin);
         return $group if $group;
         get_wwdata_group($envir,$apache,$wwadmin); #Try again if not
   } elsif($answer eq "No, we'll just use the webserver's group" && $confirmed) {
@@ -830,24 +831,25 @@ sub create_wwdata_group {
     if ($already_exists) {
         print "Oops - that group already exists. Let's try this again.\n";
     	get_wwdata_group($envir,$apache,$wwadmin); #Try again if not
-    }
-    #group doesn't exist so now confirm answer
-    my $confirmed = confirm_answer($group);
-    copy("/etc/group","/etc/group.bak");
-    open(my $in, "<","/etc/group.bak")
-        or die "Can't open /etc/group.bak for reading: $!";
-    open(my $out, ">", "/etc/group")
-        or die "Can't open /etc/group for writing: $!";
-    my @gids;
-    while(<$in>) {
-        push @gids,(split(':',$_))[2];
-        print $out $_;
-    }
-    my $new_gid = max(@gids)+1;
-    if($wwadmin eq 'root') {
-        print $out "$group:*:$new_gid:".$apache->{user}."\n";
     } else {
-        print $out "$group:*:$new_gid:".$apache->{user}.",$wwadmin\n";
+	    #group doesn't exist so now confirm answer
+	    my $confirmed = confirm_answer($group);
+	    copy("/etc/group","/etc/group.bak");
+	    open(my $in, "<","/etc/group.bak")
+		or die "Can't open /etc/group.bak for reading: $!";
+	    open(my $out, ">", "/etc/group")
+		or die "Can't open /etc/group for writing: $!";
+	    my @gids;
+	    while(<$in>) {
+		push @gids,(split(':',$_))[2];
+		print $out $_;
+	    }
+	    my $new_gid = max(@gids)+1;
+	    if($wwadmin eq 'root') {
+		print $out "$group:*:$new_gid:".$apache->{user}."\n";
+	    } else {
+		print $out "$group:*:$new_gid:".$apache->{user}.",$wwadmin\n";
+	    }
     }
 }
 
@@ -1043,11 +1045,11 @@ sub check_modules {
 	}
 }
 
-#####################################################################
+######################################################
 #
 #Check for prerequisites and get paths for binaries
 #
-#####################################################################
+######################################################
 
 sub configure_externalPrograms {
   #Expects a list of applications 	
@@ -1733,19 +1735,35 @@ sub create_admin_course {
 #############################################################
 
 sub restart_apache {
+    my $apache = shift;
+    my $cmd = [$apache->{binary},'restart'];
+    if(scalar run( command => $cmd,
+                  verbose => IPC_CMD_VERBOSE,
+                  timeout => IPC_CMD_TIMEOUT )) {
+        print "Apache successfully restarted.\n";
+    }
 
 }
 
 
 sub launch_browser {
-
+	my $url = shift;
+	my $browser = File::Spec->canonpath(can_run('firefox'));
+	if ($browser) {
+    		my $cmd = [$browser,$url];
+        	if(scalar run( command => $cmd,
+                  verbose => IPC_CMD_VERBOSE,
+                  timeout => IPC_CMD_TIMEOUT )) {
+        		print "Opening web-browser to $url\n";
+    	}
+  }
 }
 
-###############################################################################################
+###############################################################
 #
-# Now we finally come to the actuall installation procedure
+# Now we finally come to the actual installation procedure
 #
-###############################################################################################
+###############################################################
 
 
 #Check if user is ready to install webwork
@@ -1789,30 +1807,29 @@ my $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 
 print<<EOF; 
-####################################################################################
-#  At this point we need to make some access control decisions. These decisions
-#  are important because they directly impact application and system security.
-#  But, the right answers often depend on a mix of factors, such as
+#########################################################################
+#  At this point we need to make some access control decisions. 
+#  These decisions are important because they directly impact 
+#  application and system security.  But, the right answers often 
+#  depend on a mix of factors, such as
 #  - institutional and/or departmental policies,
-#  - the level of involvement and expertise of the application owner(s) and the
-#  system administrator(s)
+#  - the level of involvement and expertise of the application 
+#    owner(s) and the system administrator(s)
 #  - personal preferences and intended workflows 
 #
-#  Here we offer the option of creating a webwork admin user and a webwork data
-#  group, for four different access control options.  If none of these four options fit 
-#  your situation, then you should select one now with the intention of tweaking it 
-#  manually after this script exits.
+#  Here we offer the option of creating a webwork admin user and 
+#  a webwork data group, for four different access control options.  
+#  If none of these four options fit your situation, then you should 
+#  select one now with the intention of tweaking it manually after 
+#  this script exits.
 #
-#  Let's first deal with the webwork admin user, and then the webwork data group.
-#
-########################################################################################
+#  Let's first deal with the webwork admin user, and then the webwork 
+#  data group.  
+############################################################################
 EOF
 
 my $wwadmin = get_wwadmin_user($envir);
 my $wwdata = get_wwdata_group($envir,$apache,$wwadmin);
-
-
-
 
 #(3) $server_root_url   = "";  # e.g.  http://webwork.yourschool.edu
 #$webwork_url         = "/webwork2";
@@ -2012,14 +2029,13 @@ print<<EOF;
 #######################################################################
 
 Restarting apache...
-EOF
-my $cmd = [$apache->{binary},'restart'];
-if(scalar run( command => $cmd,
-                  verbose => IPC_CMD_VERBOSE,
-                  timeout => IPC_CMD_TIMEOUT )
-  ) {
+restart_apache($apache);
+
 print<<EOF
-Check it out at $server_root_url/webwork2! You can login to the admin course with initial
-username and password 'admin'.  Have fun! :-)
+Check it out at $server_root_url/webwork2! You can login to the 
+admin course with initial username and password 'admin'.  
+
+Have fun! :-)
 EOF
-}
+
+launch_browser('http://localhost'.$webwork_url);
