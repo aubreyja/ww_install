@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-##########################################################################################################
+###############################################################################
 #WeBWorK Installation Script
 #
 #Goals:
@@ -38,7 +38,7 @@
 #(10) append include statement to httpd.conf to pick up webwork.apache2-config
 #(11) restart apache, check for errors 
 #(12) Do some testing!
-#######################################################################################################
+#############################################################################
 
 
 use strict;
@@ -624,34 +624,39 @@ EOF
 sub get_wwadmin_user {
   my $envir = shift;
   my $print_me =<<END; 
-####################################################################################
+###########################################################################
 #
-# The first decision is whether or not to create a webwork admin user. The purpose of
-# doing this would be to allow the webwork admin user to edit the webwork system code
-# (e.g. for updates) while restricting that user from having write access to other
-# files outside of his home directory.  If the system administrator(s) and webwork
-# application maintainer(s) are the same then there is no need to create this user.
+# The first decision is whether or not to create a webwork admin user. 
+# The purpose ofdoing this would be to allow the webwork admin user to 
+# edit the webwork system code (e.g. for updates) while restricting 
+# that user from having write access to other files outside of his 
+# home directory.  If the system administrator(s) and webwork
+# application maintainer(s) are the same then there is no need to 
+# create this user.
 #
-# If the maintainer of webwork (the webwork administrator) is not the system 
-# administrator for the server, then you as a user with root access must decide how
-# to give the webwork admin sufficient privileges to maintain webwork.  One approach,
-# depending on your OS, is to give that user root access by either addiing that user 
-# to the wheel group or the sudoers file. This gives the webwork administrator complete
+# If the maintainer of webwork (the webwork administrator) is not the 
+# system administrator for the server, then you as a user with root 
+# access must decide how to give the webwork admin sufficient privileges 
+# to maintain webwork.  One approach, depending on your OS, is to give 
+# that user root access by either addiing that user to the wheel group 
+# or the sudoers file. This gives the webwork administrator complete
 # access to the system, but if that's fine with you then it's fine with me too.
 #
-# The approach offered here is to create a webwork admin user and group. All of the
-# webwork code will be owned by this user.  The only webwork files that will be 
-# writable by other users are those that must be writable by the webserver. For those
-# files and directories we will create a new webwork data group to which we will add the 
+# The approach offered here is to create a webwork admin user and group. 
+# All of the webwork code will be owned by this user.  The only webwork 
+# files that will be writable by other users are those that must be 
+# writable by the webserver. For those files and directories we will 
+# create a new webwork data group to which we will add the 
 # webwork admin user and the webserver.
 #
-# If you choose not to create this user, the webwork code will be owned by root. We
-# will still give you the opportunity to create the webwork data group. Members of this
-# group will be able to do limited webwork maintenance tasks, such as creating courses from 
-# the command line and managing logs, but will not be able edit webwork system files or other
+# If you choose not to create this user, the webwork code will be owned 
+# by root. We will still give you the opportunity to create the webwork 
+# data group. Members of this group will be able to do limited webwork 
+# maintenance tasks, such as creating courses from the command line and 
+# managing logs, but will not be able edit webwork system files or other
 # files that are writable by the webserver.
 #
-######################################################################################
+##########################################################################
 END
   my $answer = undef;
   my $confirmed = undef;
@@ -662,7 +667,8 @@ END
   $answer = $term->get_reply(
                 print_me => $print_me,
                 prompt  => $prompt,
-                choices => ["Yes, let's do it", "No, the root user will administer webwork", "No, a separate webwork admin user already exists"]
+                choices => ["Yes, let's do it", "No, the root user will administer webwork", "No, a separate webwork admin user already exists"],
+		default => "Yes, let's do it",
                 );
   #has this been confirmed?
   $confirmed = confirm_answer($answer);
@@ -751,28 +757,32 @@ sub create_wwadmin_user {
 sub get_wwdata_group {
   my ($envir,$apache,$wwadmin) = @_;
   my $print_me =<<END; 
-####################################################################################
-# Certain data directories need to be writable by the webserver.  These are the 
-# webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, webwork2/tmp, and 
-# the courses/ directories.
+#############################################################################
+# Certain data directories need to be writable by the webserver.  These 
+# are the webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, webwork2/tmp, 
+# and the courses/ directories.
 #
-# It can convenient to give WeBWorK system administrators access to these directories
-# as well, so they can permform admiistrative tasks such as removing temporary files,
-# creating and editing courses from the command line, managing logs, and so on.
+# It can convenient to give WeBWorK system administrators access to these 
+# directories as well, so they can permform administrative tasks such as 
+# removing temporary files, creating and editing courses from the command 
+# line, managing logs, and so on.
 #
-# While it can be convenient to allow the WeBWorK administrator(s) to manipulate the 
-# webwork files writable by the webserver, we may not want to give him or her rights 
-# to manipulate other files writable by the webserver.
+# While it can be convenient to allow the WeBWorK administrator(s) to 
+# manipulate the webwork files writable by the webserver, we may not want 
+# to give him or her rights to manipulate other files writable by the 
+# webserver.
 #
-# We can accomplish this by adding a new webwork data group to the system containing any
-# WeBWorK administrators and also containing the web server. We will then recursively 
-# give the directories listed above permissions g+sw and files in those directories g+w.
+# We can accomplish this by adding a new webwork data group to the system 
+# containing any WeBWorK administrators and also containing the web server. 
+# We will then recursively give the directories listed above permissions 
+# g+sw and files in those directories g+w.
 # 
-# If you choose not to create the webwork data group, the webwork directories listed above
-# will be put into the same group as the webserver. We will then recursively give those 
-# directories permissions g+sw and the files in those directories permissions g+w.
+# If you choose not to create the webwork data group, the webwork 
+# directories listed above will be put into the same group as the 
+# webserver. We will then recursively give those directories permissions 
+# g+sw and the files in those directories permissions g+w.
 #
-######################################################################################
+###########################################################################
 END
   my $answer = undef;
   my $confirmed = undef;
@@ -783,7 +793,8 @@ END
   $answer = $term->get_reply(
                 print_me => $print_me,
                 prompt  => $prompt,
-                choices => ["Yes, let's do it", "No, we'll just use the webserver's group", "No, a separate webwork data group already exists"]
+                choices => ["Yes, let's do it", "No, we'll just use the webserver's group", "No, a separate webwork data group already exists"],
+		default => "Yes, let's do it",
                 );
   #has this been confirmed?
     $confirmed = confirm_answer($answer);
@@ -2046,9 +2057,11 @@ print<<EOF;
 #######################################################################
 
 Restarting apache...
+EOF
+
 restart_apache($apache);
 
-print<<EOF
+print<<EOF;
 Check it out at $server_root_url/webwork2! You can login to the 
 admin course with initial username and password 'admin'.  
 
