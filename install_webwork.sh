@@ -43,6 +43,7 @@ rm $LOCALINSTALLER
 cd ww_install-master/
 
 source install_prerequisites.sh 
+wait
 sudo perl ww_install.pl
 
 echo
