@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-##########################################################################################################
+#############################################################################
 #WeBWorK Installation Script
 #
 #Goals:
@@ -38,7 +38,7 @@
 #(10) append include statement to httpd.conf to pick up webwork.apache2-config
 #(11) restart apache, check for errors 
 #(12) Do some testing!
-#######################################################################################################
+#############################################################################
 
 
 use strict;
@@ -1590,6 +1590,23 @@ sub copy_model_course {
   }
 }
 
+sub symlink_model_course {
+  my ($webwork_dir, $courses_dir) = @_;
+  my $full_path = can_run('ln'); 
+  my $dist_path = File::Spec->canonpath($webwork_dir.'/courses.dist/modelCourse');
+  my $link_path = File::Spec->canonpath($courses_dir.'/modelCourse');
+  my $cmd = [$full_path, '-s', $dist_path, $link_path];
+  if( scalar run( command => $cmd,
+  	    verbose => IPC_CMD_VERBOSE,
+  	    timeout => IPC_CMD_TIMEOUT)
+  ) {
+    print "Symlinked $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse\n";
+  } else {
+    warn "Could not symlink $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse.  You'll have to do this manually: $!";
+    warn "Could not copy modelCourse/ to $courses_dir/. You'll have to copy this over manually: $!";
+  }
+}
+
 #############################################################
 #
 # Create webwork database...
@@ -1663,6 +1680,21 @@ sub write_localOverrides_conf {
     while( <$in> ) {
     if(/^\$problemLibrary{root}/) {
       print $out "\$problemLibrary{version} = \"2.5\";\n";
+      print $out "\$problemLibrary{root} = \"$WW_PREFIX/libraries/webwork-open-problem-library/OpenProblemLibrary\";\n";
+    } elsif(/^\$pg{options}{displayMode}/) {
+      print $out "\$pg{options}{displayMode} = \"MathJax\";\n";
+    } else {
+      print $out $_;
+    }
+  }
+}
+
+
+sub write_webwork_apache2_config {
+  my $webwork_dir= shift;
+  my $conf_dir = "$webwork_dir/conf";
+  open(my $in,"<","$conf_dir/webwork.apache2-config.dist")
+    or die "Can't open $conf_dir/webwork.apache2-config.dist for reading: $!";
       print $out "\$problemLibrary{root} = \"$WW_PREFIX/libraries/webwork-open-problem-library/OpenProblemLibrary\";\n";
     } elsif(/^\$pg{options}{displayMode}/) {
       print $out "\$pg{options}{displayMode} = \"MathJax\";\n";
@@ -2002,21 +2034,6 @@ my $cmd = [$chmod, '-R','u+rwX,go+rX',$WW_PREFIX];
             ." with permissions u+rwX,go+rwX\n";
   } else {
     print "Couldn't change ownership of $WW_PREFIX: $!";
-  }
-}
-
-
-
-print<<EOF;
-#######################################################################
-#
-#  Now I'm going to change the ownship and permissions of some directories
-#  under $webwork_dir and $webwork_courses_dir that should be web accessible.  
-#  Faulty permissions is one of the most common cause of problems, especially
-#  after upgrades. 
-# 
-######################################################################
-EOF
 change_owner("$wwadmin:$wwdata", $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
 change_data_dir_permissions($wwdata, "$webwork_courses_dir", "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
 
