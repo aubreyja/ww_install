@@ -33,3 +33,5 @@ then
 else
     echo "I don't know what packages you need.  Fork me to fix this!"
 fi
+
+exit 0

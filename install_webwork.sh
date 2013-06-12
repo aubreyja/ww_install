@@ -42,11 +42,7 @@ unzip $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-master/
 
-echo "## Now we're going to install the prerequisites"
-./install_prerequisites.sh 
-
-echo "## OK, handing you to the webwork installation script."
-sudo perl ww_install.pl
+./install_prerequisites.sh || sudo perl ww_install.pl
 
 echo
 echo "## Done." 
