@@ -42,7 +42,8 @@ unzip $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-master/
 
-./install_prerequisites.sh || sudo perl ww_install.pl
+source install_prerequisites.sh 
+sudo perl ww_install.pl
 
 echo
 echo "## Done." 
