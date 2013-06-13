@@ -734,14 +734,16 @@ sub create_wwadmin_user {
 		#TODO: FreeBSD, MacOSX don't have useradd!!!
 		my $full_path = can_run("useradd");
 		my $cmd = [$full_path, '-s',$wwadmin_shell,'-c',"WeBWorK Administrator",'-p',$wwadmin_pw,$wwadmin];
-		if( scalar run( command => $cmd,
-			    verbose => IPC_CMD_VERBOSE,
-			    timeout => IPC_CMD_TIMEOUT))
+    my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+    run( command => $cmd,
+              verbose => IPC_CMD_VERBOSE,
+              timeout => IPC_CMD_TIMEOUT);
+		if( $success )
 		{
 		  print "Created webwork admin user $wwadmin with initial password $wwadmin_pw and default shell $wwadmin_shell.\n";
 		  return $wwadmin;
 		} else {
-		  print "Let's try again.\n";
+		  print "There was an error creating $wwadmin: $error_message \n";
 		  get_wwadmin_user($envir);
 		}
 	    } else {
@@ -882,11 +884,14 @@ sub change_owner {
  my @dirs = @_;
   my $full_path = can_run('chown'); 
   my $cmd = [$full_path, '-R',$owner,@dirs];
-    if( scalar run( command => $cmd,
-                    verbose => IPC_CMD_VERBOSE,
-                    timeout => IPC_CMD_TIMEOUT )
-    ) {
+  my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+    run( command => $cmd,
+         verbose => IPC_CMD_VERBOSE,
+         timeout => IPC_CMD_TIMEOUT);
+		if( $success ) {
         print "Changed ownership of @dirs and below to $owner.\n";
+    } else {
+      warn "There was an error changing ownership of @dirs to $owner: $error_message.\n";
     }
 }
 
@@ -896,19 +901,25 @@ sub change_data_dir_permissions {
  my ($gid, $courses, $data, $htdocs_tmp, $logs, $tmp) = @_;
   my $chmod = can_run('chmod'); 
   my $cmd = [$chmod, '-R','g+w', $courses, $data, $htdocs_tmp, $logs, $tmp];
-    if( scalar run( command => $cmd,
-                    verbose => IPC_CMD_VERBOSE,
-                    timeout => IPC_CMD_TIMEOUT )
-    ) {
+  my( $chmod_success, $chmod_error_message, $chmod_full_buf, $chmod_stdout_buf, $chmod_stderr_buf ) =
+    run( command => $cmd,
+         verbose => IPC_CMD_VERBOSE,
+         timeout => IPC_CMD_TIMEOUT);
+		if( $chmod_success ) {
         print "Made the directories \n $courses,\n $data,\n $htdocs_tmp,\n $logs,\n $tmp\n group writable.\n";
+    } else {
+      warn "Could not make the directories group writable: $chmod_error_message\n";
     }
-  my $find = can_run('find'); 
-  $cmd = [$find, $courses, $data, $htdocs_tmp, $logs, $tmp, '-type', 'd','-and', '!', '(', '-name', '".git"','-prune', ')','-exec',$chmod,'g+s', '{}', ';'];
-    if( scalar run( command => $cmd,
-                    verbose => IPC_CMD_VERBOSE,
-                    timeout => IPC_CMD_TIMEOUT )
-    ) {
+    my $find = can_run('find'); 
+    $cmd = [$find, $courses, $data, $htdocs_tmp, $logs, $tmp, '-type', 'd','-and', '!', '(', '-name', '".git"','-prune', ')','-exec',$chmod,'g+s', '{}', ';'];
+    my( $find_success, $find_error_message, $find_full_buf, $find_stdout_buf, $find_stderr_buf ) =
+      run( command => $cmd,
+           verbose => IPC_CMD_VERBOSE,
+           timeout => IPC_CMD_TIMEOUT);
+		if( $find_success ) {
         print "Added group sticky bit to \n $courses,\n $data,\n $htdocs_tmp,\n $logs,\n $tmp\n and subdirectories (except .git's).\n";
+      } else {
+        warn "Error. Could not add sticky bit: $find_error_message\n";
     }
 }
 
@@ -1078,7 +1089,7 @@ sub configure_externalPrograms {
         $apps -> {checkurl} = "$app".' -d -mHEAD';
       }
 		} else {
-			warn "** $app not found in \$PATH\n";
+			die "** $app not found in \$PATH\n";
 		}
 	}
   my (undef,$netpbm_prefix,undef) = File::Spec->splitpath(${$apps}{giftopnm});
@@ -1499,7 +1510,6 @@ sub create_prefix_path {
 #
 ############################################################################
 
-#TODO: Switch from NPL to OPL
 sub get_webwork {
   my ($prefix,$apps,$wwadmin) = @_;
   create_prefix_path($prefix);
@@ -1514,35 +1524,39 @@ sub get_webwork {
   my $opl_cmd = $apps->{git}." clone ".$opl_repo;
 
   my $buffer;
-  if( scalar run( command => $ww2_cmd,
-	  verbose => IPC_CMD_VERBOSE,
-	  buffer => \$buffer,
-	  timeout => IPC_CMD_TIMEOUT )
-  ) {
-      print "fetched webwork2 successfully: $buffer\n";
+    my( $ww2_success, $ww2_error_message, $ww2_full_buf, $ww2_stdout_buf, $ww2_stderr_buf ) =
+      run( command => $ww2_cmd,
+           verbose => IPC_CMD_VERBOSE,
+           timeout => IPC_CMD_TIMEOUT);
+		if( $ww2_success ) {
+      print "fetched webwork2 successfully.\n";
+    } else {
+      die "Couldn't get webwork2: $ww2_error_message\n";
+    }
+    my( $pg_success, $pg_error_message, $pg_full_buf, $pg_stdout_buf, $pg_stderr_buf ) =
+      run( command => $pg_cmd,
+           verbose => IPC_CMD_VERBOSE,
+           timeout => IPC_CMD_TIMEOUT);
+		if( $pg_success ) {
+      print "fetched pg successfully.\n";
+    } else {
+      die "Couldn't get pg: $pg_error_message\n";
     }
   
-
-  if( scalar run( command => $pg_cmd,
-	  verbose => IPC_CMD_VERBOSE,
-	  buffer => \$buffer,
-	  timeout => IPC_CMD_TIMEOUT)
-  ) {
-      print "fetched pg successfully: $buffer\n";
-    }
-#TODO: change owner and group after deciding if wwadmin exists
   make_path('libraries',{owner=>$wwadmin,group=>$wwadmin});
   make_path('courses',{owner=>$wwadmin,group=>$wwadmin});
   chdir "$prefix/libraries";
-#TODO: Switch from NPL to OPL
-  if( scalar run( command => $opl_cmd,
-	  verbose => IPC_CMD_VERBOSE,
-	  buffer => \$buffer,
-	  timeout => IPC_CMD_TIMEOUT)
-  ) {
-      print "fetched OPL successfully: $buffer\n";
+
+    my( $opl_success, $opl_error_message, $opl_full_buf, $opl_stdout_buf, $opl_stderr_buf ) =
+      run( command => $opl_cmd,
+           verbose => IPC_CMD_VERBOSE,
+           timeout => IPC_CMD_TIMEOUT);
+		if( $opl_success ) {
+      print "fetched OPL successfully.\n";
+    } else {
+      die "Couldn't get OPL: $opl_error_message\n";
     }
-  }
+}
 
 #############################################################
 #
@@ -1563,13 +1577,14 @@ sub get_MathJax {
   #system("git submodule update --init");
   my $full_path = can_run('git'); 
   my $cmd = [$full_path, 'submodule', "update", "--init"];
-  if( scalar run( command => $cmd,
-  	    verbose => IPC_CMD_VERBOSE,
-  	    timeout => IPC_CMD_TIMEOUT )
-  ) {
-    print "Downloaded MathJax to $webwork_dir/htdocs/mathjax\n";
-  } else {
-    warn "Could not download MathJax. You'll have to do this manually: $!";
+  my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+    run( command => $cmd,
+              verbose => IPC_CMD_VERBOSE,
+              timeout => IPC_CMD_TIMEOUT);
+		if( $success ) {
+      print "Downloaded MathJax to $webwork_dir/htdocs/mathjax\n";
+    } else {
+      warn "Could not download MathJax. You'll have to do this manually: $error_message\n";
   }
 }
 
@@ -1592,13 +1607,14 @@ sub copy_model_course {
   my ($webwork_dir, $courses_dir) = @_;
   my $full_path = can_run('cp'); 
   my $cmd = [$full_path, '-r', "$webwork_dir/courses.dist/modelCourse", "$courses_dir"];
-  if( scalar run( command => $cmd,
-  	    verbose => IPC_CMD_VERBOSE,
-  	    timeout => IPC_CMD_TIMEOUT)
-  ) {
-    print "copied modelCourse/ to $courses_dir/\n";
-  } else {
-    warn "Could not copy modelCourse/ to $courses_dir/. You'll have to copy this over manually: $!";
+  my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+    run( command => $cmd,
+              verbose => IPC_CMD_VERBOSE,
+              timeout => IPC_CMD_TIMEOUT);
+		if( $success ) {
+      print "copied modelCourse/ to $courses_dir/\n";
+    } else {
+      warn "Could not copy modelCourse/ to $courses_dir/. You'll have to copy this over manually: $error_message\n";
   }
 }
 
@@ -1608,14 +1624,15 @@ sub symlink_model_course {
   my $dist_path = File::Spec->canonpath($webwork_dir.'/courses.dist/modelCourse');
   my $link_path = File::Spec->canonpath($courses_dir.'/modelCourse');
   my $cmd = [$full_path, '-s', $dist_path, $link_path];
-  if( scalar run( command => $cmd,
-            verbose => IPC_CMD_VERBOSE,
-            timeout => IPC_CMD_TIMEOUT)
-    ) {
+  my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+    run( command => $cmd,
+              verbose => IPC_CMD_VERBOSE,
+              timeout => IPC_CMD_TIMEOUT);
+		if( $success ) {
       print "Symlinked $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse\n";
     } else {
       warn "Could not symlink $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse.  You'll have to do this manually: $!";
-      warn "Could not copy modelCourse/ to $courses_dir/. You'll have to copy this over manually: $!";
+      warn "Could not copy modelCourse/ to $courses_dir/. You'll have to copy this over manually: $error_message\n";
     }
 }
 
@@ -1766,12 +1783,15 @@ sub create_admin_course {
 sub restart_apache {
     my $apache = shift;
     my $cmd = [$apache->{binary},'restart'];
-    if(scalar run( command => $cmd,
-                  verbose => IPC_CMD_VERBOSE,
-                  timeout => IPC_CMD_TIMEOUT )) {
+    my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+    run( command => $cmd,
+              verbose => IPC_CMD_VERBOSE,
+              timeout => IPC_CMD_TIMEOUT);
+		if( $success ) {
         print "Apache successfully restarted.\n";
+    } else {
+      warn "Could not restart apache: $error_message\n";
     }
-
 }
 
 
@@ -1779,12 +1799,16 @@ sub launch_browser {
 	my $url = shift;
 	my $browser = File::Spec->canonpath(can_run('firefox'));
 	if ($browser) {
-    		my $cmd = [$browser,$url];
-        	if(scalar run( command => $cmd,
-                  verbose => IPC_CMD_VERBOSE,
-                  timeout => IPC_CMD_TIMEOUT )) {
-        		print "Opening web-browser to $url\n";
-    	}
+       my $cmd = [$browser,$url];
+       my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+      run( command => $cmd,
+                verbose => IPC_CMD_VERBOSE,
+                timeout => IPC_CMD_TIMEOUT);
+      if( $success ) {
+      		print "Opening web-browser to $url\n";
+  	} else {
+      warn "Couldn't open web-browser: $error_message\n";
+    }
   }
 }
 
@@ -2023,10 +2047,11 @@ EOF
 change_owner("$wwadmin:$wwadmin",$WW_PREFIX);
 my $chmod = can_run('chmod'); 
 my $cmd = [$chmod, '-R','u+rwX,go+rX',$WW_PREFIX];
-  if( scalar run( command => $cmd,
-                  verbose => IPC_CMD_VERBOSE,
-                  timeout => IPC_CMD_TIMEOUT )
-  ) {
+my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+    run( command => $cmd,
+            verbose => IPC_CMD_VERBOSE,
+            timeout => IPC_CMD_TIMEOUT);
+  if( $success ) {
       print "Changed the ownship of $WW_PREFIX and everything under it to $wwadmin:$wwadmin"
             ." with permissions u+rwX,go+rwX\n";
   } else {
