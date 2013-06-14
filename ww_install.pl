@@ -1819,6 +1819,24 @@ sub launch_browser {
   }
 }
 
+sub write_launch_browser_script {
+	my $url = shift;
+
+  #We want to open the browser as the user that logged in, not root.
+  my $username = $ENV{SUDO_USER};
+  my $uid = getpwnam($username);
+  my $gid = getgrnam($username);
+
+  #Get preferred web brwoser
+	my $browser = can_run('xdg-open') || can_run('x-www-browser') || can_run('www-browser') || can_run('gnome-open') || can_run('firefox'); 
+  open(my $out,">","launch_browser.sh")
+    or die "Can't open launch_browser.sh: $!";
+  print $out "#!/usr/bin/env bash\n\n";
+  print $out "$browser $url\n";
+  close($out);
+  chown $uid, $gid, "launch_browser.sh";
+}
+
 ###############################################################
 #
 # Now we finally come to the actual installation procedure
@@ -2101,4 +2119,4 @@ admin course with initial username and password 'admin'.
 Have fun! :-)
 EOF
 
-launch_browser('http://localhost'.$webwork_url);
+write_launch_browser_script('http://localhost'.$webwork_url);

@@ -45,6 +45,11 @@ cd ww_install-master/
 source install_prerequisites.sh 
 wait
 sudo perl ww_install.pl
+wait
+
+if [ -f "launch_browser.sh" ]; then
+  source launch_browser.sh
+fi
 
 echo
 echo "## Done." 
