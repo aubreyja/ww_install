@@ -1798,7 +1798,7 @@ sub launch_browser {
 
   #We want to open the browser as the user that logged in, not root.
   my $username = getlogin();
-  my $uid = getpwname(getlogin());
+  my $uid = getpwnam(getlogin());
   $> = $uid;
   
   #Get preferred web brwoser
