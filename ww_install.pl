@@ -954,8 +954,6 @@ EOF
  $envir->{os} = get_os();
  $envir->{passwd_file} = "/etc/passwd" if -e "/etc/passwd";
  $envir->{group_file} = "/etc/group" if -e "/etc/group";
- $envir ->{username} = $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
-
 
  #we're going to get a list of users and groups on the system
  #for use later when we create our own users and groups. Also
@@ -1797,17 +1795,26 @@ sub restart_apache {
 
 sub launch_browser {
 	my $url = shift;
-	my $browser = File::Spec->canonpath(can_run('firefox'));
+
+  #We want to open the browser as the user that logged in, not root.
+  my $username = getlogin();
+  my $uid = getpwname(getlogin());
+  $> = $uid;
+  
+  #Get preferred web brwoser
+	my $browser = can_run('xdg-open') || can_run('x-www-browser') || can_run('www-browser') || can_run('gnome-open') || can_run('firefox'); 
+
+  #if a web browser is installed open it to webwork!
 	if ($browser) {
-       my $cmd = [$browser,$url];
-       my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
-      run( command => $cmd,
-                verbose => IPC_CMD_VERBOSE,
-                timeout => IPC_CMD_TIMEOUT);
+      my $cmd = [$browser,$url];
+      my( $success, $error_message, $full_buf, $stdout_buf, $stderr_buf ) =
+      run(  command => $cmd,
+            verbose => IPC_CMD_VERBOSE,
+            timeout => IPC_CMD_TIMEOUT);
       if( $success ) {
       		print "Opening web-browser to $url\n";
   	} else {
-      warn "Couldn't open web-browser: $error_message\n";
+          warn "Couldn't open web-browser: $error_message\n";
     }
   }
 }
