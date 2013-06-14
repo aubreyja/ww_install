@@ -1797,9 +1797,9 @@ sub launch_browser {
 	my $url = shift;
 
   #We want to open the browser as the user that logged in, not root.
-  my $username = getlogin();
-  my $uid = getpwnam(getlogin());
-  $> = $uid;
+  my $username = $ENV{SUDO_USER};
+  my $uid = getpwnam($username);
+  $< = $uid;
   
   #Get preferred web brwoser
 	my $browser = can_run('xdg-open') || can_run('x-www-browser') || can_run('www-browser') || can_run('gnome-open') || can_run('firefox'); 
