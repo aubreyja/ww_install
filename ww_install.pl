@@ -50,7 +50,7 @@ use File::Path qw(make_path);
 use File::Spec;
 use File::Copy;
 use File::CheckTree;
-#use File::Glob ':bsd_glob';
+use Cwd;
 
 use IPC::Cmd qw(can_run run run_forked);
 use Params::Check qw(check);
@@ -1820,7 +1820,7 @@ sub launch_browser {
 }
 
 sub write_launch_browser_script {
-	my $url = shift;
+  my ($dir,$url) = @_;
 
   #We want to open the browser as the user that logged in, not root.
   my $username = $ENV{SUDO_USER};
@@ -1843,6 +1843,8 @@ sub write_launch_browser_script {
 #
 ###############################################################
 
+#We'll use this later
+my $installer_dir = getcwd();
 
 #Check if user is ready to install webwork
 get_ready();
@@ -2119,4 +2121,4 @@ admin course with initial username and password 'admin'.
 Have fun! :-)
 EOF
 
-write_launch_browser_script('http://localhost'.$webwork_url);
+write_launch_browser_script($installer_dir,'http://localhost'.$webwork_url);
