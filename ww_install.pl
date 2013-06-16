@@ -51,7 +51,7 @@ use File::Copy;
 #use File::CheckTree;
 use Cwd;
 
-use IPC::Cmd qw(can_run run run_forked);
+use IPC::Cmd qw(can_run run);
 
 use Sys::Hostname;
 use User::pwent;
