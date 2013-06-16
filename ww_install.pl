@@ -187,14 +187,20 @@ my @modulesList = qw(
   Getopt::Long
   Getopt::Std
   HTML::Entities
+  HTML::Scrubber
   HTML::Tagset
+  HTML::Template
   IO::File
   Iterator
   Iterator::Util
+  JSON
+  Locale::Maketext::Lexicon
+  Locale::Maketext::Simple
   Mail::Sender
   MIME::Base64
   Net::IP
   Net::LDAPS
+  Net::OAuth
   Net::SMTP
   Opcode
   PadWalker
@@ -207,6 +213,7 @@ my @modulesList = qw(
   Socket
   SQL::Abstract
   String::ShellQuote
+  Text::CSV
   Text::Wrap
   Tie::IxHash
   Time::HiRes
