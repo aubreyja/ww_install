@@ -52,25 +52,20 @@ use File::Copy;
 use Cwd;
 
 use IPC::Cmd qw(can_run run run_forked);
-#use Params::Check qw(check);
 
 use Sys::Hostname;
 use User::pwent;
-#use Data::Dumper;
-
-use DBI;
-
-#use DB_File;
-#use Fcntl;
-
 use List::Util qw(max);
 
 use DateTime::TimeZone;    #non-core!
+use DBI;
 
 use Term::UI;
 use Term::ReadLine;
 
 #use Term::ReadKey;
+#use Data::Dumper;
+
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
 #Don't worry people with spurious warnings.
@@ -2115,7 +2110,11 @@ print <<EOF;
 ######################################################################
 EOF
 copy_classlist_files( $webwork_dir, $webwork_courses_dir );
-copy_model_course( $webwork_dir, $webwork_courses_dir );
+
+#Symlinking webwork2/courses.dist/modelCourse to courses/modelCourse is
+#better than copying it over for updates.
+#copy_model_course( $webwork_dir, $webwork_courses_dir );
+symlink_model_course( $webwork_dir, $webwork_courses_dir );
 
 print <<EOF;
 #######################################################################
