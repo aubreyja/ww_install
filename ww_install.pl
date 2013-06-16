@@ -42,6 +42,7 @@
 
 use strict;
 use warnings;
+use lib 'lib';
 
 use Config;
 
@@ -62,6 +63,8 @@ use DBI;
 
 use Term::UI;
 use Term::ReadLine;
+use Term::ReadPassword #to be found in lib/
+
 
 #use Term::ReadKey;
 #use Data::Dumper;
@@ -1476,26 +1479,28 @@ END
 
 sub get_mysql_root_password {
 
-    my $print_me = <<END;
-####################################################################################
-# Please enter the root mysql password. Please escape any special characters with \
-# Caution: The password will be echoed back as you type.
-#####################################################################################
-END
-    my $prompt = "Root mysql password:";
-    my $answer = $term->get_reply(
-        print_me => $print_me,
-        prompt   => $prompt,
-    );
+  print <<END;
+############################################################################
+# Please enter the root mysql password. 
+#############################################################################
 
-    #has this been confirmed?
-    if ($answer) {
-        print "Thanks; I'll keep it secret.\n";
-        return $answer;
-    } else {
-        get_mysql_root_password();
+END
+    my $password;
+    while(1) {
+      my $double_check;
+      $password = read_password('MySQL root password: ');
+      $double_check = read_password('Please confirm MySQL root password: ') if $password;
+      if($password eq $double_check)  {
+          print "MySQL root password confirmed.\n\n";
+          last;
+       } else {
+          print "Sorry, the passwords you entered did not match.\n\n";
+          redo;
+        }
     }
+    return $password;
 }
+
 
 #TODO: Make this a question
 sub get_webwork_database {
@@ -1562,14 +1567,14 @@ END
 sub get_database_password {
     my $print_me = <<END;
 ##############################################################################
-# Now create a password to identify the webwork database user.  Note that
+# Now we need a password to identify the webwork database user.  Note that
 # this password will be written into one of the (plain text) config files
 # in webwork2/conf/.  It's important for security that this password not be
 # the same as the mysql root password.
 # Caution: The password will be echoed back as you type.
 ##############################################################################
 END
-    my $prompt = "webwork database password:";
+    my $prompt = "Please enter webwork database password:";
     my $answer = $term->get_reply(
         print_me => $print_me,
         prompt   => $prompt,
