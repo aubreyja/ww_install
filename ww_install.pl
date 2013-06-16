@@ -48,22 +48,21 @@ use Config;
 use File::Path qw(make_path);
 use File::Spec;
 use File::Copy;
-use File::CheckTree;
+#use File::CheckTree;
 use Cwd;
 
 use IPC::Cmd qw(can_run run run_forked);
-use Params::Check qw(check);
+#use Params::Check qw(check);
 
 use Sys::Hostname;
 use User::pwent;
-use Data::Dumper;
+#use Data::Dumper;
 
 use DBI;
 
-use DB_File;
-use Fcntl;
+#use DB_File;
+#use Fcntl;
 
-use POSIX;
 use List::Util qw(max);
 
 use DateTime::TimeZone;    #non-core!
@@ -2134,7 +2133,8 @@ print <<EOF;
 ######################################################################
 EOF
 
-write_database_conf("$webwork_dir/conf");
+# No longer necessary to copy database.conf.dist to database.conf
+#write_database_conf("$webwork_dir/conf");
 
 write_site_conf(
     $WW_PREFIX,         "$webwork_dir/conf", $webwork_url,
@@ -2159,6 +2159,16 @@ symlink(
     "$webwork_dir/conf/webwork.apache2-config",
     $apache->{root} . "/conf.d/webwork.conf"
 );
+
+print <<EOF;
+#######################################################################
+#
+# Sanity check: Let's make sure we can restart apache. 
+# 
+######################################################################
+EOF
+
+restart_apache($apache);
 
 print <<EOF;
 #######################################################################
