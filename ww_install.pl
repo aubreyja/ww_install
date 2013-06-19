@@ -564,6 +564,18 @@ sub get_existing_groups {
     return $groups;
 }
 
+sub user_exists {
+    my ( $envir, $user ) = @_;
+    my %users = map { $_ => 1 } @{ $envir->{existing_users} };
+    return 1 if $users{$user};
+}
+
+sub group_exists {
+    my ( $envir, $group ) = @_;
+    my %groups = map { $_ => 1 } @{ $envir->{existing_groups} };
+    return 1 if $groups{$group};
+}
+
 ############################################################################################
 #
 # Script Util Subroutines:  The script is based on Term::Readline to interact with user
@@ -588,17 +600,22 @@ sub confirm_answer {
     }
 }
 
-sub user_exists {
-    my ( $envir, $user ) = @_;
-    my %users = map { $_ => 1 } @{ $envir->{existing_users} };
-    return 1 if $users{$user};
+sub get_reply {
+  my ($print_me,$prompt,$choices,$default) = @_;
+  my $answer = $term->get_reply(
+    print_me => $print_me,
+    prompt => $prompt,
+    choices => $choices,
+    default => $default,
+  );
+  my $confirmed = confirm_answer($answer);
+  if($confirmed) {
+    return $answer;
+  } else {
+    get_reply($print_me,$prompt,$choices,$default);
+  }
 }
 
-sub group_exists {
-    my ( $envir, $group ) = @_;
-    my %groups = map { $_ => 1 } @{ $envir->{existing_groups} };
-    return 1 if $groups{$group};
-}
 
 #####################################################
 #
@@ -1477,6 +1494,37 @@ END
 #
 ############################################################################
 
+sub database_exists {
+  my ($root_password,$database,$server) = @_;
+  my $dbh = DBI->connect("dbi:mysql:database=information_schema;host=$server", 'root', $root_password, { 'RaiseError' => 1 } );
+  my $databases = $dbh->selectcol_arrayref('show databases');
+  $dbh->disconnect();
+  foreach(@$databases) {
+    return 1 if $database eq $_;
+  }
+  return 0;
+}
+
+sub connect_to_database {
+  my ( $server, $ww_db, $ww_user, $ww_pw ) = @_;
+  eval {
+    my $dbh = DBI->connect("dbi:mysql:database=$ww_db;host=$server", $ww_user, $ww_pw, { 'RaiseError' => 1 } );
+  };
+  if($@) {
+    print "Something's wrong: $@";
+    return 0;
+  } else {
+    print "Connected to $ww_db on $server as $ww_user...\n";
+    return 1;
+  }
+}
+
+############################################################################
+#
+#Configure the database
+#
+############################################################################
+
 sub get_mysql_root_password {
 
   print <<END;
@@ -1502,66 +1550,115 @@ END
 }
 
 
-#TODO: Make this a question
-sub get_webwork_database {
-    my $default  = shift;
-    my $print_me = <<END;
-##############################################################################
-# Now we want to create a new mysql database for webwork database. As a first 
-# step, please choose a name for the database.  It can be anything that conforms
-# to mysql's rules for database names.  If you don't know those, just be sensible
-# and things will probably be ok. (Or look up the rules if you are inclined to 
-# be unsensible.)
-###############################################################################
-END
-    my $prompt = "Name for the webwork database:";
-    my $answer = $term->get_reply(
-        print_me => $print_me,
-        prompt   => $prompt,
-        default  => $default,
-    );
+# Is there an existing webwork db or would you like me to create one?
 
-    #has this been confirmed?
-    my $confirmed = confirm_answer($answer);
-    if ($confirmed) {
-        print "Thanks, got it, I'll use \"$answer\" \n";
-        return $answer;
+sub get_webwork_database {
+    my $print_me = <<END;
+#############################################################
+#  We now need to designate a MySQL database and database user
+#  for webwork.  First we need to know which server hosts your
+#  MySQL database and the port through which we can access it.
+#  The answer will be of the form 'serverName:port'. If your
+#  MySQL server is on this machine, your server name is 
+#  'localhost'.  You may omit the port number if your MySQL 
+#  server is listening on the dfault port of 3306.
+#############################################################
+END
+    my $prompt = "Please enter the MySQL server and port ";
+    my $choices = [];
+    my $default = 'localhost';
+    my $server = get_reply($print_me,$prompt,$choices,$default);
+    $print_me = <<END;
+##############################################################
+#  If you would like me to create a new database and user for 
+#  webwork, you will need ot know the root mysql password.
+#
+#  If such a database and mysql user has already been created, 
+#  you will need to know (a) the name of the database, (b) the 
+#  name and password of the mysql user with the appropriate 
+#  privileges on that database.
+###############################################################
+END
+    $prompt = "Create a new database or use an existing one? ";
+    $choices = ['Create a new database','Use an existing database'];
+    $default = 'Create a new database';
+    my $new_or_existing = get_reply($print_me,$prompt,$choices,$default);     
+    if($new_or_existing eq 'Create a new database') {
+      print<<END;
+###################################################################
+# Great, we'll create a new mysql database for webwork. To do so
+# we'll need the root mysql password.
+# ##################################################################
+END
+      my $mysql_root_password = get_mysql_root_password();
+      my $print_me =<<END;
+########################################################################
+# Thanks. I'll keep it secret. Please choose a name for the webwork 
+# database. It can be anything that conforms to mysql's rules for 
+# database names.  If you don't know those, just be sensible and things 
+# will probably be ok. (Or look up the rules if you are inclined to 
+# be unsensible.)  Also, you can't choose something that is the name of
+# an existing mysql database.
+########################################################################
+END
+      my $prompt = "Name for the webwork database:";
+      my $choices = '';
+      my $database = get_reply($print_me,$prompt,[],WW_DB);
+      my $exists = database_exists($mysql_root_password,$database,$server);
+      if($exists) {
+        print "\n\nSorry, Charlie. That database already exists. Let's try".
+          " this again.\n\n";
+        sleep(2);
+        get_webwork_database();
+      } else {
+        my $username = get_database_username(WWDB_USER);
+        my $password = get_database_password();
+        create_database( $server, $mysql_root_password, $database,
+            $username, $password );
+        return ($database,$server,$username,$password);
+      }
+    } elsif($new_or_existing eq 'Use an existing database') {
+      my $print_me =<<END;
+###################################################################
+# Ok, we can use an existing database.
+####################################################################
+END
+      my $prompt = "Name of the existing webwork database:";
+      my $database = get_reply($print_me,$prompt,[],WW_DB);
+      my $username = get_database_username(WWDB_USER);
+      my $password = get_database_password();
+      my $can_connect = connect_to_database($server,$database,$username,$password);
+      return ($database,$server,$username,$password) if $can_connect;
+      get_webwork_database(WW_DB);
     } else {
-        get_webwork_database($default);
+      get_webwork_database(WW_DB);
     }
-    return $answer;
 }
 
 sub get_dsn {
-    my $database = shift;
-    return "dbi:mysql:$database";
+    my ($database,$server) = @_;
+    return "dbi:mysql:$database;host=$server";
 }
 
 sub get_database_username {
     my $default  = shift;
     my $print_me = <<END;
-##############################################################################
-# Now we want to create a new mysql user with the necessary privileges on the 
-# webwork database, but no privileges on other tables.  An example is 
-# 'webworkWrite'.  But, you can use anything except 'root'.
-##############################################################################
+#############################################################################
+# Now we need new mysql user with the necessary privileges on the 
+# webwork database. For maximum security, this user should have no 
+# privileges on other tables.  So, 'root' is a bad choice. 
+#
+# If you created a new webwork database, we suggest creating a new user 
+# for that database. In that case, we will give that user the appropriate
+# privileges. 
+#
+# If you are using an existing database, we are expecting you to 
+# also use an existing database user here and we are expecting that this 
+# database user has appropriate privileges on that database.
+###############################################################################
 END
     my $prompt = "webwork database username:";
-    my $answer = $term->get_reply(
-        print_me => $print_me,
-        prompt   => $prompt,
-        default  => $default,
-    );
-
-    #has this been confirmed?
-    my $confirmed = confirm_answer($answer);
-    if ($confirmed) {
-        print "Thanks, got it, I'll use \"$answer\" \n";
-        return $answer;
-    } else {
-        get_database_username($default);
-    }
-
+    my $answer = get_reply($print_me,$prompt,[],$default);
 }
 
 sub get_database_password {
@@ -1569,25 +1666,20 @@ sub get_database_password {
 ##############################################################################
 # Now we need a password to identify the webwork database user.  Note that
 # this password will be written into one of the (plain text) config files
-# in webwork2/conf/.  It's important for security that this password not be
+# in webwork2/conf/.  So, it's important for security that this password not be
 # the same as the mysql root password.
-# Caution: The password will be echoed back as you type.
+#
+# If you created a new database and a new database user, then you can enter
+# any password you like here.
+#
+# If you are using an existing database and db user, then we are expecting you
+# to use the existing password for that user.
 ##############################################################################
 END
     my $prompt = "Please enter webwork database password:";
-    my $answer = $term->get_reply(
-        print_me => $print_me,
-        prompt   => $prompt,
-    );
-
-    #has this been confirmed?
-    if ($answer) {
-        return $answer;
-    } else {
-        get_database_password();
-    }
-
+    my $answer = get_reply($print_me,$prompt,[]);
 }
+
 
 #############################################################
 #
@@ -2064,24 +2156,9 @@ $mail{smtpSender} = get_smtp_sender(SMTP_SENDER);    #constant defined at top
 #(7) $database_dsn = "dbi:mysql:webwork";
 #(8) $database_username = "webworkWrite";
 #(9) $database_password = "";
-my $mysql_root_password = get_mysql_root_password();
-my $ww_db               = get_webwork_database(WW_DB);  #constant defined at top
-my $database_dsn        = get_dsn($ww_db);
-my $database_username =
-  get_database_username(WWDB_USER);                     #constant defined at top
-my $database_password = get_database_password();
+my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database(WW_DB);  #constant defined at top
 
-print <<EOF;
-#######################################################################
-#
-#  OK, now I'm going to create the webwork mysql database $ww_db. The webwork db
-#  user $database_username will have rights to modifiy tables of that database but
-#  no others.
-# 
-######################################################################
-EOF
-create_database( $database_dsn, $mysql_root_password, $ww_db,
-    $database_username, $database_password );
+my $database_dsn        = get_dsn($database_server,$ww_db);
 
 print <<EOF;
 #######################################################################
