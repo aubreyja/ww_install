@@ -1,6 +1,6 @@
 #!/bin/sh
 
-WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/db_reorg.zip
+WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/master.zip
 
 if [ -z "$TMPDIR" ]; then
     if [ -d "/tmp" ]; then
@@ -29,7 +29,7 @@ fi
 
 clean_exit () {
   [ -f $LOCALINSTALLER ] && rm $LOCALINSTALLER
-  [ -d $TMPDIR/ww_install-db_reorg/ ] && rm -rf $TMPDIR/ww_install-db_reorg/ 
+  [ -d $TMPDIR/ww_install-master/ ] && rm -rf $TMPDIR/ww_install-master/ 
   echo "Cleaning up...."
   exit $1
 }
@@ -40,7 +40,7 @@ $WWINSTALLDOWNLOAD
 echo "## Unzipping the installer"
 unzip $LOCALINSTALLER
 rm $LOCALINSTALLER
-cd ww_install-db_reorg/
+cd ww_install-master/
 
 source install_prerequisites.sh 
 wait
