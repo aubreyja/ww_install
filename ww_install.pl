@@ -1637,7 +1637,7 @@ END
 
 sub get_dsn {
     my ($database,$server) = @_;
-    return "dbi:mysql:$database;host=$server";
+    return "dbi:mysql:$database:$server";
 }
 
 sub get_database_username {
@@ -2158,7 +2158,7 @@ $mail{smtpSender} = get_smtp_sender(SMTP_SENDER);    #constant defined at top
 #(9) $database_password = "";
 my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database(WW_DB);  #constant defined at top
 
-my $database_dsn        = get_dsn($database_server,$ww_db);
+my $database_dsn        = get_dsn($ww_db,$database_server);
 
 print <<EOF;
 #######################################################################
