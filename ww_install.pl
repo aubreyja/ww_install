@@ -63,7 +63,7 @@ use DBI;
 
 use Term::UI;
 use Term::ReadLine;
-use Term::ReadPassword #to be found in lib/
+use Term::ReadPassword; #to be found in lib/
 
 
 #use Term::ReadKey;
