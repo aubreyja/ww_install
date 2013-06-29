@@ -264,7 +264,7 @@ sub run_command {
         timeout => IPC_CMD_TIMEOUT
       );
       my $cmd_string = join(' ',@$cmd);
-      writelog("Running ".$cmd_string.":\n");
+      writelog("Running [".$cmd_string."]:\n");
       writelog("STDOUT: ",@$stdout_buf) if @$stdout_buf;
       writelog("STDERR: ",@$stderr_buf) if @$stderr_buf;
       if (!$success) {
@@ -468,40 +468,36 @@ sub get_os {
         $os->{name} = "darwin";
         chomp( $os->{version} = `sw_vers -productVersion` );
         chomp( $os->{arch}    = `uname -p` );
-        print
-"Great, you're on Mac running OS X $$os{version} on $$os{arch} hardware.\n";
+        print_and_log("Great, you're on Mac running OS X $$os{version} on $$os{arch} hardware.");
     } elsif ( $^O eq "freebsd" ) {
         $os->{type} = "unix";
         $os->{name} = "freebsd";
         chomp( $os->{version} = `uname -r` );
         chomp( $os->{arch}    = `uname -p` );
-        print
-"I see - rocking it on FreeBSD $$os{version} on $$os{arch} hardware.\n";
+        print_and_log("I see - rocking it on FreeBSD $$os{version} on $$os{arch} hardware.");
     } elsif ( $^O eq "linux" )
     {    #Now we're going to have to look more closely to get specific distro
         $os->{type}    = "linux";
         $os->{name}    = distribution_name();
         $os->{version} = distribution_version();
         chomp( $os->{arch} = `uname -p` );
-        print "Linux, yay! That's my favorite. I see you're running $$os{name} "
-          . "version $$os{version} on $$os{arch} hardware. This will be easy.\n";
+        print_and_log("Linux, yay! That's my favorite. I see you're running $$os{name} "
+          . "version $$os{version} on $$os{arch} hardware. This will be easy.\n");
     } elsif ( $^O eq "MSWin32" ) {
-        print
-          "Installing WeBWorK on Windows is, afaik, currently impossible.\n";
-        die "If you get it working, please let us know. Good luck!";
+        print_and_log("Installing WeBWorK on Windows is, afaik, currently impossible.");
+        print_and_log("If you get it working, please let us know. Good luck!");
     } else {
         $os->{type}    = $^O;
         $os->{name}    = distribution_name();
         $os->{version} = distribution_version();
         chomp( $os->{arch} = `uname -p` );
-        print
-"I see you're running $$os{name} version $$os{version} on $$os{arch} hardware. "
+        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware. "
           . "This script mostly finds the information it needs at run time. But, there are a few "
           . "places where we have hard coded OS specific details into data structures built into the "
           . "script. We don't have anything for your OS. The script will very likely still work. Either "
           . "way, it would be very helpful if you could send a report to webwork\@maa.org. We can help you "
           . "get it working if it doesn't work, and if it does we would like to add it to the list of supported "
-          . "systems.\n";
+          . "systems.");
     }
     return $os;
 }
@@ -826,14 +822,14 @@ END
         if ( $confirmed && $exists ) {
             return $ww_admin;
         } elsif ( !$exists ) {
-            print "Hey, silly goose, that user doesn't exist!\n";
+            print_and_log("Hey, silly goose, that user doesn't exist!");
             get_wwadmin_user($envir);
         } else {
-            print "You didn't cofirm your last answer so let's try again.\n";
+            print_and_log("You didn't cofirm your last answer so let's try again.");
             get_wwadmin_user($envir);
         }
     } else {
-        print "Let's try again.\n";
+        print_and_log("Let's try again.");
         get_wwadmin_user($envir);
     }
 }
@@ -847,7 +843,7 @@ sub create_wwadmin_user {
     );
     my $exists_already = user_exists( $envir, $wwadmin );
     if ($exists_already) {
-        print "Sorry, that user already exists. Try again.\n";
+        print_and_log("Sorry, that user already exists. Try again.");
         get_wwadmin_user($envir);
     } else {
 
@@ -889,7 +885,7 @@ sub create_wwadmin_user {
                 get_wwadmin_user($envir);
             }
         } else {
-            print "Let's try again.\n";
+            print_and_log("Let's try again.");
             get_wwadmin_user($envir);
         }
     }
@@ -1227,7 +1223,7 @@ sub configure_externalPrograms {
 
     #Expects a list of applications
     my @applicationsList = @_;
-    print "\nChecking your system for executables required by WeBWorK...\n";
+    print_and_log("\nChecking your system for executables required by WeBWorK...\n");
 
     my $apps;
     foreach my $app (@applicationsList) {
@@ -1289,7 +1285,7 @@ END
     my $confirmed = 0;
     $confirmed = confirm_answer($repo);
     if ($confirmed) {
-        print "Got it, I'll download webwork2 from $repo.\n";
+        print_and_log("Got it, I'll download webwork2 from $repo.\n");
         return $repo;
     } else {
         get_webwork2_repo($default);
@@ -1309,7 +1305,7 @@ sub get_pg_repo {
     my $confirmed = 0;
     $confirmed = confirm_answer($repo);
     if ($confirmed) {
-        print "Got it, I'll download pg from $repo.\n";
+        print_and_log("Got it, I'll download pg from $repo.\n");
         return $repo;
     } else {
         get_pg_repo($default);
@@ -1328,7 +1324,7 @@ sub get_opl_repo {
     my $confirmed = 0;
     $confirmed = confirm_answer($repo);
     if ($confirmed) {
-        print "Got it, I'll download the OPL from $repo.\n";
+        print_and_log("Got it, I'll download the OPL from $repo.\n");
         return $repo;
     } else {
         get_opl_repo($default);
@@ -1392,7 +1388,7 @@ END
         die "Exiting...";
     }
     if ( $confirmed && !$fix ) {
-        print "Got it, I'll create $dir and install webwork there.\n";
+        print_and_log("Got it, I'll create $dir and install webwork there.\n");
 
         #print "\$confirmed = $confirmed and \$fix = $fix\n";
         return $dir;
@@ -1432,7 +1428,7 @@ END
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
     if ($confirmed) {
-        print "Thanks, got it, I'll use \"$answer\" \n";
+        print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
         get_root_url($default);
@@ -1471,7 +1467,7 @@ END
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
     if ($confirmed) {
-        print "Thanks, got it, I'll use \"$answer\" \n";
+        print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
         get_webwork_url($default);
@@ -1502,7 +1498,7 @@ END
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
     if ($confirmed) {
-        print "Thanks, got it, I'll use \"$answer\" \n";
+        print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
         get_smtp_server($default);
@@ -1527,7 +1523,7 @@ END
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
     if ($confirmed) {
-        print "Thanks, got it, I'll use \"$answer\" \n";
+        print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
         get_smtp_server($default);
@@ -1557,10 +1553,10 @@ sub connect_to_database {
     my $dbh = DBI->connect("dbi:mysql:database=$ww_db;host=$server", $ww_user, $ww_pw, { 'RaiseError' => 1 } );
   };
   if($@) {
-    print "Something's wrong: $@";
+    print_and_log("Something's wrong: $@");
     return 0;
   } else {
-    print "Connected to $ww_db on $server as $ww_user...\n";
+    print_and_log("Connected to $ww_db on $server as $ww_user...\n");
     return 1;
   }
 }
@@ -1573,7 +1569,7 @@ sub connect_to_database {
 
 sub get_mysql_root_password {
 
-  print <<END;
+  print_and_log(<<END);
 ############################################################################
 # Please enter the root mysql password. 
 #############################################################################
@@ -1585,10 +1581,10 @@ END
       $password = read_password('MySQL root password: ');
       $double_check = read_password('Please confirm MySQL root password: ') if $password;
       if($password eq $double_check)  {
-          print "MySQL root password confirmed.\n\n";
+          print_and_log("MySQL root password confirmed.\n\n");
           last;
        } else {
-          print "Sorry, the passwords you entered did not match.\n\n";
+          print_and_log("Sorry, the passwords you entered did not match.\n\n");
           redo;
         }
     }
@@ -1630,7 +1626,7 @@ END
     $default = 'Create a new database';
     my $new_or_existing = get_reply($print_me,$prompt,$choices,$default);     
     if($new_or_existing eq 'Create a new database') {
-      print<<END;
+      print_and_log(<<END);
 ###################################################################
 # Great, we'll create a new mysql database for webwork. To do so
 # we'll need the root mysql password.
@@ -1652,8 +1648,8 @@ END
       my $database = get_reply($print_me,$prompt,[],WW_DB);
       my $exists = database_exists($mysql_root_password,$database,$server);
       if($exists) {
-        print "\n\nSorry, Charlie. That database already exists. Let's try".
-          " this again.\n\n";
+        print_and_log("\n\nSorry, Charlie. That database already exists. Let's try".
+          " this again.\n\n");
         sleep(2);
         get_webwork_database();
       } else {
@@ -1768,7 +1764,7 @@ sub get_webwork {
     my $ww2_success = run_command($ww2_cmd);
 
     if ($ww2_success) {
-        print "fetched webwork2 successfully.\n";
+        print_and_log("Fetched webwork2 successfully.\n");
     } else {
         print_and_log("Couldn't get webwork2!");
     }
@@ -1822,10 +1818,9 @@ sub get_MathJax {
     my $cmd = [ $full_path, 'submodule', "update", "--init" ];
     my $success = run_command($cmd);
     if ($success) {
-        print "Downloaded MathJax to $webwork_dir/htdocs/mathjax\n";
+        print_and_log("Downloaded MathJax to $webwork_dir/htdocs/mathjax\n");
     } else {
-        warn
-"Could not download MathJax. You'll have to do this manually.\n";
+        print_and_log("Could not download MathJax. You'll have to do this manually.");
     }
 }
 
@@ -1838,12 +1833,12 @@ sub copy_classlist_files {
       or warn
 "Couldn't copy $webwork_dir/courses.dist/adminClasslist.lst to $courses_dir."
       . " You'll have to copy this over manually: $!";
-    print "copied adminClasslist.lst to $courses_dir\n";
+    print_and_log("Copied adminClasslist.lst to $courses_dir");
     copy( "$webwork_dir/courses.dist/defaultClasslist.lst", "$courses_dir" )
       or warn
 "Couldn't copy $webwork_dir/courses.dist/defaultClasslist.lst to $courses_dir."
       . " You'll have to copy this over manually: $!";
-    print "copied defaultClasslist.lst file to $courses_dir\n";
+    print_and_log("Copied defaultClasslist.lst file to $courses_dir\n");
 }
 
 sub symlink_model_course {
@@ -1855,13 +1850,10 @@ sub symlink_model_course {
     my $cmd = [ $full_path, '-s', $dist_path, $link_path ];
     my $success = run_command($cmd);
     if ($success) {
-        print
-"Symlinked $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse\n";
+        print_and_log("Symlinked $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse");
     } else {
-        warn
-"Could not symlink $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse.  You'll have to do this manually: $!";
-        warn
-"Could not copy modelCourse/ to $courses_dir/. You'll have to do this manually.\n";
+        print_and_log("Could not symlink $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse. ".
+                      "You'll have to do this manually: $!");
     }
 }
 
@@ -1874,15 +1866,16 @@ sub symlink_model_course {
 sub create_database {
     my ( $dsn, $root_pw, $ww_db, $ww_user, $ww_pw ) = @_;
     my $dbh = DBI->connect( 'DBI:mysql:database=mysql', 'root', $root_pw );
-    print "Connected to mysql as root...\n";
+    print_and_log("Connected to mysql as root...");
     $dbh->do("CREATE DATABASE $ww_db")
       or die "Could not create $ww_db database: $!\n";
-    print "Created $ww_db database...\n";
+    print_and_log("Created $ww_db database...");
     $dbh->do(
 "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON $ww_db.* TO $ww_user\@localhost IDENTIFIED BY '$ww_pw'"
       )
-      or die "Could not grant privileges to $ww_user on $ww_db database: $!\n";
-    print "Granted privileges...\n";
+      or (print_and_log("Could not grant privileges to $ww_user on $ww_db database: $!") && die);
+      
+    print_and_log("Granted privileges...");
     $dbh->disconnect();
 }
 
@@ -2026,9 +2019,9 @@ sub restart_apache {
     my $cmd = [ $apache->{binary}, 'restart' ];
     my $success = run_command($cmd);;
     if ($success) {
-        print "Apache successfully restarted.\n";
+        print_and_log("Apache successfully restarted.");
     } else {
-        warn "Could not restart apache.\n";
+        print_and_log("Could not restart apache.");
     }
 }
 
@@ -2087,7 +2080,7 @@ my $server_userID  = $apache->{user};
 my $server_groupID = $apache->{group};
 
 #Check perl prerequisites
-print <<EOF;
+print_and_log(<<EOF);
 ###################################################################
 #
 # Checking for required perl modules and external programs...
@@ -2110,7 +2103,7 @@ my $webwork_courses_dir = "$WW_PREFIX/courses";
 my $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 
-print <<EOF;
+print_and_log(<<EOF);
 #########################################################################
 #  At this point we need to make some access control decisions. 
 #  These decisions are important because they directly impact 
@@ -2158,7 +2151,7 @@ my ($ww_db,$database_server,$database_username,$database_password) = get_webwork
 
 my $database_dsn        = get_dsn($ww_db,$database_server);
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 #  Now I'm going to download the webwork code.  This will take a couple
@@ -2168,7 +2161,7 @@ print <<EOF;
 EOF
 get_webwork( $WW_PREFIX, $apps );
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 #
@@ -2181,7 +2174,7 @@ print <<EOF;
 EOF
 unpack_jsMath_fonts($webwork_dir);
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 #
@@ -2194,7 +2187,7 @@ print <<EOF;
 EOF
 get_MathJax($webwork_dir);
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 #  Now I'm going to copy some classlist files and the modelCourse/ dir from
@@ -2210,7 +2203,7 @@ copy_classlist_files( $webwork_dir, $webwork_courses_dir );
 #copy_model_course( $webwork_dir, $webwork_courses_dir );
 symlink_model_course( $webwork_dir, $webwork_courses_dir );
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 #
@@ -2239,7 +2232,7 @@ write_localOverrides_conf( $WW_PREFIX, "$webwork_dir/conf" );
 
 write_webwork_apache2_config("$webwork_dir");
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 # Well, that was easy.  Now i'm going to symlink webwork.apache2-config
@@ -2253,7 +2246,7 @@ symlink(
     $apache->{root} . "/conf.d/webwork.conf"
 );
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 # Sanity check: Let's make sure we can restart apache. 
@@ -2263,7 +2256,7 @@ EOF
 
 restart_apache($apache);
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 # Kay. Now I'm going to set up the OPL.  This could take a few...
@@ -2272,7 +2265,7 @@ print <<EOF;
 EOF
 setup_opl($WW_PREFIX);
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 # Creating admin course...
@@ -2282,7 +2275,7 @@ EOF
 create_admin_course($WW_PREFIX);
 
 if ( $wwadmin ne 'root' ) {
-    print <<EOF;
+    print_and_log(<<EOF);
 #######################################################################
 #
 #  Now I'm going to change the ownship of $WW_PREFIX and everything 
@@ -2307,7 +2300,7 @@ EOF
     }
 }
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 #  Now I'm going to change the ownship and permissions of some directories
@@ -2328,7 +2321,7 @@ change_data_dir_permissions(
     "$webwork_dir/logs", "$webwork_dir/tmp"
 );
 
-print <<EOF;
+print_and_log(<<EOF);
 #######################################################################
 #
 # Hey! I'm done!  
@@ -2340,7 +2333,7 @@ EOF
 
 restart_apache($apache);
 
-print <<EOF;
+print_and_log(<<EOF);
 Check it out at $server_root_url/webwork2! You can login to the 
 admin course with initial username and password 'admin'.  
 
@@ -2350,4 +2343,4 @@ EOF
 write_launch_browser_script( $installer_dir,
     'http://localhost' . $webwork_url );
 
-copy("webwork_install.log","$WW_PREFIX/webwork_install.log")
+copy("webwork_install.log","$WW_PREFIX/webwork_install.log") if -e 'webwork_install.log';
