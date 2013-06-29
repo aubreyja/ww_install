@@ -68,7 +68,7 @@ use Term::ReadPassword; #to be found in lib/
 
 
 #use Term::ReadKey;
-#use Data::Dumper;
+use Data::Dumper;
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
@@ -263,9 +263,10 @@ sub run_command {
         verbose => IPC_CMD_VERBOSE,
         timeout => IPC_CMD_TIMEOUT
       );
-      writelog("Running ".@$cmd.":\n");
-      writelog("STDOUT: ".@$stdout_buf) if @$stdout_buf;
-      writelog("STDERR: ".@$stderr_buf) if @$stderr_buf;
+      my $cmd_string = join(' ',@$cmd);
+      writelog("Running ".$cmd_string.":\n");
+      writelog("STDOUT: ",@$stdout_buf) if @$stdout_buf;
+      writelog("STDERR: ",@$stderr_buf) if @$stderr_buf;
       if (!$success) {
         writelog($error_message) if $error_message;
         my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
@@ -726,7 +727,7 @@ EOF
 
 sub check_root {
     if ( $> == 0 ) {
-        print "Running as root....\n";
+        print_and_log("Running as root....");
         return 1;
     } else {
 
@@ -1084,7 +1085,7 @@ sub change_data_dir_permissions {
 ####################################################################
 
 sub check_environment {
-    print <<EOF;
+    print_and_log(<<EOF);
 ###################################################################
 #
 # Getting basic information about your environment 
@@ -1094,13 +1095,14 @@ EOF
 
     my $envir;
     $envir->{host} = hostname;
-    print "And your hostname is " . $envir->{host} . "\n";
+    print_and_log("And your hostname is " . $envir->{host});
     $envir->{perl} = $^V;
-    print "You're running Perl " . $envir->{perl} . "\n";
+    print_and_log("You're running Perl " . $envir->{perl});
     my $timezone = DateTime::TimeZone->new( name => 'local' );
     $envir->{timezone} = $timezone->name;
-    print "Your timezone is " . $envir->{timezone} . "\n";
+    print_and_log("Your timezone is " . $envir->{timezone});
     $envir->{os}          = get_os();
+    print_and_log("Your OS is ".$envir->{os});
     $envir->{passwd_file} = "/etc/passwd" if -e "/etc/passwd";
     $envir->{group_file}  = "/etc/group" if -e "/etc/group";
 
@@ -1116,7 +1118,7 @@ EOF
 sub check_apache {
     my ( $envir, $apache22Layouts ) = @_;
 
-    print <<EOF;
+    print_and_log(<<EOF);
 ###################################################################
 #
 # Gathering information about Apache
@@ -1130,16 +1132,16 @@ EOF
       or die "Can't find Apache!\n";
 
     open( HTTPD, $apache->{binary} . " -V |" ) or die "Can't do this: $!";
-    print "Your apache start up script is at " . $apache->{binary} . "\n";
+    print_and_log("Your apache start up script is at " . $apache->{binary});
 
     #Get some information from apache2 -V
     while (<HTTPD>) {
         if ( $_ =~ /apache.(\d\.\d\.\d+)/i ) {
             $apache->{version} = $1;
-            print "Your apache version is " . $apache->{version} . "\n";
+            print_and_log("Your apache version is " . $apache->{version});
         } elsif ( $_ =~ /HTTPD_ROOT\=\"((\/\w+)+)\"$/ ) {
             $apache->{root} = File::Spec->canonpath($1);
-            print "Your apache server root is " . $apache->{root} . "\n";
+            print_and_log("Your apache server root is " . $apache->{root});
         } elsif ( $_ =~ /SERVER_CONFIG_FILE\=\"((\/)?(\w+\/)*(\w+\.?)+)\"$/ ) {
             $apache->{conf} = File::Spec->canonpath($1);
             my $is_absolute =
@@ -1150,7 +1152,7 @@ EOF
                 $apache->{conf} = File::Spec->canonpath(
                     $apache->{root} . "/" . $apache->{conf} );
             }
-            print "Your apache config file is " . $apache->{conf} . "\n";
+            print_and_log("Your apache config file is " . $apache->{conf});
         }
     }
     close(HTTPD);
@@ -1178,8 +1180,8 @@ EOF
         $apache->{user}  = $apache22Layouts->{$os_name}->{User};
         $apache->{group} = $apache22Layouts->{$os_name}->{Group};
     }
-    print "Apache runs as user " . $apache->{user} . "\n";
-    print "Apache runs in group " . $apache->{group} . "\n";
+    print_and_log("Apache runs as user " . $apache->{user});
+    print_and_log("Apache runs in group " . $apache->{group});
     return $apache;
 }
 
@@ -1193,9 +1195,9 @@ EOF
 sub check_modules {
     my @modulesList = @_;
 
-    print "\nChecking your \@INC for modules required by WeBWorK...\n";
+    print_and_log("\nChecking your \@INC for modules required by WeBWorK...\n");
     my @inc = @INC;
-    print "\@INC=";
+    print_and_log("\@INC=");
     print join( "\n", map( "     $_", @inc ) ), "\n\n";
 
     foreach my $module (@modulesList) {
@@ -1205,12 +1207,12 @@ sub check_modules {
             $file =~ s|::|/|g;
             $file .= ".pm";
             if ( $@ =~ /Can't locate $file in \@INC/ ) {
-                print "** $module not found in \@INC\n";
+                print_and_log("** $module not found in \@INC\n");
             } else {
-                print "** $module found, but failed to load: $@";
+                print_and_log("** $module found, but failed to load: $@");
             }
         } else {
-            print "   $module found and loaded\n";
+            print_and_log("   $module found and loaded\n");
         }
     }
 }
@@ -1231,13 +1233,14 @@ sub configure_externalPrograms {
     foreach my $app (@applicationsList) {
         $apps->{$app} = File::Spec->canonpath( can_run($app) );
         if ( $apps->{$app} ) {
-            print "   $app found at ${$apps}{$app}\n";
+            print_and_log("   $app found at ${$apps}{$app}\n");
             if ( $app eq 'lwp-request' ) {
                 delete $apps->{$app};
                 $apps->{checkurl} = "$app" . ' -d -mHEAD';
             }
         } else {
-            die "** $app not found in \$PATH\n";
+            print_and_log("** $app not found in \$PATH\n");
+            die;
         }
     }
     my ( undef, $netpbm_prefix, undef ) =
@@ -1316,7 +1319,6 @@ sub get_pg_repo {
 sub get_opl_repo {
     my $default = shift;
     my $repo    = $term->get_reply(
-
         #print_me => $print_me,
         prompt  => 'Where would you like to download the OPL from?',
         default => $default,
