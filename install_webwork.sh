@@ -46,7 +46,7 @@ unzip $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
 
-echo "Installing prerequisites..." 
+echo "Installing prerequisites..." >> webwork_install.log
 source install_prerequisites.sh 
 wait
 sudo perl ww_install.pl
