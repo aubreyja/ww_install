@@ -23,7 +23,7 @@ Usage
 Inspired by [perlbrew](http://perlbrew.pl), the following one liner is all you need to enter
 to go through the installation process:
 
-`wget -O - https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
+`wget -O - https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh | bash`
 
 For more control over the process you can clone this repository with
 
