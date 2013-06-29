@@ -15,10 +15,10 @@ fi
 echo "Working in $TMPDIR"
 cd $TMPDIR || exit 1
 
-exec >  >(tee -a webwork_install.log)
+exec 1>  >(tee -a webwork_install.log)
 exec 2> >(tee -a webwork_install.log >&2)
 
-LOCALINSTALLER="ww_install-$$.zip"
+LOCALINSTALLER="ww_install.zip"
 
 echo
 if type curl >/dev/null 2>&1; then
@@ -46,6 +46,7 @@ echo "## Unzipping the installer"
 unzip $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
+mv $TMPDIR/webwork_install.log .
 
 echo "Installing prerequisites..." >> webwork_install.log
 source install_prerequisites.sh 
@@ -59,6 +60,7 @@ if [ -f "launch_browser.sh" ]; then
   source launch_browser.sh
 fi
 
+move_install_log () {
 if [ -d "$WEBWORK_ROOT" ]; then
     sudo mv webwork_install.log $WEBWORK_ROOT/logs
     echo "webwork_install.log can be found in $WEBWORK_ROOT/logs"
@@ -69,7 +71,9 @@ else
     sudo mv webwork_install.log $TMPDIR
     echo "webwork_install.log can be found in $TMPDIR"
 fi
+}
 
 echo
-echo "## Done." 
+echo "## Done."
+move_install_log
 clean_exit 1
