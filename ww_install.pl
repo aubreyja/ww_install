@@ -2049,7 +2049,7 @@ sub write_launch_browser_script {
     open( my $out, ">", "launch_browser.sh" )
       or die "Can't open launch_browser.sh: $!";
     print $out "#!/usr/bin/env bash\n\n";
-    print $out "$browser $url 2>/dev/null\n";
+    print $out "$browser $url\n";
     close($out);
     chown $uid, $gid, "launch_browser.sh";
 }
