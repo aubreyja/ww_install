@@ -266,7 +266,6 @@ sub run_command {
       writelog("Running ".@$cmd.":\n");
       writelog("STDOUT: ".@$stdout_buf) if @$stdout_buf;
       writelog("STDERR: ".@$stderr_buf) if @$stderr_buf;
-      writelog(@$stderr_buf);
       if (!$success) {
         writelog($error_message) if $error_message;
         my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
@@ -1755,13 +1754,13 @@ sub get_webwork {
     chdir $prefix or die "Can't chdir to $prefix";
     my $ww2_repo =
       get_webwork2_repo(WEBWORK2_REPO);   #WEBWORK2_REPO constant defined at top
-    my $ww2_cmd = $apps->{git} . " clone " . $ww2_repo;
+    my $ww2_cmd = [$apps->{git},'clone',$ww2_repo];
 
     my $pg_repo = get_pg_repo(PG_REPO);    #PG_REPO constant defined at top
-    my $pg_cmd = $apps->{git} . " clone " . $pg_repo;
+    my $pg_cmd = [$apps->{git},'clone',$pg_repo];
 
     my $opl_repo = get_opl_repo(OPL_REPO);    #OPL_REPO constant defined at top
-    my $opl_cmd = $apps->{git} . " clone " . $opl_repo;
+    my $opl_cmd = [$apps->{git},'clone',$opl_repo];
 
     my $buffer;
     my $ww2_success = run_command($ww2_cmd);
