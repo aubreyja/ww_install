@@ -20,7 +20,7 @@ On these systems it did install webwork.
 Usage
 -------
 
-Inspired by [perlbrew](http://perlbrew.pl), I wrote it so that the following one liner is all you need to enter
+Inspired by [perlbrew](http://perlbrew.pl), the following one liner is all you need to enter
 to go through the installation process:
 
 `wget -O - https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
@@ -30,6 +30,9 @@ For more control over the process you can clone this repository with
 `git clone https://github.com/aubreyja/ww_install.git`
 
 and then run the scripts individually as needed.
+
+Contents
+--------
 
 ### install_webwork.sh
 
@@ -59,6 +62,8 @@ well on unix machines. Again, contributions of work in this direction would be w
 ### iptables_rules.sh
 
 The `iptables_rules.sh` script sets up a firewall which only allows network services necessary for running WeBWorK.
+This script is not currently hooked into the other scripts, so you'll need to run this separately as root if you
+want to use it to set up a firewall.
 
 ### Other files
 
