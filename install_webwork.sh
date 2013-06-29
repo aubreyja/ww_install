@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BRANCH=add_logging
+BRANCH=master
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.zip
 
 if [ -z "$TMPDIR" ]; then
@@ -11,11 +11,12 @@ if [ -z "$TMPDIR" ]; then
     fi
 fi
 
-exec >  >(tee -a webwork_install.log)
-exec 2> >(tee -a webwork_install.log >&2)
 
 echo "Working in $TMPDIR"
 cd $TMPDIR || exit 1
+
+exec >  >(tee -a webwork_install.log)
+exec 2> >(tee -a webwork_install.log >&2)
 
 LOCALINSTALLER="ww_install-$$.zip"
 
