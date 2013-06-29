@@ -2297,11 +2297,11 @@ EOF
     my $cmd = [ $chmod, '-R', 'u+rwX,go+rX', $WW_PREFIX ];
     my $success = run_command($cmd);;
     if ($success) {
-        print
-"Changed the ownship of $WW_PREFIX and everything under it to $wwadmin:$wwadmin"
-          . " with permissions u+rwX,go+rwX\n";
+        print_and_log("Changed the ownship of $WW_PREFIX and ".
+                      "everything under it to $wwadmin:$wwadmin ".
+                      "with permissions u+rwX,go+rwX\n");
     } else {
-        print "Couldn't change ownership of $WW_PREFIX.";
+        print_and_log("Couldn't change ownership of $WW_PREFIX.");
     }
 }
 
@@ -2347,3 +2347,5 @@ EOF
 
 write_launch_browser_script( $installer_dir,
     'http://localhost' . $webwork_url );
+
+copy("webwork_install.log","$WW_PREFIX/webwork_install.log")

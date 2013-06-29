@@ -1,6 +1,7 @@
 #!/bin/sh
 
-WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/master.zip
+BRANCH=add_logging
+WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.zip
 
 if [ -z "$TMPDIR" ]; then
     if [ -d "/tmp" ]; then
@@ -29,7 +30,7 @@ fi
 
 clean_exit () {
   [ -f $LOCALINSTALLER ] && rm $LOCALINSTALLER
-  [ -d $TMPDIR/ww_install-master/ ] && rm -rf $TMPDIR/ww_install-master/ 
+  [ -d $TMPDIR/ww_install-$BRANCH/ ] && rm -rf $TMPDIR/ww_install-$BRANCH/ 
   echo "Cleaning up...."
   exit $1
 }
@@ -40,7 +41,7 @@ $WWINSTALLDOWNLOAD
 echo "## Unzipping the installer"
 unzip $LOCALINSTALLER
 rm $LOCALINSTALLER
-cd ww_install-master/
+cd ww_install-$BRANCH/
 
 source install_prerequisites.sh 
 wait
