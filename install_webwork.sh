@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 BRANCH=master
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.zip
