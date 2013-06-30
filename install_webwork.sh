@@ -14,8 +14,7 @@ fi
 
 cd $TMPDIR || exit 1
 
-exec 1>  >(tee -a webwork_install.log)
-exec 2> >(tee -a webwork_install.log >&2)
+exec 1> >(tee -a webwork_install.log) 2> >(tee -a webwork_install.log >&2)
 
 date
 echo "
@@ -73,9 +72,8 @@ sudo perl ww_install.pl
 wait
 
 if [ -f "launch_browser.sh" ]; then
-  echo "Running launch_browser.sh:"
-  cat launch_browser.sh >> webwork_install.log
-  source launch_browser.sh 2>> webwork_install.log
+  echo "Running launch_browser.sh"
+  source launch_browser.sh 
 fi
 
 move_install_log () {
