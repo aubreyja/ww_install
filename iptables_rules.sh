@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #Delete all existing rules
 iptables -F
