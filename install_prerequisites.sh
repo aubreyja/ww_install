@@ -25,10 +25,10 @@ then
   if [ -e "/etc/fedora-release" ]
   then
     printf "%b" "# We've got fedora"
-    $MYSQLSTART='sudo service start mysqld.service'
+    MYSQLSTART='sudo service start mysqld.service'
   else 
     printf "%b" "# We've got a version of redhat which is not fedora"
-    $MYSQLSTART='sudo service mysqld start'
+    MYSQLSTART='sudo service mysqld start'
     printf "%b" "# Adding EPEL repository...."
     add_epel
   fi
