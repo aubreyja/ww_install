@@ -1,5 +1,25 @@
 #!/bin/sh
 
+add_epel () {
+    ARCH=$(uname -m)
+    MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
+    sudo cat <<EOM >/etc/yum.repos.d/epel-bootstrap.repo
+[epel]
+name=Bootstrap EPEL
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$MAJORVER&arch=$ARCH
+failovermethod=priority
+enabled=0
+gpgcheck=0
+EOM
+    sudo yum --enablerepo=epel -y install epel-release
+    sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
+}
+
+yum_install () {
+  sudo yum update -y
+	sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server perl-DateTime perl-Email-Address perl-GD perl-GDGraph perl-LDAP perl-libapreq2 perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-PHP-Serialization perl-PadWalker perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote perl-Tie-IxHash system-config-services tex-preview uuid-perl perl-IPC-Cmd perl-Term-UI git subversion perl-Exception-Class perl-Net-IP perl-XML-Parser
+}
+
 if [ -e "/etc/redhat-release" ]
 then
   if [ -e "/etc/fedora-release" ]
@@ -46,23 +66,4 @@ else
     echo "I don't know what packages you need.  Fork me to fix this!"
 fi
 
-add_epel () {
-    ARCH=$(uname -m)
-    MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
-    sudo cat <<EOM >/etc/yum.repos.d/epel-bootstrap.repo
-[epel]
-name=Bootstrap EPEL
-mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$MAJORVER&arch=$ARCH
-failovermethod=priority
-enabled=0
-gpgcheck=0
-EOM
-    sudo yum --enablerepo=epel -y install epel-release
-    sudo rm -f /etc/yum.repos.d/epel-bootstrap.repo
-}
-
-yum_install () {
-  sudo yum update -y
-	sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server perl-DateTime perl-Email-Address perl-GD perl-GDGraph perl-LDAP perl-libapreq2 perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-PHP-Serialization perl-PadWalker perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote perl-Tie-IxHash system-config-services tex-preview uuid-perl perl-IPC-Cmd perl-Term-UI git subversion perl-Exception-Class perl-Net-IP perl-XML-Parser
-}
 
