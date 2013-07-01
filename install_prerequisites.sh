@@ -30,11 +30,11 @@ then
   else 
     printf "%b" "# We've got a version of redhat which is not fedora"
     MYSQLSTART='sudo service mysqld start'
-    CPANOPT=''
+    #CPANOPT=''
     printf "%b" "# Adding EPEL repository...."
-    add_epel ()
+    add_epel
   fi
-  yum_install ()
+  yum_install
   sudo cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template
   $MYSQLSTART
   sudo /usr/bin/mysql_secure_installation
