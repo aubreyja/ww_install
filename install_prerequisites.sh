@@ -16,8 +16,8 @@ EOM
 }
 
 yum_install () {
-  sudo yum update -y
-	sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server perl-DateTime perl-Email-Address perl-GD perl-GDGraph perl-LDAP perl-libapreq2 perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-PHP-Serialization perl-PadWalker perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote perl-Tie-IxHash system-config-services tex-preview uuid-perl perl-IPC-Cmd perl-Term-UI git subversion perl-Exception-Class perl-Net-IP perl-XML-Parser
+  sudo yum -y update
+	sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server perl-CPAN perl-DateTime perl-Email-Address perl-GD perl-GDGraph perl-LDAP perl-libapreq2 perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-PHP-Serialization perl-PadWalker perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote perl-Tie-IxHash system-config-services tex-preview uuid-perl perl-IPC-Cmd perl-Term-UI git subversion perl-Exception-Class perl-Net-IP perl-XML-Parser
 }
 
 if [ -e "/etc/redhat-release" ]
@@ -26,16 +26,18 @@ then
   then
     printf "%b" "# We've got fedora"
     MYSQLSTART='sudo service start mysqld.service'
+    CPANOPT='-j lib/cpan_config.pm'
   else 
     printf "%b" "# We've got a version of redhat which is not fedora"
     MYSQLSTART='sudo service mysqld start'
+    CPANOPT=''
     printf "%b" "# Adding EPEL repository...."
-    add_epel
+    add_epel ()
   fi
-    yum_install
-    sudo cpan -j lib/cpan_config.pm XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template
-    $MYSQLSTART
-    sudo /usr/bin/mysql_secure_installation
+  yum_install ()
+  sudo cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template
+  $MYSQLSTART
+  sudo /usr/bin/mysql_secure_installation
 elif [ -e "/etc/debian_version" ]
 then
     sudo apt-get -y update
