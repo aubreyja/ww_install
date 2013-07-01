@@ -1973,9 +1973,30 @@ sub write_webwork_apache2_config {
 ##########################################################
 
 sub configure_shell {
+    my ($WW_PREFIX, $wwadmin) = @_;
 
+    #We want to configure the shell of the wwadmin user, root, and the user that logged in.
     #export PATH=$PATH:/opt/webwork/webwork2/bin
     #export WEBWORK_ROOT=/opt/webwork/webwork2
+    
+    my $user = $ENV{SUDO_USER};
+    my @users = ('root',$wwadmin,$user);
+    my @unique = do { my %seen; grep { !$seen{$_}++ } @users };
+    foreach(@unique) {
+        #Remember that we used User::pwent which overrides the builtin pw* functions.
+        my $pw  = getpwnam($_);
+        my $dir = $pw->dir;
+        if (-f "$dir/.bashrc") {
+            copy("$dir/.bashrc","$dir/.bashrc.bak");
+            open(my $bashrc,'>>',"$dir/.bashrc" ) or warn "Couldn't open $dir/.bashrc: $!";
+            print $bashrc "export PATH=\$PATH:$WW_PREFIX/webwork2/bin";
+            print_and_log("Added 'export PATH=\$PATH:$WW_PREFIX/webwork2/bin' to $dir/.bashrc");
+            print $bashrc "export WEBWORK_ROOT=$WW_PREFIX/webwork2";
+            print_and_log("Added 'export WEBWORK_ROOT=$WW_PREFIX/webwork2' to $dir/.bashrc");
+            close($bashrc);
+        }
+        $ENV{'WEBWORK_ROOT'}="$WW_PREFIX/webwork2";
+    }
 }
 
 sub setup_opl {
@@ -2343,4 +2364,5 @@ EOF
 write_launch_browser_script( $installer_dir,
     'http://localhost' . $webwork_url );
 
-copy("webwork_install.log","$WW_PREFIX/webwork_install.log") if -e 'webwork_install.log';
+configure_shell($WW_PREFIX,$wwadmin);
+copy("webwork_install.log","$WW_PREFIX/webwork_install.log") if -f 'webwork_install.log';
