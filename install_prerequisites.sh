@@ -17,7 +17,16 @@ EOM
 
 yum_install () {
     sudo yum -y update
-    sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server perl-CPAN perl-DateTime perl-Email-Address perl-GD perl-GDGraph perl-LDAP perl-libapreq2 perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-PHP-Serialization perl-PadWalker perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote perl-Tie-IxHash system-config-services tex-preview uuid-perl perl-IPC-Cmd perl-Term-UI git subversion perl-Exception-Class perl-Net-IP perl-XML-Parser
+    sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server 
+    sudo yum -y install netpbm tex-preview git subversion system-config-services
+    sudo yum -y install perl-CPAN perl-DateTime perl-Email-Address 
+    sudo yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
+    sudo yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender 
+    sudo yum -y install perl-PHP-Serialization perl-PadWalker 
+    sudo yum -y install perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote 
+    sudo yum -y install perl-Tie-IxHash uuid-perl perl-IPC-Cmd perl-Term-UI 
+    sudo yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser
+    sudo yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
 }
 
 if [ -e "/etc/redhat-release" ]
