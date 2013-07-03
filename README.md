@@ -20,16 +20,22 @@ On these systems it did install webwork.
 Usage
 -------
 
-Inspired by [perlbrew](http://perlbrew.pl), the following one liner is all you need to enter
-to go through the installation process:
+To install [WeBWorK](https://github.com/openwebwork):
 
-`wget -O - https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh | bash`
+1. Get the `install_webwork.sh` script:
 
-or, if you don't have wget
+  `wget https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
+  
+  or if you prefer
+  
+  `curl -ksSO https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
 
-`curl -L https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh | bash`
+2. As root (or with sudo) do
 
-Note that you must be a sudoer with administrative rights for this to work. If not, run this command as root.
+  `bash install_webwork.sh`
+
+Note that if you use sudo, then you must be a sudoer with sufficient administrative rights 
+(probabaly `ALL=(ALL) ALL`) for `install_webwork.sh` to work properly. If not, run this command as root.
 
 For more control over the process you can clone this repository with
 
