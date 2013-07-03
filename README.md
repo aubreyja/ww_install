@@ -25,6 +25,10 @@ to go through the installation process:
 
 `wget -O - https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh | bash`
 
+or, if you don't have wget
+
+`curl -L https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh | bash`
+
 Note that you must be a sudoer with administrative rights for this to work. If not, run this command as root.
 
 For more control over the process you can clone this repository with

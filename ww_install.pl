@@ -742,6 +742,17 @@ EOF
     }
 }
 
+sub get_selinux {
+    my $selinux_status;
+    my $selinux = can_run('selinuxenabled');
+    if ($selinux) {
+        $selinux_status = run_command($selinux);
+    }
+    
+}
+sub disable_selinux {
+    
+}
 sub get_wwadmin_user {
     my $envir    = shift;
     my $print_me = <<END;

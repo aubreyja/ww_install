@@ -16,27 +16,30 @@ EOM
 }
 
 yum_install () {
-  sudo yum -y update
-	sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server perl-CPAN perl-DateTime perl-Email-Address perl-GD perl-GDGraph perl-LDAP perl-libapreq2 perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-PHP-Serialization perl-PadWalker perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote perl-Tie-IxHash system-config-services tex-preview uuid-perl perl-IPC-Cmd perl-Term-UI git subversion perl-Exception-Class perl-Net-IP perl-XML-Parser
+    sudo yum update
+    sudo yum install dvipng gcc libapreq2 mod_perl mysql-server perl-CPAN perl-DateTime perl-Email-Address perl-GD perl-GDGraph perl-LDAP perl-libapreq2 perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-PHP-Serialization perl-PadWalker perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote perl-Tie-IxHash system-config-services tex-preview uuid-perl perl-IPC-Cmd perl-Term-UI git subversion perl-Exception-Class perl-Net-IP perl-XML-Parser
 }
 
 if [ -e "/etc/redhat-release" ]
 then
   if [ -e "/etc/fedora-release" ]
   then
-    printf "%b" "# We've got fedora"
-    MYSQLSTART='sudo service start mysqld.service'
+    printf "%b\n" "# We've got Fedora"
+    MYSQLSTART='sudo systemctl start mysqld.service'
+    MYSQLENABLE='sudo systemctl enable mysqld.service'
     CPANOPT='-j lib/cpan_config.pm'
   else 
-    printf "%b" "# We've got a version of redhat which is not fedora"
+    printf "%b\n" "# We've got a relative of RedHat which is not Fedora"
     MYSQLSTART='sudo service mysqld start'
+    MYSQLENABLE='sudo chkconfig mysqld on'
     #CPANOPT=''
-    printf "%b" "# Adding EPEL repository...."
+    printf "%b\n" "# Adding EPEL repository...."
     add_epel
   fi
   yum_install
   sudo cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template
   $MYSQLSTART
+  $MYSQLENABLE
   sudo /usr/bin/mysql_secure_installation
 elif [ -e "/etc/debian_version" ]
 then
