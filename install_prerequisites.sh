@@ -18,7 +18,7 @@ EOM
 yum_install () {
     sudo yum -y update
     sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server 
-    sudo yum -y install netpbm tex-preview git subversion system-config-services
+    sudo yum -y install netpbm netpbm-progs tex-preview git subversion system-config-services
     sudo yum -y install perl-CPAN perl-DateTime perl-Email-Address 
     sudo yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
     sudo yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender 
@@ -36,11 +36,15 @@ then
     printf "%b\n" "# We've got Fedora"
     MYSQLSTART='sudo systemctl start mysqld.service'
     MYSQLENABLE='sudo systemctl enable mysqld.service'
+    APACHESTART='sudo systemctl start httpd.service'
+    APACHEENABLE='sudo systemctl enable httpd.service'
     CPANOPT='-j lib/cpan_config.pm'
   else 
     printf "%b\n" "# We've got a relative of RedHat which is not Fedora"
     MYSQLSTART='sudo service mysqld start'
     MYSQLENABLE='sudo chkconfig mysqld on'
+    APACHESTART='sudo service httpd start'
+    APACHEENABLE='sudo chkconfig httpd on'
     #CPANOPT=''
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
@@ -49,6 +53,8 @@ then
   sudo cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template
   $MYSQLSTART
   $MYSQLENABLE
+  $APACHESTART
+  $APACHEENABLE
   sudo /usr/bin/mysql_secure_installation
 elif [ -e "/etc/debian_version" ]
 then
