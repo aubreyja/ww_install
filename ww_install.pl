@@ -743,16 +743,73 @@ EOF
 }
 
 sub get_selinux {
-    my $selinux_status;
-    my $selinux = can_run('selinuxenabled');
-    if ($selinux) {
-        $selinux_status = run_command($selinux);
+    my $enabled;
+    my $disable;
+    my $full_path = can_run('selinuxenabled');
+    if($full_path) {
+	my $cmd = [$full_path];
+        $enabled = run(
+          command => $cmd,
+          verbose => IPC_CMD_VERBOSE,
+          timeout => IPC_CMD_TIMEOUT
+        );
+     }
+    if($enabled) {
+	my $print_me=<<END;
+######################################
+#
+# This machine appears to have SELinux
+# enabled.  We strongly recommend disabling
+# SELinux. If you choose not to disable
+# SELinux then webwork will not work
+# properly unless you can devise a 
+# SELinux policy that allows it to do
+# what it needs to function.
+#
+# If you choose to disable SELinux I
+# will set it to permissive mode for
+# this session and replace /etc/selinux/config
+# with a config file that will disable
+# SELinux permanently after a reboot.
+#
+#######################################
+END
+       $disable = $term->ask_yn(
+  	    print_me => $print_me,
+	    prompt => 'Disable SELinux?',
+	    default => 'y',
+        ); 
+        my $confirmed = confirm_answer($disable);
+        get_selinux() unless $confirmed;
     }
-    
+    disable_selinux() if $disable;
+    print_and_log("Good, SELinux not enabled.\n") unless $enabled;
+    print_and_log("You've been warned!\n") if $enabled && !$disable;
 }
+
 sub disable_selinux {
-    
+    print_and_log("You've chosen to disable SELinux. Good choice."); 
+    my $full_path = can_run('getenforce');
+    my $cmd = [$full_path,"0"]; #set SELinux in permissive mode
+    my $success = run_command($cmd);      
+    copy('/etc/selinux/config','/etc/selinux/config.bak')
+	or die "Couldn't make a backup of /etc/selinux/config: $!";
+    copy('conf/webwork_selinux_config','/etc/selinux/config')
+	or die "Couldn't copy conf/webwork_selinux_config to /etc/selinux/config: $!";
+    print_and_log(<<END);
+######################################################
+#
+# I have set SELinux to permissive mode for this session
+# and replaced /etc/selinux/config with a config file that
+# will permanently disable selinux.
+#
+# After this installation completes, you must reboot the
+# machine to permanently disable SELinux
+#
+# ###################################################### 
+END
 }
+
 sub get_wwadmin_user {
     my $envir    = shift;
     my $print_me = <<END;
@@ -2101,6 +2158,9 @@ get_ready();
 #Check if user is running script as root
 check_root();
 
+#Deal with SELinux
+get_selinux();
+
 #Get os, host, perl version, timezone
 my $envir = check_environment();
 my %siteDefaults;
@@ -2354,11 +2414,11 @@ change_data_dir_permissions(
 );
 
 print_and_log(<<EOF);
-#######################################################################
+######################################################
 #
 # Hey! I'm done!  
 #
-#######################################################################
+#######################################################
 
 Restarting apache...
 EOF
