@@ -50,7 +50,7 @@ then
     add_epel
   fi
   yum_install
-  sudo cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template
+  sudo cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization
   $MYSQLSTART
   $MYSQLENABLE
   $APACHESTART
