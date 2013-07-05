@@ -7,6 +7,7 @@ config files, and perl modules designed to work together install the open source
 
 It's been lightly tested on
 
+* [CentOS 6.4](http://wiki.centos.org/Download) (7/2013)
 * [Fedora 17 (Beefy Miracle)](http://docs.fedoraproject.org/en-US/Fedora/17/html/Release_Notes/) (11/2012)
 * [Debian 7.0 (Wheezy) GNU/Linux](http://www.debian.org/releases/wheezy/) (6/2013)
 
@@ -16,6 +17,9 @@ It's been moderately well tested on
 * [Ubuntu 13.04 (Raring Ringtail)](http://releases.ubuntu.com/raring/) (6/2013)
 
 On these systems it did install webwork. 
+
+Note that at this time (7/2013) WeBWorK does not work on Fedora 18 due to
+changes in Apache 2.4.4 and mod_perl 2.0.8.
 
 Usage
 -------
