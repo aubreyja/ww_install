@@ -789,7 +789,7 @@ END
 
 sub disable_selinux {
     print_and_log("You've chosen to disable SELinux. Good choice."); 
-    my $full_path = can_run('getenforce');
+    my $full_path = can_run('setenforce');
     my $cmd = [$full_path,"0"]; #set SELinux in permissive mode
     my $success = run_command($cmd);      
     copy('/etc/selinux/config','/etc/selinux/config.bak')
