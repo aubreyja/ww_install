@@ -2,6 +2,7 @@
 
 BRANCH=master
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.zip
+THISDIR="$( pwd )"
 
 if [ -z "$TMPDIR" ]; then
     if [ -d "/tmp" ]; then
@@ -50,9 +51,10 @@ else
 fi
 
 clean_exit () {
+  echo "Cleaning up..."
   [ -f $LOCALINSTALLER ] && rm $LOCALINSTALLER
-  [ -d $TMPDIR/ww_install-$BRANCH/ ] && rm -rf $TMPDIR/ww_install-$BRANCH/ 
-  echo "Cleaning up...."
+  [ -d $TMPDIR/ww_install-$BRANCH/ ] && rm -rf $TMPDIR/ww_install-$BRANCH/
+  [ -f $THISDIR/install_webwork.sh ] && rm $THISDIR/install_webwork.sh
   exit $1
 }
 
