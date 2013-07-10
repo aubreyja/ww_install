@@ -16,8 +16,8 @@ EOM
 }
 
 yum_install () {
-    sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server 
-    sudo yum -y install netpbm netpbm-progs tex-preview git subversion system-config-services
+    sudo yum -y install make patch gcc libapreq2 mod_perl mysql-server 
+    sudo yum -y install dvipng netpbm netpbm-progs tex-preview git subversion system-config-services
     sudo yum -y install perl-CPAN perl-DateTime perl-Email-Address 
     sudo yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
     sudo yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender 
