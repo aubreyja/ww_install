@@ -16,7 +16,6 @@ EOM
 }
 
 yum_install () {
-    sudo yum -y update
     sudo yum -y install dvipng gcc libapreq2 mod_perl mysql-server 
     sudo yum -y install netpbm netpbm-progs tex-preview git subversion system-config-services
     sudo yum -y install perl-CPAN perl-DateTime perl-Email-Address 
@@ -27,6 +26,25 @@ yum_install () {
     sudo yum -y install perl-Tie-IxHash uuid-perl perl-IPC-Cmd perl-Term-UI 
     sudo yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser
     sudo yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
+}
+
+apt_get_install () {
+    APTOPTS='-y --allow-unauthenticated'
+    sudo apt-get $APTOPTS install gcc make
+    sudo apt-get $APTOPTS install git subversion
+    sudo apt-get $APTOPTS install perl perl-modules 
+    sudo apt-get $APTOPTS install dvipng netpbm unzip
+    sudo apt-get $APTOPTS install preview-latex-style texlive 
+    sudo apt-get $APTOPTS install mysql-server openssh-server
+    sudo apt-get $APTOPTS install apache2 apache2-mpm-prefork apache2.2-common libapreq2 libapache2-request-perl 
+    sudo apt-get $APTOPTS install libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl 
+    sudo apt-get $APTOPTS install libexception-class-perl libextutils-xsbuilder-perl libgd-gd2-perl 
+    sudo apt-get $APTOPTS install liblocale-maketext-lexicon-perl libmime-tools-perl libnet-ip-perl 
+    sudo apt-get $APTOPTS install libnet-ldap-perl libnet-oauth-perl libossp-uuid-perl libpadwalker-perl 
+    sudo apt-get $APTOPTS install libphp-serialization-perl libsoap-lite-perl libsql-abstract-perl 
+    sudo apt-get $APTOPTS install libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl 
+    sudo apt-get $APTOPTS install libxml-writer-perl libpod-wsdl-perl libjson-perl libtext-csv-perl 
+    sudo apt-get $APTOPTS install libhtml-scrubber-perl 
 }
 
 if [ -e "/etc/redhat-release" ]
@@ -49,6 +67,7 @@ then
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
   fi
+  sudo yum -y update
   yum_install
   sudo cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization
   $MYSQLSTART
@@ -60,7 +79,7 @@ elif [ -e "/etc/debian_version" ]
 then
     sudo apt-get -y update
     sudo apt-get -y upgrade
-    sudo apt-get -y install apache2 apache2-mpm-prefork apache2.2-common libapreq2 dvipng gcc perl perl-modules libapache2-request-perl git libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl libexception-class-perl libextutils-xsbuilder-perl libgd-gd2-perl liblocale-maketext-lexicon-perl libmime-tools-perl libnet-ip-perl libnet-ldap-perl libnet-oauth-perl libossp-uuid-perl libpadwalker-perl libphp-serialization-perl libsoap-lite-perl libsql-abstract-perl libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl libxml-writer-perl libpod-wsdl-perl libjson-perl libtext-csv-perl libhtml-scrubber-perl make mysql-server netpbm openssh-server preview-latex-style subversion texlive unzip
+    apt_get_install
     sudo cpan -j lib/cpan_config.pm XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
     sudo a2enmod apreq
     sudo apache2ctl restart
