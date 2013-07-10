@@ -18,7 +18,7 @@ It's been moderately well tested on
 
 On these systems it did install webwork. 
 
-Note that at this time (7/2013) WeBWorK does not work on Fedora 18 due to
+Note that at this time (7/2013) WeBWorK does not work on Fedora 18 or 19 due to
 changes in Apache 2.4.4 and mod_perl 2.0.8.
 
 Usage
