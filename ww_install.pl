@@ -1,74 +1,39 @@
 #!/usr/bin/env perl
-###############################################################################
-#WeBWorK Installation Script
-#
-#Goals:
-#(1) interactively install webwork on any machine on which the prerequisites are installed
-#(2) do as much as possible for the user, finding paths, writing config files, etc.
-#(3) never use anything other than core perl modules, webwork modules, webwork prerequisite modules
-#(4) eventually add options for --nointeractive, --with-svn, other?
-#
-#How it works
-#(1) check if running as root
-#(2) Have you downloaded webwork already?
-#--if so, where is webwork2/, pg/, NationalProblemLibrary/?
-#--if not, do you want me to get the software for you via svn?
-#(3) check prerequisites, using this opportunity to populate %externalPrograms hash, and gather
-#environment information: $server_userID, $server_groupID, hostname?, timezone?
-#(4) Initially ask user minimum set of config questions:
-#-Directory root PREFIX
-#--accept standard webwork layout below PREFIX? (later)
-#-$server_root_url   = "";  # e.g.  http://webwork.yourschool.edu (default from hostname lookup in (2))
-#-$server_userID     = "";  # e.g.  www-data    (default from httpd.conf lookup in (2))
-#-$server_groupID    = "";  # e.g.  wwdata      (default from httpd.conf lookup in (2))
-#-$mail{smtpServer}            = 'mail.yourschool.edu';
-#-$mail{smtpSender}            = 'webwork@yourserver.yourschool.edu';
-#-$mail{smtpTimeout}           = 30;
-#-database root password
-#-$database_dsn = "dbi:mysql:webwork";
-#-$database_username = "webworkWrite";
-#-$database_password = "";
-#-$siteDefaults{timezone} = "America/New_York";
-#(5) Put software in correct locations
-#(6) use gathered information to write initial global.conf file, webwork.apache2-config,database.conf,
-#wwapache2ctl,
-#(7) check and fix filesystem permissions in webwork2/ tree
-#(8) Create initial database user, initial mysql tables
-#(9) Create admin course
-#(10) append include statement to httpd.conf to pick up webwork.apache2-config
-#(11) restart apache, check for errors
-#(12) Do some testing!
-#############################################################################
 
 use strict;
 use warnings;
+
 use lib 'lib';
 
 use Config;
+use Cwd;
+
+use Data::Dumper;
+use DateTime;
+use DateTime::TimeZone;    #non-core!
+use DBI;
 
 use File::Path qw(make_path);
 use File::Spec;
 use File::Copy;
 #use File::CheckTree;
-use Cwd;
+
+use GetOpt::Long;
 
 use IPC::Cmd qw(can_run run);
 
-use Sys::Hostname;
-use User::pwent;
 use List::Util qw(max);
 
-use DateTime;
-use DateTime::TimeZone;    #non-core!
-use DBI;
+use Pod::Usage;
+
+use Sys::Hostname;
 
 use Term::UI;
 use Term::ReadLine;
 use Term::ReadPassword; #to be found in lib/
 
+use User::pwent;
 
-#use Term::ReadKey;
-use Data::Dumper;
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
@@ -2437,3 +2402,174 @@ write_launch_browser_script( $installer_dir,
 
 configure_shell($WW_PREFIX,$wwadmin);
 copy("webwork_install.log","$WW_PREFIX/webwork_install.log") if -f 'webwork_install.log';
+
+__END__
+==encoding utf8
+
+=head1 NAME
+
+ww_install.pl 
+
+=head1 DESCRIPTION
+
+ww_install.pl, a WeBWorK Installation Script
+
+=head2 Goals
+
+=over
+
+=item *
+
+Interactively install webwork on any machine on which the prerequisites are installed
+
+=item
+
+Do as much as possible for the user, finding paths, writing config files, etc.
+
+=item
+
+Try not use anything other than core perl modules, webwork modules, webwork prerequisite modules
+
+=item
+
+Eventually add option for --nointeractive  and options to specify command line options
+
+=back
+
+=head2 How it works
+
+=over
+
+=item 1
+
+Check if running as root
+
+=item 2
+
+Have you downloaded webwork already?
+
+--if so, where is webwork2/, pg/, courses/, libraries/?
+
+--if not, do you want me to get the software for you via svn?
+
+=item 3
+
+Check prerequisites, using this opportunity to populate %externalPrograms hash, and gather
+environment information: $server_userID, $server_groupID, hostname?, timezone?
+
+=item 4
+
+Initially ask user minimum set of config questions:
+
+=over
+
+=item *
+
+Directory root PREFIX
+
+=item *
+
+Accept standard webwork layout below PREFIX? (later)
+
+=item *
+
+  $server_root_url = "";  # e.g.  http://webwork.yourschool.edu (default from hostname lookup in (2))
+
+=item *
+
+  $server_userID = "";  # e.g.  www-data (default from httpd.conf lookup in (2))
+
+=item *
+
+  $server_groupID = "";  # e.g.  wwdata (gets the default from httpd.conf lookup in (2))
+
+=item *
+
+  $mail{smtpServer} = 'mail.yourschool.edu';
+
+=item *
+
+  $mail{smtpSender} = 'webwork@yourserver.yourschool.edu';
+
+=item *
+
+  $mail{smtpTimeout} = 30;
+
+=item *
+
+database root password
+
+=item *
+
+$database_dsn = "dbi:mysql:webwork";
+
+=item *
+
+$database_username = "webworkWrite";
+
+=item *
+
+$database_password = "";
+
+=item *
+
+$siteDefaults{timezone} = "America/New_York";
+
+=back
+
+=item 5
+
+Put software in correct locations
+
+=item 6
+
+Use gathered information to write site.conf file, localOverrides.conf, webwork.apache2-config, wwapache2ctl,
+
+=item 7
+
+Check and fix filesystem permissions in webwork2/ tree
+
+=item 8
+
+Create initial database user, initial mysql tables
+
+=item 9
+
+Create admin course
+
+=item 10
+
+Append include statement to httpd.conf to pick up webwork.apache2-config
+
+=item 11
+
+Restart apache, check for errors
+
+=item 12
+
+Do some testing!
+
+=back
+
+=head1 AUTHOR
+
+Jason Aubrey <aubreyja@gmail.com>
+
+=head1 COPYRIGHT AND DISCLAIMER
+
+This program is Copyright 2013 by Jason Aubrey.  This program is
+free software; you can redistribute it and/or modify it under the terms
+of the Perl Artistic License or the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+If you do not have a copy of the GNU General Public License write to
+the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
+USA.
+
+=cut
