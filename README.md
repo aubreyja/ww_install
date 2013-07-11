@@ -7,6 +7,7 @@ config files, and perl modules designed to work together install the open source
 
 It's been lightly tested on
 
+* [Scientific Linux 6.4 (Carbon)](https://www.scientificlinux.org/distributions/6x/6.4/) (7/2013)
 * [CentOS 6.4](http://wiki.centos.org/Download) (7/2013)
 * [Fedora 17 (Beefy Miracle)](http://docs.fedoraproject.org/en-US/Fedora/17/html/Release_Notes/) (11/2012)
 * [Debian 7.0 (Wheezy) GNU/Linux](http://www.debian.org/releases/wheezy/) (6/2013)
@@ -62,11 +63,10 @@ webwork_install.log to `webwork2/logs` and then deletes the downloaded installat
 If your system does not have all of the prerequisites installed, then the `install_prerequisites.sh` script 
 might help.  The goal of that script is to install all of the software that WeBWorK depends on. This is also
 the script most likely to be incomplete or fail in some way on your system.  For systems based on Debian 
-(Ubuntu,etc.), it will do everything needed.  However, on systems based on Red Hat Linux (Fedora, 
-CentOS, Scientific Linux) and on SUSE this script is only partially complete. We're working 
-on getting it to install prereqs on other systems also, but for now other systems will need to have these 
-prerequisites already installed.  If you would like to fill it out for your favorite linux distro or unix
-system, I will happily accept pull requests.
+(Ubuntu,etc.) and Red Hat (CentOS, Scientific Linux, etc.) it will do everything needed. We're working 
+on getting it to install prereqs on other systems such as OpenSUSE and Magia, but for now other systems will 
+need to have these prerequisites already installed.  If you would like to fill it out for your favorite 
+linux distro or unix system, I will happily accept pull requests.
 
 ### ww_install.pl
 
