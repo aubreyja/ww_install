@@ -97,3 +97,29 @@ repository.
 
 Questions and comments about this installer can be directed to me on the [webwork-devel](http://webwork.maa.org/mailman/listinfo/webwork-devel)
 mailing list. For a recent discussion see [[1]](http://webwork.maa.org/pipermail/webwork-devel/2013-June/001089.html).
+
+Information and documenation about WeBWorK itself can be found at http://webwork.maa.org/wiki
+
+Author
+--------
+
+Jason Aubrey <aubreyja@gmail.com>
+
+Copyright and Disclaimer
+-------------------------
+
+This program is Copyright 2013 by Jason Aubrey.  This program is
+free software; you can redistribute it and/or modify it under the terms
+of the Perl Artistic License or the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+If you do not have a copy of the GNU General Public License write to
+the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139,
+USA.
+
