@@ -34,7 +34,7 @@ apt_get_install () {
     sudo apt-get $APTOPTS install git subversion
     sudo apt-get $APTOPTS install perl perl-modules 
     sudo apt-get $APTOPTS install dvipng netpbm unzip
-    sudo apt-get $APTOPTS install preview-latex-style texlive 
+    sudo apt-get $APTOPTS install preview-latex-style texlive-latex-base 
     sudo apt-get $APTOPTS install mysql-server openssh-server
     sudo apt-get $APTOPTS install apache2 apache2-mpm-prefork apache2.2-common libapreq2 libapache2-request-perl 
     sudo apt-get $APTOPTS install libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl 
