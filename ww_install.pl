@@ -18,7 +18,7 @@ use File::Spec;
 use File::Copy;
 #use File::CheckTree;
 
-use GetOpt::Long;
+use Getopt::Long;
 
 use IPC::Cmd qw(can_run run);
 
