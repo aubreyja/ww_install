@@ -105,6 +105,20 @@ Author
 
 Jason Aubrey <aubreyja@gmail.com>
 
+Contributors
+------------
+
+[Qalthos](https://github.com/Qalthos)
+
+Acknowledgements
+----------------
+
+This script was inspired by Tom Haggedorn's [automatic installer for WeBWorK 2.4 on Mac OS 10.5 for Intel processors](http://webwork.maa.org/wiki/Automatic_Installer_for_2.4_on_Mac_OS_10.5_for_Intel_processors) bash script.
+Valuable feedback and testing has been provided by [Danny Glin](https://github.com/dlglin),[Djun Kim](https://github.com/djun-kim),
+[Geoff Gohle](https://github.com/goehle), [John Travis](https://github.com/drjt), [Peter Staab](https://github.com/pstaabp),
+[Arnie Pizer](https://github.com/apizer), [Paul Pearson](https://github.com/paultpearson), [Christina Kayastha](https://github.com/christinakayastha), and
+[Nathaniel Case (Qalthos)](https://github.com/Qalthos).
+
 Copyright and Disclaimer
 -------------------------
 
