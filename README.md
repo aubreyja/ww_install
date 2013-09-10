@@ -40,7 +40,7 @@ To install [WeBWorK](https://github.com/openwebwork):
   `bash install_webwork.sh`
 
 Note that if you use sudo, then you must be a sudoer with sufficient administrative rights 
-(probabaly `ALL=(ALL) ALL`) for `install_webwork.sh` to work properly. If not, run this command as root.
+(probably `ALL=(ALL) ALL`) for `install_webwork.sh` to work properly. If not, run this command as root.
 
 For more control over the process you can clone this repository with
 
