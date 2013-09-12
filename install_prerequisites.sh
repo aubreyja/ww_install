@@ -30,6 +30,13 @@ yum_install () {
 
 apt_get_install () {
     APTOPTS='-y --allow-unauthenticated'
+
+    #make sure we don't try to get anything off of 
+    #a cdrom. (Allowing it causes script to hang 
+    # on Debian 7)
+    sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
+
+    #Install some prerequisites
     sudo apt-get $APTOPTS install gcc make
     sudo apt-get $APTOPTS install git subversion
     sudo apt-get $APTOPTS install perl perl-modules 
