@@ -262,7 +262,7 @@ sub run_command {
 ####################################################################################################
 #
 # Platform specific data - these data structures are to help with identifying our platform and
-# eventually will be used for specifying prerequiste packages, likely locations of binaries we can't find
+# eventually will be used for specifying prerequisite packages, likely locations of binaries we can't find
 # with can_run(), and doing other platform specific processing. Such as
 # (1) Disabling SELinux on RH/Fedora
 # Others....
@@ -1050,7 +1050,7 @@ sub create_wwdata_group {
 
 ##############################################################
 #
-# Adjust file owernship and permissions
+# Adjust file ownership and permissions
 #
 #############################################################
 #change_grp($server_groupid, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
@@ -2004,9 +2004,6 @@ sub edit_httpd_conf {
 
   my (undef,$dir,$file) = File::Spec->splitpath($httpd_conf);
 
-  #Make a backup copy of the apache config file
-  copy($httpd_conf,$dir."/".$file.".bak");
-
   my $print_me = <<END;
 #######################################################################
 #
@@ -2041,6 +2038,10 @@ END
   $default = 100;
   my $max_requests_per_child = get_reply('',$prompt,[],$default);
 
+  #Make a backup copy of the apache config file
+  copy($httpd_conf,$dir."/".$file.".bak")
+    or die "Couldn't copy $httpd_conf to ".$dir."/".$file."bak: $!\n";
+  print_and_log("Backed up $httpd_conf to ".$dir."/".$file."bak");
 
   #Open apache config file for reading 
   open(my $fh, '<',$httpd_conf)
@@ -2051,7 +2052,6 @@ END
 
   #Make replacements
   if($string =~ /(Timeout\s+\d+)/s) {
-   print "$1 \n";
    $string =~ s/$1/Timeout $timeout/;
   }
   if($string =~ /\<IfModule mpm\_prefork\_module\>.*?(MaxClients\s+\d+).*?\<\/IfModule\>/s) {
@@ -2065,6 +2065,9 @@ END
   open($fh, '>',$httpd_conf)
     or die "Couldn't open $httpd_conf for writing: $!\n";
   print $fh $string;
+  print_and_log("Set Timeout $timeout in $httpd_conf");
+  print_and_log("Set prefork MaxClients $max_clients in $httpd_conf");
+  print_and_log("Set prefork MaxRequestsPerChild $max_requests_per_child in $httpd_conf");
   close($fh);
 }
 
@@ -2163,7 +2166,7 @@ sub write_launch_browser_script {
     #Now we need to get back to starting dir
     chdir $dir;
 
-    #Get preferred web brwoser
+    #Get preferred web browser
     my $browser =
          can_run('xdg-open')
       || can_run('x-www-browser')
@@ -2363,7 +2366,9 @@ print_and_log(<<EOF);
 #######################################################################
 #
 # Well, that was easy.  Now I need to slightly modify the 
-# configuration of your apache webserver.  
+# configuration of your apache webserver.  Note that we will
+# back up the apache config file before any modifications are
+# made. 
 #
 # First, I'm going symlink webwork.apache2-config to your apache 
 # conf.d dir as webwork.conf. This will have the effect of starting 
