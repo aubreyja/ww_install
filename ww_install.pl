@@ -901,11 +901,11 @@ sub create_wwadmin_user {
    #useradd  -s /usr/bin/bash -c "WeBWorK Administrator" -p $wwadmin_pw $wwadmin
    #TODO: FreeBSD, MacOSX don't have useradd!!!
             my $full_path = can_run("useradd");
-            my $cmd       = [
-                $full_path,              '-s',
-                $wwadmin_shell,          '-c',
-                "WeBWorK Administrator", '-p',
-                $wwadmin_pw,             $wwadmin
+            my $cmd       = [ $full_path, '-m' #create user home dir
+              '-s', $wwadmin_shell, #set default shell
+              '-c', "WeBWorK Administrator",  #comment
+              '-p', $wwadmin_pw, #password
+              $wwadmin
             ];
             my $success = run_command($cmd);
             if ($success) {
@@ -2095,9 +2095,9 @@ sub configure_shell {
         if (-f "$dir/.bashrc") {
             copy("$dir/.bashrc","$dir/.bashrc.bak");
             open(my $bashrc,'>>',"$dir/.bashrc" ) or warn "Couldn't open $dir/.bashrc: $!";
-            print $bashrc "export PATH=\$PATH:$WW_PREFIX/webwork2/bin";
+            print $bashrc "export PATH=\$PATH:$WW_PREFIX/webwork2/bin\n";
             print_and_log("Added 'export PATH=\$PATH:$WW_PREFIX/webwork2/bin' to $dir/.bashrc");
-            print $bashrc "export WEBWORK_ROOT=$WW_PREFIX/webwork2";
+            print $bashrc "export WEBWORK_ROOT=$WW_PREFIX/webwork2\n";
             print_and_log("Added 'export WEBWORK_ROOT=$WW_PREFIX/webwork2' to $dir/.bashrc");
             close($bashrc);
         }
