@@ -613,6 +613,34 @@ sub group_exists {
 # Script Util Subroutines:  The script is based on Term::Readline to interact with user
 #
 ###########################################################################################
+sub get_reply {
+  my $defaults = {
+   print_me => '',
+   prompt => '',
+   choices => [],
+   default => '',
+   checkers => [\&confirm_answer],
+  }; 
+  my $options = shift;
+  foreach(keys %$defaults) {
+    $options->{$_} = $options->{$_} // $defaults->{$_};
+  }
+  my $answer = $term->get_reply(
+    print_me => $options->{print_me},
+    prompt => $options->{prompt},
+    choices => $options->{choices},
+    default => $options->{default},
+  );
+  foreach my $checker (@{$options -> {checkers}}) {
+    my $checked = $checker->($answer);
+    get_reply({print_me=> $options->{print_me},
+        prompt => $options->{prompt},
+        choices => $options->{choices},
+        default => $options->{default},
+        checkers =>$options->{checkers}}) unless $checked; 
+  }
+  return $answer
+}
 
 #For confirming answers
 sub confirm_answer {
@@ -632,21 +660,22 @@ sub confirm_answer {
     }
 }
 
-sub get_reply {
-  my ($print_me,$prompt,$choices,$default) = @_;
-  my $answer = $term->get_reply(
-    print_me => $print_me,
-    prompt => $prompt,
-    choices => $choices,
-    default => $default,
-  );
-  my $confirmed = confirm_answer($answer);
-  if($confirmed) {
-    return $answer;
-  } else {
-    get_reply($print_me,$prompt,$choices,$default);
-  }
-}
+#Old get reply
+#sub get_reply {
+#  my ($print_me,$prompt,$choices,$default) = @_;
+#  my $answer = $term->get_reply(
+#    print_me => $print_me,
+#    prompt => $prompt,
+#    choices => $choices,
+#    default => $default,
+#  );
+#  my $confirmed = confirm_answer($answer);
+#  if($confirmed) {
+#    return $answer;
+#  } else {
+#    get_reply($print_me,$prompt,$choices,$default);
+#  }
+#}
 
 
 #####################################################
@@ -1642,7 +1671,11 @@ END
     my $prompt = "Please enter the MySQL server and port ";
     my $choices = [];
     my $default = 'localhost';
-    my $server = get_reply($print_me,$prompt,$choices,$default);
+    my $server = get_reply({
+        print_me => $print_me,
+        prompt => $prompt,
+        default => $default,
+      });
     $print_me = <<END;
 ##############################################################
 #  If you would like me to create a new database and user for 
@@ -1657,7 +1690,12 @@ END
     $prompt = "Create a new database or use an existing one? ";
     $choices = ['Create a new database','Use an existing database'];
     $default = 'Create a new database';
-    my $new_or_existing = get_reply($print_me,$prompt,$choices,$default);     
+    my $new_or_existing = get_reply({
+        print_me => $print_me,
+        prompt => $prompt,
+        choices => $choices,
+        default => $default
+      });     
     if($new_or_existing eq 'Create a new database') {
       print_and_log(<<END);
 ###################################################################
@@ -1677,8 +1715,11 @@ END
 ########################################################################
 END
       my $prompt = "Name for the webwork database:";
-      my $choices = '';
-      my $database = get_reply($print_me,$prompt,[],WW_DB);
+      my $database = get_reply({
+          print_me => $print_me,
+          prompt => $prompt,
+          default => WW_DB,
+        });
       my $exists = database_exists($mysql_root_password,$database,$server);
       if($exists) {
         print_and_log("\n\nSorry, Charlie. That database already exists. Let's try".
@@ -1699,7 +1740,11 @@ END
 ####################################################################
 END
       my $prompt = "Name of the existing webwork database:";
-      my $database = get_reply($print_me,$prompt,[],WW_DB);
+      my $database = get_reply({
+        print_me => $print_me,
+        prompt => $prompt,
+        default => WW_DB,
+      });
       my $username = get_database_username(WWDB_USER);
       my $password = get_database_password();
       my $can_connect = connect_to_database($server,$database,$username,$password);
@@ -1733,7 +1778,11 @@ sub get_database_username {
 ###############################################################################
 END
     my $prompt = "webwork database username:";
-    my $answer = get_reply($print_me,$prompt,[],$default);
+    my $answer = get_reply({
+        print_me => $print_me,
+        prompt => $prompt,
+        default => $default,
+      });
 }
 
 sub get_database_password {
@@ -1752,7 +1801,10 @@ sub get_database_password {
 ##############################################################################
 END
     my $prompt = "Please enter webwork database password:";
-    my $answer = get_reply($print_me,$prompt,[]);
+    my $answer = get_reply({
+      print_me => $print_me,
+      prompt => $prompt,
+    });
 }
 
 
