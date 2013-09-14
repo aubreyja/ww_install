@@ -10,12 +10,12 @@ It's been lightly tested on
 * [Scientific Linux 6.4 (Carbon)](https://www.scientificlinux.org/distributions/6x/6.4/) (7/2013)
 * [CentOS 6.4](http://wiki.centos.org/Download) (7/2013)
 * [Fedora 17 (Beefy Miracle)](http://docs.fedoraproject.org/en-US/Fedora/17/html/Release_Notes/) (11/2012)
-* [Debian 7.0 (Wheezy) GNU/Linux](http://www.debian.org/releases/wheezy/) (6/2013)
+* [Debian 7.0 (Wheezy) GNU/Linux](http://www.debian.org/releases/wheezy/) (6/2013, 9/2013)
 
 It's been moderately well tested on
 
 * [Ubuntu 12.04 (Precise Pangolin)](http://releases.ubuntu.com/precise/) (11/2012, 6/2013)
-* [Ubuntu 13.04 (Raring Ringtail)](http://releases.ubuntu.com/raring/) (6/2013)
+* [Ubuntu 13.04 (Raring Ringtail)](http://releases.ubuntu.com/raring/) (6/2013, 9/2013)
 
 On these systems it did install webwork. 
 
@@ -40,7 +40,7 @@ To install [WeBWorK](https://github.com/openwebwork):
   `bash install_webwork.sh`
 
 Note that if you use sudo, then you must be a sudoer with sufficient administrative rights 
-(probabaly `ALL=(ALL) ALL`) for `install_webwork.sh` to work properly. If not, run this command as root.
+(probably `ALL=(ALL) ALL`) for `install_webwork.sh` to work properly. If not, run this command as root.
 
 For more control over the process you can clone this repository with
 

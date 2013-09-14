@@ -262,7 +262,7 @@ sub run_command {
 ####################################################################################################
 #
 # Platform specific data - these data structures are to help with identifying our platform and
-# eventually will be used for specifying prerequiste packages, likely locations of binaries we can't find
+# eventually will be used for specifying prerequisite packages, likely locations of binaries we can't find
 # with can_run(), and doing other platform specific processing. Such as
 # (1) Disabling SELinux on RH/Fedora
 # Others....
@@ -930,11 +930,11 @@ sub create_wwadmin_user {
    #useradd  -s /usr/bin/bash -c "WeBWorK Administrator" -p $wwadmin_pw $wwadmin
    #TODO: FreeBSD, MacOSX don't have useradd!!!
             my $full_path = can_run("useradd");
-            my $cmd       = [
-                $full_path,              '-s',
-                $wwadmin_shell,          '-c',
-                "WeBWorK Administrator", '-p',
-                $wwadmin_pw,             $wwadmin
+            my $cmd       = [ $full_path, '-m' #create user home dir
+              '-s', $wwadmin_shell, #set default shell
+              '-c', "WeBWorK Administrator",  #comment
+              '-p', $wwadmin_pw, #password
+              $wwadmin
             ];
             my $success = run_command($cmd);
             if ($success) {
@@ -1079,7 +1079,7 @@ sub create_wwdata_group {
 
 ##############################################################
 #
-# Adjust file owernship and permissions
+# Adjust file ownership and permissions
 #
 #############################################################
 #change_grp($server_groupid, $webwork_courses_dir, "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp", "$webwork_dir/logs", "$webwork_dir/tmp");
@@ -1952,7 +1952,7 @@ sub create_database {
     my ( $dsn, $root_pw, $ww_db, $ww_user, $ww_pw ) = @_;
     my $dbh = DBI->connect( 'DBI:mysql:database=mysql', 'root', $root_pw );
     print_and_log("Connected to mysql as root...");
-    $dbh->do("CREATE DATABASE $ww_db")
+    $dbh->do("CREATE DATABASE IF NOT EXISTS $ww_db")
       or die "Could not create $ww_db database: $!\n";
     print_and_log("Created $ww_db database...");
     $dbh->do(
@@ -2050,6 +2050,79 @@ sub write_webwork_apache2_config {
     }
 }
 
+sub edit_httpd_conf {
+  my $apache = shift;
+  my $httpd_conf = $apache->{conf};
+
+  my (undef,$dir,$file) = File::Spec->splitpath($httpd_conf);
+
+  my $print_me = <<END;
+#######################################################################
+#
+# Next, I would like to increase apache's page timout value from 300
+# to 1200. 
+#
+#######################################################################
+END
+  my $prompt = "Please enter a value for Timeout:";
+  my $default = 1200;
+  my $timeout = get_reply($print_me,$prompt,[],$default);
+
+   
+  $print_me = <<END;
+###################################################################
+#
+# Now I would like to modify the prefork MPM
+# settings MaxClients and MaxRequestsPerChild. By default I'll change 
+# MaxClients from 150 to 20 and MaxRequestsPerChild from 0 to 100.
+#
+# For WeBWorK a rough rule of thumb is 20 MaxClients per 1 GB of 
+# memory.  So, e.g., if you have 4GB of RAM you may want to use
+# MaxClients 80.
+# 
+######################################################################
+END
+  $prompt = "Please enter a value for prefork MaxClients:";
+  $default = 20;
+  my $max_clients = get_reply($print_me,$prompt,[],$default);
+
+  $prompt = "Please enter a value for prefork MaxRequestsPerChild:";
+  $default = 100;
+  my $max_requests_per_child = get_reply('',$prompt,[],$default);
+
+  #Make a backup copy of the apache config file
+  copy($httpd_conf,$dir."/".$file.".bak")
+    or die "Couldn't copy $httpd_conf to ".$dir."/".$file."bak: $!\n";
+  print_and_log("Backed up $httpd_conf to ".$dir."/".$file."bak");
+
+  #Open apache config file for reading 
+  open(my $fh, '<',$httpd_conf)
+    or die "Couldn't open $httpd_conf for reading: $!\n";
+  #read it into a string
+  my $string = do { local($/); <$fh> };
+  close($fh);
+
+  #Make replacements
+  if($string =~ /(Timeout\s+\d+)/s) {
+   $string =~ s/$1/Timeout $timeout/;
+  }
+  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?(MaxClients\s+\d+).*?\<\/IfModule\>/s) {
+    $string =~ s/$1/MaxClients           $max_clients/;
+  }
+  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?(MaxRequestsPerChild\s*\d+).*?\<\/IfModule\>/s) {
+    $string =~ s/$1/MaxRequestsPerChild $max_requests_per_child/;
+  }
+
+  #Open apache config file for writing and write!
+  open($fh, '>',$httpd_conf)
+    or die "Couldn't open $httpd_conf for writing: $!\n";
+  print $fh $string;
+  print_and_log("Set Timeout $timeout in $httpd_conf");
+  print_and_log("Set prefork MaxClients $max_clients in $httpd_conf");
+  print_and_log("Set prefork MaxRequestsPerChild $max_requests_per_child in $httpd_conf");
+  close($fh);
+}
+
 ##########################################################
 #
 #  Configure environment (symlink webwork-apache2.config,
@@ -2074,9 +2147,9 @@ sub configure_shell {
         if (-f "$dir/.bashrc") {
             copy("$dir/.bashrc","$dir/.bashrc.bak");
             open(my $bashrc,'>>',"$dir/.bashrc" ) or warn "Couldn't open $dir/.bashrc: $!";
-            print $bashrc "export PATH=\$PATH:$WW_PREFIX/webwork2/bin";
+            print $bashrc "export PATH=\$PATH:$WW_PREFIX/webwork2/bin\n";
             print_and_log("Added 'export PATH=\$PATH:$WW_PREFIX/webwork2/bin' to $dir/.bashrc");
-            print $bashrc "export WEBWORK_ROOT=$WW_PREFIX/webwork2";
+            print $bashrc "export WEBWORK_ROOT=$WW_PREFIX/webwork2\n";
             print_and_log("Added 'export WEBWORK_ROOT=$WW_PREFIX/webwork2' to $dir/.bashrc");
             close($bashrc);
         }
@@ -2145,7 +2218,7 @@ sub write_launch_browser_script {
     #Now we need to get back to starting dir
     chdir $dir;
 
-    #Get preferred web brwoser
+    #Get preferred web browser
     my $browser =
          can_run('xdg-open')
       || can_run('x-www-browser')
@@ -2344,16 +2417,25 @@ write_webwork_apache2_config("$webwork_dir");
 print_and_log(<<EOF);
 #######################################################################
 #
-# Well, that was easy.  Now i'm going to symlink webwork.apache2-config
-# to your apache conf.d dir as webwork.conf. 
+# Well, that was easy.  Now I need to slightly modify the 
+# configuration of your apache webserver.  Note that we will
+# back up the apache config file before any modifications are
+# made. 
 #
-# 
-######################################################################
+# First, I'm going symlink webwork.apache2-config to your apache 
+# conf.d dir as webwork.conf. This will have the effect of starting 
+# webwork whenever the webserver is started.  This *must* be done
+# to enable webwork, so sorry - no choice in this matter.
+#
+#######################################################################
 EOF
+
 symlink(
     "$webwork_dir/conf/webwork.apache2-config",
     $apache->{root} . "/conf.d/webwork.conf"
 );
+
+edit_httpd_conf($apache);
 
 print_and_log(<<EOF);
 #######################################################################
