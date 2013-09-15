@@ -930,7 +930,7 @@ sub create_wwadmin_user {
    #useradd  -s /usr/bin/bash -c "WeBWorK Administrator" -p $wwadmin_pw $wwadmin
    #TODO: FreeBSD, MacOSX don't have useradd!!!
             my $full_path = can_run("useradd");
-            my $cmd       = [ $full_path, '-m' #create user home dir
+            my $cmd       = [ $full_path, '-m', #create user home dir
               '-s', $wwadmin_shell, #set default shell
               '-c', "WeBWorK Administrator",  #comment
               '-p', $wwadmin_pw, #password
