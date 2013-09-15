@@ -1160,7 +1160,6 @@ EOF
     $envir->{timezone} = $timezone->name;
     print_and_log("Your timezone is " . $envir->{timezone});
     $envir->{os}          = get_os();
-    print_and_log("Your OS is ".$envir->{os});
     $envir->{passwd_file} = "/etc/passwd" if -e "/etc/passwd";
     $envir->{group_file}  = "/etc/group" if -e "/etc/group";
 
@@ -2103,8 +2102,8 @@ END
 
   #Make a backup copy of the apache config file
   copy($httpd_conf,$dir."/".$file.".bak")
-    or die "Couldn't copy $httpd_conf to ".$dir."/".$file."bak: $!\n";
-  print_and_log("Backed up $httpd_conf to ".$dir."/".$file."bak");
+    or die "Couldn't copy $httpd_conf to ".$dir.$file.".bak: $!\n";
+  print_and_log("Backed up $httpd_conf to ".$dir.$file.".bak");
 
   #Open apache config file for reading 
   open(my $fh, '<',$httpd_conf)
