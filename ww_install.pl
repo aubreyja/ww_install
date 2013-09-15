@@ -2066,7 +2066,11 @@ sub edit_httpd_conf {
 END
   my $prompt = "Please enter a value for Timeout:";
   my $default = 1200;
-  my $timeout = get_reply($print_me,$prompt,[],$default);
+  my $timeout = get_reply({
+      print_me => $print_me,
+      prompt => $prompt,
+      default => $default,
+    });
 
    
   $print_me = <<END;
@@ -2084,11 +2088,18 @@ END
 END
   $prompt = "Please enter a value for prefork MaxClients:";
   $default = 20;
-  my $max_clients = get_reply($print_me,$prompt,[],$default);
+  my $max_clients = get_reply({
+      print_me => $print_me,
+      prompt => $prompt,
+      default => $default,
+    });
 
   $prompt = "Please enter a value for prefork MaxRequestsPerChild:";
   $default = 100;
-  my $max_requests_per_child = get_reply('',$prompt,[],$default);
+  my $max_requests_per_child = get_reply({
+      prompt => $prompt,
+      default => $default,
+    });
 
   #Make a backup copy of the apache config file
   copy($httpd_conf,$dir."/".$file.".bak")
