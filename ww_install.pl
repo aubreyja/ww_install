@@ -631,16 +631,19 @@ sub get_reply {
     choices => $options->{choices},
     default => $options->{default},
   );
+  my $checked = { answer => $answer, status => 0};
   foreach my $checker (@{$options -> {checkers}}) {
-    my $checked = $checker->($answer);
-    get_reply({print_me=> $options->{print_me},
-        prompt => $options->{prompt},
-        choices => $options->{choices},
-        default => $options->{default},
-        checkers =>$options->{checkers}}) unless $checked; 
+    $checked = $checker->($checked->{answer});
+    last unless $checked->{status};
   }
-  return $answer
+  $checked->{answer} = get_reply({print_me=> $options->{print_me},
+      prompt => $options->{prompt},
+      choices => $options->{choices},
+      default => $options->{default},
+      checkers =>$options->{checkers}}) unless $checked->{status}; 
+  return $checked->{answer};
 }
+
 
 #For confirming answers
 sub confirm_answer {
@@ -654,28 +657,11 @@ sub confirm_answer {
     if ( $confirm eq "Quit." ) {
         die "Exiting...";
     } elsif ( $confirm eq "Change my answer." ) {
-        return 0;
+        return { answer => $answer, status => 0 };
     } else {
-        return 1;
+        return { answer => $answer, status => 1 };
     }
 }
-
-#Old get reply
-#sub get_reply {
-#  my ($print_me,$prompt,$choices,$default) = @_;
-#  my $answer = $term->get_reply(
-#    print_me => $print_me,
-#    prompt => $prompt,
-#    choices => $choices,
-#    default => $default,
-#  );
-#  my $confirmed = confirm_answer($answer);
-#  if($confirmed) {
-#    return $answer;
-#  } else {
-#    get_reply($print_me,$prompt,$choices,$default);
-#  }
-#}
 
 
 #####################################################
@@ -1393,72 +1379,77 @@ sub get_opl_repo {
 
 }
 
+sub is_absolute {
+  my $dir = shift;
+  $dir = File::Spec->canonpath($dir);
+  my $is_absolute = File::Spec->file_name_is_absolute($dir);
+  if($is_absolute) {
+    return { answer => $dir, status => 1 };
+  } else {
+    my $abs_dir = File::Spec->rel2abs($dir);
+    my $fix = $term->get_reply(
+       print_me => "I need an absolute path, but you gave me a relative path.",
+       prompt => "How do you want me to fix this? ",
+       choices => [ "Go back", "I really meant $abs_dir", "Quit" ],
+     );
+   if( $fix eq "Go back") {
+     return { answer => $dir, status => 0 };
+   } elsif( $fix eq "I really meant $abs_dir" ) {
+     return { answer => $abs_dir, status => 1 }
+   } elsif( $fix eq 'Quit' ) {
+     die "Exiting...";
+   }
+
+  }
+}
+
+sub check_path {
+ chomp(my $given = shift);
+ my $exists = -e $given;
+ return { answer => $given, status=> 1} unless $exists;
+
+ my $reply = $term->get_reply( 
+      print_me => "Error! You gave me a path which already exists on the filesystem.",       
+      choices => ['Enter new location',"Delete existing $given and use that location","Quit"],
+      prompt => 'How would you like to proceed?',
+      default => 'Enter new location',
+    ); 
+
+ if($reply eq 'Enter new location') {
+   return { answer=> $given, status => 0 };
+ } elsif($reply eq "Delete existing $given and use that location") {
+   return { answer=> $given, status => 1 };
+ } elsif($reply eq "Quit") {
+   die "Quitting..."
+ }
+}
+
 sub get_WW_PREFIX {
     my $default  = shift;
-    my $print_me = <<END;
+    my $dir = get_reply({
+    print_me => <<END,
 #################################################################
 # Installation Prefix: Please enter the absolute path of the directory
 # under which we should install the webwork software. A typical choice
-# is /opt/webwork/. We will create # four subdirectories under your PREFIX:
+# is /opt/webwork/. We will create four subdirectories under your PREFIX:
 #
 # PREFIX/webwork2 - for the core code for the web-applcation
 # PREFIX/pg - for the webwork problem generating language PG
-# PREFIX/libraries - for the National Problem Library and other problem libraries
+# PREFIX/libraries - for the Open Problem Library and other problem libraries
 # PREFIX/courses - for the individual webwork courses on your server
 #
 # Note that we will also set a new system wide environment variable WEBWORK_ROOT 
 # to PREFIX/webwork2/
 #################################################################
 END
-    my $dir = $term->get_reply(
-        print_me => $print_me,
-        prompt   => 'Where should I install webwork?',
-        default  => $default,
-    );
-
-    #has this been confirmed?
-    my $confirmed = 0;
-
-    #remove trailing "/"'s
-    $dir = File::Spec->canonpath($dir);
-
-    # Now we'll check for errors, if we don't need any fixes, we'll move on
-    my $fix = 0;
-
-    #check if reply is an absolute path
-    my $is_absolute = File::Spec->file_name_is_absolute($dir);
-    if ($is_absolute) {    #everything is fine by us, let's confirm with user
-        $confirmed = confirm_answer($dir);
-    } else {
-        $dir = File::Spec->rel2abs($dir);
-        $fix = $term->get_reply(
-            print_me =>
-              "I need an absolute path, but you gave me a relative path.",
-            prompt  => "How do you want to fix this? ",
-            choices => [ "Go back", "I really meant $dir", "Quit" ]
-        );
-    }
-
-    if ( $fix eq "Go back" ) {
-        $fix = 0;
-        get_WW_PREFIX(WW_PREFIX);    #constant defined at top
-    } elsif ( $fix eq "I really meant $dir" ) {
-        $fix       = 0;
-        $confirmed = confirm_answer($dir);
-    } elsif ( $fix eq "Quit" ) {
-        die "Exiting...";
-    }
-    if ( $confirmed && !$fix ) {
-        print_and_log("Got it, I'll create $dir and install webwork there.\n");
-
-        #print "\$confirmed = $confirmed and \$fix = $fix\n";
-        return $dir;
-    } else {
-
-        #print "Here!\n";
-        get_WW_PREFIX(WW_PREFIX);    #constant defined at top
-    }
+    prompt => 'Where should I install webwork?',
+    default=>$default,
+    checkers => [\&is_absolute,\&check_path, \&confirm_answer],
+  });
+      print "Got it, I'll create $dir and install webwork there.\n";
+      return $dir;
 }
+
 
 sub get_root_url {
     my $default  = shift;
@@ -1821,7 +1812,22 @@ END
 
 sub create_prefix_path {
     my $dir = shift;
-    make_path($dir);
+    remove_tree($dir,{ verbose => 1 }) if -e $dir;
+    make_path($dir, {error => \my $err} );
+         if (@$err) {
+             for my $diag (@$err) {
+                 my ($file, $message) = %$diag;
+                 if ($file eq '') {
+                     print "general error: $message\n";
+                 }
+                 else {
+                     print "problem creating $file: $message\n";
+                 }
+             }
+         }
+         else {
+             print "No error encountered\n";
+         }
 }
 
 ############################################################################
