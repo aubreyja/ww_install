@@ -760,7 +760,7 @@ END
 	    default => 'y',
         ); 
         my $confirmed = confirm_answer($disable);
-        get_selinux() unless $confirmed;
+        get_selinux() unless $confirmed->{status};
     }
     disable_selinux() if $disable;
     print_and_log("Good, SELinux not enabled.\n") unless $enabled;
@@ -846,18 +846,18 @@ END
 
     #has this been confirmed?
     $confirmed = confirm_answer($answer);
-    if ( $answer eq "Yes, let's do it" && $confirmed ) {
+    if ( $answer eq "Yes, let's do it" && $confirmed->{status} ) {
         $ww_admin = create_wwadmin_user($envir);
         return $ww_admin if $ww_admin;
         get_wwadmin_user($envir);    #Try again if not
     } elsif ( $answer eq "No, the root user will administer webwork"
-        && $confirmed )
+        && $confirmed->{status} )
     {
         print
 "Sounds good. We will not create a separate webwork admin user. The root user will administer webwork.\n";
         return "root";
     } elsif ( $answer eq "No, a separate webwork admin user already exists"
-        && $confirmed )
+        && $confirmed->{status} )
     {
         $ww_admin = $term->get_reply(
             print_me =>
@@ -867,7 +867,7 @@ END
         );
         $confirmed = confirm_answer($ww_admin);
         $exists = user_exists( $envir, $ww_admin );
-        if ( $confirmed && $exists ) {
+        if ( $confirmed->{status} && $exists ) {
             return $ww_admin;
         } elsif ( !$exists ) {
             print_and_log("Hey, silly goose, that user doesn't exist!");
@@ -989,18 +989,18 @@ END
 
     #has this been confirmed?
     $confirmed = confirm_answer($answer);
-    if ( $answer eq "Yes, let's do it" && $confirmed ) {
+    if ( $answer eq "Yes, let's do it" && $confirmed->{status} ) {
         $group = create_wwdata_group( $envir, $apache, $wwadmin );
         return $group if $group;
         get_wwdata_group( $envir, $apache, $wwadmin );    #Try again if not
     } elsif ( $answer eq "No, we'll just use the webserver's group"
-        && $confirmed )
+        && $confirmed->{status} )
     {
         print
 "Sounds good. We will not create a separate webwork data group. Instead we'lljust use the webserver's group.\n";
         return $apache->{group};
     } elsif ( $answer eq "No, a separate webwork data group already exists"
-        && $confirmed )
+        && $confirmed->{status} )
     {
         $group = $term->get_reply(
             print_me =>
@@ -1010,7 +1010,7 @@ END
         );
         $confirmed = confirm_answer($group);
         $exists = group_exists( $envir, $group );
-        if ( $confirmed && $exists ) {
+        if ( $confirmed->{status} && $exists ) {
             return $group;
         } elsif ( !$exists ) {
             print "Hey, silly goose, that user doesn't exist!\n";
@@ -1331,7 +1331,7 @@ END
     #has this been confirmed?
     my $confirmed = 0;
     $confirmed = confirm_answer($repo);
-    if ($confirmed) {
+    if ($confirmed->{status}) {
         print_and_log("Got it, I'll download webwork2 from $repo.\n");
         return $repo;
     } else {
@@ -1351,7 +1351,7 @@ sub get_pg_repo {
     #has this been confirmed?
     my $confirmed = 0;
     $confirmed = confirm_answer($repo);
-    if ($confirmed) {
+    if ($confirmed->{status}) {
         print_and_log("Got it, I'll download pg from $repo.\n");
         return $repo;
     } else {
@@ -1370,7 +1370,7 @@ sub get_opl_repo {
     #has this been confirmed?
     my $confirmed = 0;
     $confirmed = confirm_answer($repo);
-    if ($confirmed) {
+    if ($confirmed->{status}) {
         print_and_log("Got it, I'll download the OPL from $repo.\n");
         return $repo;
     } else {
@@ -1479,7 +1479,7 @@ END
 
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
-    if ($confirmed) {
+    if ($confirmed->{status}) {
         print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
@@ -1518,7 +1518,7 @@ END
 
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
-    if ($confirmed) {
+    if ($confirmed->{status}) {
         print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
@@ -1549,7 +1549,7 @@ END
 
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
-    if ($confirmed) {
+    if ($confirmed->{status}) {
         print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
@@ -1574,7 +1574,7 @@ END
 
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
-    if ($confirmed) {
+    if ($confirmed->{status}) {
         print_and_log("Thanks, got it, I'll use \"$answer\" \n");
         return $answer;
     } else {
@@ -1643,6 +1643,50 @@ END
     return $password;
 }
 
+sub get_storage_engine {
+    my $print_me = <<END;
+#############################################################
+#  
+#  The default engine for MySQL is InnoDB as of MySQL 5.5.5 
+#  (MyISAM before 5.5.5) but (at least on some hardware) InnoDB 
+#  seems to be 50-100 times slower than MyISAM. So we recommend
+#  changing the default MySQL storange engine from InnoDB to 
+#  MyISAM. Note that this change only applies to new tables, 
+#  tables already constructed will continue to use InnoDB. 
+#  But we haven't created any WeBWorK tables so we don't have 
+#  to change the engine for any existing tables.  
+#
+##############################################################
+END
+    my $prompt = "Would you like me to change the default mysql 
+   storage engine to MyISAM?";
+    my $engine= $term->ask_yn(
+        print_me => $print_me,
+        prompt => $prompt,
+        default => 'y',
+      );
+      my $confirmed = confirm_answer($engine);
+      if($confirmed->{status}) {
+        change_storage_engine('/etc/mysql/my.cnf'); #this should be searched for
+      } else {
+        print_and_log("OK. We won't modify MySQL's default storage engine");
+      }
+}
+
+sub change_storage_engine {
+  my $my_cnf = shift; 
+  my (undef,$dir,$file) = File::Spec->splitpath($my_cnf);
+  my $engine = 'myisam';
+  open(my $fh,'<',$my_cnf) or print_and_log("Couldn't find $my_cnf: $!");
+  return unless $fh;
+  copy($my_cnf,$dir."/".$file.".bak");
+  my $string = do { local($/); <$fh> };
+  close($fh);
+  open(my $new,'>',$my_cnf);
+  $string =~ s/\[mysqld\]/\[mysqld\]\n#\n# webwork wants this:\n#\n\ndefault-storage-engine = $engine\n/;
+  print $new $string;
+  print_and_log("Modified $my_cnf to set MyISAM to be default MySQL storage engine");
+}
 
 # Is there an existing webwork db or would you like me to create one?
 
@@ -2348,6 +2392,8 @@ $mail{smtpSender} = get_smtp_sender(SMTP_SENDER);    #constant defined at top
 my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database(WW_DB);  #constant defined at top
 
 my $database_dsn        = get_dsn($ww_db,$database_server);
+
+get_storage_engine();
 
 print_and_log(<<EOF);
 #######################################################################
