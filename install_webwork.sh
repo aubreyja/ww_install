@@ -1,8 +1,45 @@
 #!/bin/sh
 
+PREREQUISITES=1
+VERBOSE=1
+INTERACTIVE=''
+
 BRANCH=master
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.zip
 THISDIR="$( pwd )"
+
+while :
+do
+    case $1 in
+        -h | --help | -\?)
+            #  Call your Help() or usage() function here.
+            exit 0      # This is not an error, User asked help. Don't do "exit 1"
+            ;;
+        -np | --no-prerequisites | --no-prereqs)
+            PREREQUISITES=0
+            shift
+            ;;
+        -nv | --no-verbose)
+            VERBOSE=0 
+            shift
+            ;;
+        -ni | --no-interactive)
+            INTERACTIVE='--no-interactive' 
+            shift
+            ;;
+        --) # End of all options
+            shift
+            break
+            ;;
+        -*)
+            echo "WARN: Unknown option (ignored): $1" >&2
+            shift
+            ;;
+        *)  # no more options. Stop while loop
+            break
+            ;;
+    esac
+done
 
 if [ -z "$TMPDIR" ]; then
     if [ -d "/tmp" ]; then
@@ -67,10 +104,13 @@ rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
 mv $TMPDIR/webwork_install.log .
 
-echo "Installing prerequisites..."
-source install_prerequisites.sh 
-wait
-sudo perl ww_install.pl
+if [ $PREREQUISITES -eq 1 ]; then
+  echo "Installing prerequisites..."
+  source install_prerequisites.sh 
+  wait
+fi
+
+sudo perl ww_install.pl $INTERACTIVE
 wait
 
 if [ -f "launch_browser.sh" ]; then

@@ -13,7 +13,7 @@ use DateTime;
 use DateTime::TimeZone;    #non-core!
 use DBI;
 
-use File::Path qw(make_path);
+use File::Path qw(make_path remove_tree);
 use File::Spec;
 use File::Copy;
 #use File::CheckTree;
@@ -249,7 +249,8 @@ sub run_command {
             });
         return 0;
         if ($continue eq "Exit") {
-            print_and_log("Bye. Please report this error asap.") if $continue eq "Exit";
+            print_and_log("Bye. Please report this error asap.");
+            die "Exiting..."
         } else {
             print_and_log("You chose to continue in spite of an error. There is a very good".
                           " chance this will end badly.\n");
@@ -1666,7 +1667,7 @@ END
         default => 'y',
       );
       my $confirmed = confirm_answer($engine);
-      if($confirmed->{status}) {
+      if($confirmed->{answer} && $confirmed->{status}) {
         change_storage_engine('/etc/mysql/my.cnf'); #this should be searched for
       } else {
         print_and_log("OK. We won't modify MySQL's default storage engine");
@@ -1862,15 +1863,15 @@ sub create_prefix_path {
              for my $diag (@$err) {
                  my ($file, $message) = %$diag;
                  if ($file eq '') {
-                     print "general error: $message\n";
+                     print_and_log("General error: $message");
                  }
                  else {
-                     print "problem creating $file: $message\n";
+                     print_and_log("Problem creating $file: $message");
                  }
              }
          }
          else {
-             print "No error encountered\n";
+             print_and_log("Created $dir. No error encountered.");
          }
 }
 
