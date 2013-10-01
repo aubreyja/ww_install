@@ -90,6 +90,10 @@ into the other scripts, so you'll need to run them separately.  Currently contai
 
   Steps user through generating an ssl cert
 
+* install_chromatic.pl
+
+  Installs Chromatic.pm from the NAU library so thier graph theory problems work.
+
 The `lib/` subdirectory contains copies of any perl modules the script uses but which don't need to be installed on your
 system for webwork to run.
 
