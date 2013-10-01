@@ -53,7 +53,7 @@ Contents
 
 ### install_webwork.sh
 
-This script is the 'conroller' that ties together the other scripts.  It opens an install log, downloads this
+This script is the 'controller' that ties together the other scripts.  It opens an install log, downloads this
 repo and opens it in (typically) tmp/.  Then it runs `install_prerequisites.sh` followed by `ww_install.pl`.
 When `ww_install.pl` exits, it attempts to open webwork in the system's default web browser, copies 
 webwork_install.log to `webwork2/logs` and then deletes the downloaded installation package.
