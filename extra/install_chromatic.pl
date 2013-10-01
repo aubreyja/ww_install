@@ -25,6 +25,7 @@ use File::Find;
 use File::Basename;
 
 use Cwd;
+use File::Path qw(make_path);
 use File::Copy;
 use File::Spec;
 use IPC::Cmd qw(can_run run);
@@ -70,13 +71,14 @@ copy($chromatic,"$pg_dir/lib/")
   or die "Couldn't copy $chromatic to $pg_dir/lib/:$!";
 $chromatic = File::Spec->canonpath("$pg_dir/lib/Chromatic.pm");
 
-copy($color_dot_c,"$pg_dir/lib/")
-  or die "Couldn't copy $color_dot_c to $pg_dir/lib/:$!";
-$color_dot_c = File::Spec->canonpath("$pg_dir/lib/color.c");
+make_path("$pg_dir/lib/chromatic");
+copy($color_dot_c,"$pg_dir/lib/chromatic/")
+  or die "Couldn't copy $color_dot_c to $pg_dir/lib/chromatic/:$!";
+$color_dot_c = File::Spec->canonpath("$pg_dir/lib/chromatic/color.c");
 
 
 #gcc -O3 color.c -o color
-chdir("$pg_dir/lib/");
+chdir("$pg_dir/lib/chromatic/");
 
 my $cmd = ['gcc','-O3',$color_dot_c,'-o','color']; #should be an array reference
 
