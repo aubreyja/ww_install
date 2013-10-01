@@ -107,3 +107,6 @@ while(<$in>) {
 # }
 
 chdir($cwd);
+
+print "Installed Chromatic.pm and associated binary.\n"; 
+print "Restart apache for changes to take effect.\n";
