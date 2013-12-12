@@ -75,24 +75,23 @@ It is an interactive script based on the core perl module Term::UI, and is writt
 cross-platform.  It does use some linux built-ins, and work is needed to ensure that this script will work as 
 well on unix machines. Again, contributions of work in this direction would be welcome.
 
-This script is not currently hooked into the other scripts, so you'll need to run this separately as root if you
-want to use it to set up a firewall.
-
 ### Other files
 
 The `extra/` subdirectory contains scripts which help with optional post install tasks.  These are not currently hooked 
 into the other scripts, so you'll need to run them separately.  Currently contains
-* iptables_rules.sh 
+
+* `iptables_rules.sh` 
 
   Sets up an iptables firewall which only allows network services necessary for running WeBWorK.
 
-* generate_ssl_cert.sh
+* `generate_ssl_cert.sh`
 
-  Steps user through generating an ssl cert
+  Steps user through generating an ssl cert.  Under construction.
 
-* install_chromatic.pl
+* `install_chromatic.pl`
 
-  Installs Chromatic.pm from the NAU library so thier graph theory problems work.
+  Installs Chromatic.pm from the NAU library so thier graph theory problems work.  Should no longer be necessary
+  as of WeBWorK 2.8.
 
 The `lib/` subdirectory contains copies of any perl modules the script uses but which don't need to be installed on your
 system for webwork to run.
