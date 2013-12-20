@@ -1659,8 +1659,7 @@ sub get_storage_engine {
 #
 ##############################################################
 END
-    my $prompt = "Would you like me to change the default mysql 
-   storage engine to MyISAM?";
+    my $prompt = "Change default mysql storage engine to MyISAM?";
     my $engine= $term->ask_yn(
         print_me => $print_me,
         prompt => $prompt,
