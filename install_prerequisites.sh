@@ -26,6 +26,7 @@ yum_install () {
     sudo yum -y install perl-Tie-IxHash uuid-perl perl-IPC-Cmd perl-Term-UI 
     sudo yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser
     sudo yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
+    sudo yum -y install perl-File-Find-Rule #ww2.8
 }
 
 apt_get_install () {
@@ -43,7 +44,7 @@ apt_get_install () {
     sudo apt-get $APTOPTS install dvipng netpbm unzip
     sudo apt-get $APTOPTS install preview-latex-style texlive-latex-base 
     sudo apt-get $APTOPTS install mysql-server openssh-server
-    sudo apt-get $APTOPTS install apache2 apache2-mpm-prefork apache2.2-common libapreq2 libapache2-request-perl 
+    sudo apt-get $APTOPTS install apache2-mpm-prefork libapreq2 libapache2-request-perl 
     sudo apt-get $APTOPTS install libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl 
     sudo apt-get $APTOPTS install libexception-class-perl libextutils-xsbuilder-perl libgd-gd2-perl 
     sudo apt-get $APTOPTS install liblocale-maketext-lexicon-perl libmime-tools-perl libnet-ip-perl 
@@ -52,6 +53,7 @@ apt_get_install () {
     sudo apt-get $APTOPTS install libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl 
     sudo apt-get $APTOPTS install libxml-writer-perl libpod-wsdl-perl libjson-perl libtext-csv-perl 
     sudo apt-get $APTOPTS install libhtml-scrubber-perl 
+    sudo apt-get $APTOPTS install libfile-find-rule-perl #ww2.8
 }
 
 if [ -e "/etc/redhat-release" ]
