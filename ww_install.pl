@@ -52,6 +52,7 @@ use constant WEBWORK2_REPO => 'https://github.com/openwebwork/webwork2.git';
 use constant PG_REPO       => 'https://github.com/openwebwork/pg.git';
 use constant OPL_REPO =>
   'https://github.com/openwebwork/webwork-open-problem-library.git';
+use constant MATHJAX_REPO => "https://github.com/mathjax/MathJax.git";
 
 use constant WW_PREFIX => '/opt/webwork/';
 use constant ROOT_URL  => 'http://localhost';
@@ -1944,15 +1945,19 @@ sub unpack_jsMath_fonts {
 }
 
 sub get_MathJax {
-    my $webwork_dir = shift;
-    chdir("$webwork_dir");
+    my $WW_PREFIX = shift;
+    chdir($WW_PREFIX);
 
-    #system("git submodule update --init");
     my $full_path = can_run('git');
-    my $cmd = [ $full_path, 'submodule', "update", "--init" ];
+    #As of ww2.8, MathJax is no longer a git submodule.
+    #pre-2.8 code: 
+    #command: system("git submodule update --init");
+    #my $cmd = [ $full_path, 'submodule', "update", "--init" ];
+
+    my $cmd = [ $full_path, 'clone', MATHJAX_REPO];
     my $success = run_command($cmd);
     if ($success) {
-        print_and_log("Downloaded MathJax to $webwork_dir/htdocs/mathjax\n");
+        print_and_log("Downloaded MathJax to $WW_PREFIX/MathJax\n");
     } else {
         print_and_log("Could not download MathJax. You'll have to do this manually.");
     }
@@ -2429,7 +2434,7 @@ print_and_log(<<EOF);
 # 
 ######################################################################
 EOF
-get_MathJax($webwork_dir);
+get_MathJax($WW_PREFIX);
 
 print_and_log(<<EOF);
 #######################################################################

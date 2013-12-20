@@ -49,33 +49,15 @@ use WeBWorK::CourseEnvironment;
 my $cwd = getcwd;
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 
-my $libraryRoot = $ce->{problemLibrary}->{root};
-$libraryRoot = File::Spec->canonpath($libraryRoot);
-my $nau = File::Spec->canonpath("$libraryRoot/NAU");
-my $chromatic = File::Spec->canonpath("$nau/lib/Chromatic.pm");
-my $color_dot_c = File::Spec->canonpath("$nau/lib/chromatic/color.c");
-#should now check that these really exist 
-
 my $pg_dir = $ce->{pg_dir};
 $pg_dir = File::Spec->canonpath($pg_dir);
 
-my $conf_dir = File::Spec->canonpath("$ENV{WEBWORK_ROOT}/conf");
+my $chromatic = File::Spec->canonpath("$pg_dir/lib/Chromatic.pm");
+my $color_dot_c = File::Spec->canonpath("$pg_dir/lib/chromatic/color.c");
+#should now check that these really exist 
 
 my $gcc = can_run('gcc')
   or die "Can't find gcc - please install it and try again.";
-
-#1. The files should be copied here:
-#/opt/webwork/pg/lib/Chromatic.pm
-#/opt/webwork/pg/lib/chromatic/color.c
-copy($chromatic,"$pg_dir/lib/")
-  or die "Couldn't copy $chromatic to $pg_dir/lib/:$!";
-$chromatic = File::Spec->canonpath("$pg_dir/lib/Chromatic.pm");
-
-make_path("$pg_dir/lib/chromatic");
-copy($color_dot_c,"$pg_dir/lib/chromatic/")
-  or die "Couldn't copy $color_dot_c to $pg_dir/lib/chromatic/:$!";
-$color_dot_c = File::Spec->canonpath("$pg_dir/lib/chromatic/color.c");
-
 
 #gcc -O3 color.c -o color
 chdir("$pg_dir/lib/chromatic/");
@@ -89,22 +71,6 @@ my (  $success, $error_message, $full_buf,
         verbose => IPC_CMD_VERBOSE,
         timeout => IPC_CMD_TIMEOUT
    );
-
-
-copy("$conf_dir/localOverrides.conf","$conf_dir/localOverrides.conf.bak");
-open(my $in,"<","$conf_dir/localOverrides.conf.bak");
-open(my $out,">","$conf_dir/localOverrides.conf");
-while(<$in>) {
-  if(/^1;/) {
-    print $out "push(\@{\$pg{modules}},[qw(Chromatic)]);\n1;\n";
-  } else {
-    print $out $_;
-  }
-}
-#push(@{$ce->{pg}->{modules}},[qw(Chromatic)]);
-#foreach(@{$ce->{pg}->{modules}}) {
-# print "@{$_}\n";
-# }
 
 chdir($cwd);
 
