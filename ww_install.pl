@@ -2252,6 +2252,31 @@ sub create_admin_course {
     );
 }
 
+
+sub install_chromatic {
+  my $pg_dir = shift;
+
+  chdir("$pg_dir/lib/chromatic");
+
+  my $color_dot_c = File::Spec->canonpath("$pg_dir/lib/chromatic/color.c");
+  #should now check that this really exists 
+
+  my $gcc = can_run('gcc')
+    or die "Can't find gcc - please install it and try again.";
+
+  #gcc -O3 color.c -o color
+  chdir("$pg_dir/lib/chromatic/");
+
+  my $cmd = ['gcc','-O3',$color_dot_c,'-o','color']; #should be an array reference
+
+  my $success = run_command($cmd);
+  if ($success) {
+    print_and_log("Compiled $color_dot_c."); 
+  } else {
+      print_and_log("Couldn't compile $color_dot_c.");
+  }
+}
+
 #############################################################
 #
 # Restart apache and launch web-browser!
@@ -2522,6 +2547,18 @@ print_and_log(<<EOF);
 ######################################################################
 EOF
 setup_opl($WW_PREFIX);
+
+
+print_and_log(<<EOF);
+######################################################################
+#
+# Now I'm going to compile pg/lib/chromatic/color.c. When you get a
+# chance you should check out Nandor Sieben's excellent graph theory
+# problems that use this.
+#
+#####################################################################
+EOF
+install_chromatic($pg_dir);
 
 print_and_log(<<EOF);
 #######################################################################

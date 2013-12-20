@@ -5,6 +5,8 @@ This repository consists of a perl script `ww_install.pl`, along with some suppo
 config files, and perl modules designed to work together install the open source online homework system 
 [WeBWorK](https://github.com/openwebwork).
 
+The script has been updated to install WeBWorK 2.8 as of 12/20/2013.
+
 It's been lightly tested on
 
 * [Scientific Linux 6.4 (Carbon)](https://www.scientificlinux.org/distributions/6x/6.4/) (7/2013)
@@ -70,7 +72,8 @@ linux distro or unix system, I will happily accept pull requests.
 
 ### ww_install.pl
 
-The goal of `ww_install.pl` is to install WeBWorK on any system on which the preqrequisites are already installed.  
+The goal of `ww_install.pl` is to install WeBWorK on any system on which the prerequisites are already installed.  
+
 It is an interactive script based on the core perl module Term::UI, and is written with the goal of being 
 cross-platform.  It does use some linux built-ins, and work is needed to ensure that this script will work as 
 well on unix machines. Again, contributions of work in this direction would be welcome.
@@ -90,8 +93,9 @@ into the other scripts, so you'll need to run them separately.  Currently contai
 
 * `install_chromatic.pl`
 
-  Installs Chromatic.pm from the NAU library so thier graph theory problems work.  Should no longer be necessary
-  as of WeBWorK 2.8.
+  Standalone script to compile color.c so the NAU library graph theory problems work. This functionality has been incorporated into
+  `ww_install.pl`, so it should not be necessary to run this script.  However, if you find the NAU graph theory problems are 
+  complaining that pg/lib/chromatic/color doesn't exist, then you can run this script to compile it for you.
 
 The `lib/` subdirectory contains copies of any perl modules the script uses but which don't need to be installed on your
 system for webwork to run.
@@ -108,7 +112,7 @@ repository.
 Questions and comments about this installer can be directed to me on the [webwork-devel](http://webwork.maa.org/mailman/listinfo/webwork-devel)
 mailing list. For a recent discussion see [[1]](http://webwork.maa.org/pipermail/webwork-devel/2013-June/001089.html).
 
-Information and documenation about WeBWorK itself can be found at http://webwork.maa.org/wiki
+Information and documentation about WeBWorK itself can be found at http://webwork.maa.org/wiki
 
 Author
 --------
@@ -124,7 +128,7 @@ Acknowledgements
 ----------------
 
 This script was inspired by Tom Haggedorn's [automatic installer for WeBWorK 2.4 on Mac OS 10.5 for Intel processors](http://webwork.maa.org/wiki/Automatic_Installer_for_2.4_on_Mac_OS_10.5_for_Intel_processors) bash script.
-Valuable feedback and testing has been provided by [Danny Glin](https://github.com/dlglin),[Djun Kim](https://github.com/djun-kim),
+Valuable feedback and testing has been provided by [Danny Glin](https://github.com/dlglin), [Djun Kim](https://github.com/djun-kim),
 [Geoff Gohle](https://github.com/goehle), [John Travis](https://github.com/drjt), [Peter Staab](https://github.com/pstaabp),
 [Arnie Pizer](https://github.com/apizer), [Paul Pearson](https://github.com/paultpearson), [Christina Kayastha](https://github.com/christinakayastha), and
 [Nathaniel Case (Qalthos)](https://github.com/Qalthos).
