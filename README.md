@@ -57,9 +57,9 @@ Contents
 ### install_webwork.sh
 
 This script is the 'controller' that ties together the other scripts.  It opens an install log, downloads this
-repo and opens it in (typically) tmp/.  Then it runs `install_prerequisites.sh` followed by `ww_install.pl`.
+repo and opens it in (typically) `/tmp`.  Then it runs `install_prerequisites.sh` followed by `ww_install.pl`.
 When `ww_install.pl` exits, it attempts to open webwork in the system's default web browser, copies 
-webwork_install.log to `webwork2/logs` and then deletes the downloaded installation package.
+webwork_install.log to your top level webwork directory (e.g. `/opt/webwork`) and then deletes the downloaded installation package.
 
 ### install_prerequisites.sh
 
@@ -75,14 +75,12 @@ linux distro or unix system, I will happily accept pull requests.
 
 The goal of `ww_install.pl` is to install WeBWorK on any system on which the prerequisites are already installed.  
 
-It is an interactive script based on the core perl module Term::UI, and is written with the goal of being 
-cross-platform.  It does use some linux built-ins, and work is needed to ensure that this script will work as 
-well on unix machines. Again, contributions of work in this direction would be welcome.
+It is an interactive script based on the core perl module [Term::UI](http://perldoc.perl.org/Term/UI.html), and is written with the goal of being cross-platform.  It does use some linux built-ins, and work is needed to ensure that this script will work as well on unix machines. Again, contributions of work in this direction would be welcome.
 
 ### Other files
 
-The `extra/` subdirectory contains scripts which help with optional post install tasks.  These are not currently hooked 
-into the other scripts, so you'll need to run them separately.  Currently contains
+The `extra/` subdirectory contains scripts which help with optional post install tasks.  These are not currently 
+hooked into the other scripts, so you'll need to run them separately.  Currently contains
 
 * `iptables_rules.sh` 
 
@@ -94,12 +92,13 @@ into the other scripts, so you'll need to run them separately.  Currently contai
 
 * `install_chromatic.pl`
 
-  Standalone script to compile color.c so the NAU library graph theory problems work. This functionality has been incorporated into
-  `ww_install.pl`, so it should not be necessary to run this script.  However, if you find the NAU graph theory problems are 
-  complaining that pg/lib/chromatic/color doesn't exist, then you can run this script to compile it for you.
+  Standalone script to compile `pg/lib/chromatic/color.c` so the NAU library graph theory problems work. This
+  functionality has been incorporated into `ww_install.pl`, so it should not be necessary to run this script. However,
+  if you find the NAU graph theory problems are complaining that `pg/lib/chromatic/color` doesn't exist, then you 
+  can run this script to compile it for you.
 
-The `lib/` subdirectory contains copies of any perl modules the script uses but which don't need to be installed on your
-system for webwork to run.
+The `lib/` subdirectory contains copies of any perl modules the script uses but which don't need to be installed 
+on your system for webwork to run.
 
 The `conf/` subdirectory contains copies of config files or snippets of config files that this installation package
 will ask to modify.
