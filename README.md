@@ -10,6 +10,7 @@ The script has been updated to install WeBWorK 2.8 as of 12/20/2013.
 It has been tested with WeBWorK 2.8 on
 
 * [Debian 7.3.0 (Wheezy) GNU/Linux](http://www.debian.org/releases/wheezy) (12/2013)
+* [Ubuntu 13.04 (Raring Ringtail)](http://releases.ubuntu.com/raring/) (12/2013)
 
 It was tested with WeBWorK 2.7 on
 
