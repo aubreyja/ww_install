@@ -236,8 +236,8 @@ sub run_command {
       if (!$success) {
         writelog($error_message) if $error_message;
         my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
-            "We have logged the error message, if any. We suggest that you exit now and ".
-            "report the error at https://github.com/aubreyja/ww_install ".
+            "We have logged the error message, if any. We suggest that you exit now and \n".
+            "report the error at https://github.com/aubreyja/ww_install \n\n".
             "If you are certain the error is harmless, then you may continue the installation ".
             "at your own risk.";
         my $choices = ["Continue the installation", "Exit"];
@@ -246,6 +246,7 @@ sub run_command {
         my $continue = get_reply({
             print_me=>$print_me,
             prompt=>$prompt,
+            choices=>$choices,
             default=>$default,
             });
         return 0;
@@ -257,7 +258,7 @@ sub run_command {
                           " chance this will end badly.\n");
         }
       } else {
-        return 1;
+        return $stdout_buf;
       }
 }
 
@@ -1305,81 +1306,23 @@ sub configure_externalPrograms {
     return $apps;
 }
 
-sub get_webwork2_repo {
-    my $default  = shift;
+sub get_repo {
+    my ($repo_name,$default)  = @_;
     my $print_me = <<END;
-##########################################################################################
+#######################################################################
 #
-# There are two bundles of code to download that comprise webwork: The 'webwork2'
-# code constitutes the web application, and the 'pg' code which defines the language in
-# which webwork problems are written and is responsible for translating webwork problem
-# for display on the web or in print, answer checking, etc.
-#
-# We're about to download that code and the WeBWorK Open Problem Library.  Most users
-# will want to download the code from the standard github repositories.  But some users
-# will want to use their own custom repositories.  Here we ask where you would like to
-# download webwork2, pg, and the OPL from.  To accept the defaults, and download the code 
-# from the standard repositories, just hit enter. Otherwise, enter your custom urls.  
-#
-###########################################################################################
+#  Let's select the location of the $repo_name code repository.
+# 
+######################################################################
 END
 
-    my $repo = $term->get_reply(
+    my $repo = get_reply({
         print_me => $print_me,
-        prompt   => 'Where would you like to download webwork2 from?',
-        default => $default,    #constant defined at top
-    );
-
-    #has this been confirmed?
-    my $confirmed = 0;
-    $confirmed = confirm_answer($repo);
-    if ($confirmed->{status}) {
-        print_and_log("Got it, I'll download webwork2 from $repo.\n");
-        return $repo;
-    } else {
-        get_webwork2_repo($default);
-    }
+        prompt   => "Where would you like to download $repo_name from?",
+        default => $default,  
+      });
 }
 
-sub get_pg_repo {
-    my $default = shift;
-    my $repo    = $term->get_reply(
-
-        #print_me => $print_me,
-        prompt => 'Where would you like to download pg from?',
-        default => $default,    #constant defined at top
-    );
-
-    #has this been confirmed?
-    my $confirmed = 0;
-    $confirmed = confirm_answer($repo);
-    if ($confirmed->{status}) {
-        print_and_log("Got it, I'll download pg from $repo.\n");
-        return $repo;
-    } else {
-        get_pg_repo($default);
-    }
-}
-
-sub get_opl_repo {
-    my $default = shift;
-    my $repo    = $term->get_reply(
-        #print_me => $print_me,
-        prompt  => 'Where would you like to download the OPL from?',
-        default => $default,
-    );
-
-    #has this been confirmed?
-    my $confirmed = 0;
-    $confirmed = confirm_answer($repo);
-    if ($confirmed->{status}) {
-        print_and_log("Got it, I'll download the OPL from $repo.\n");
-        return $repo;
-    } else {
-        get_opl_repo($default);
-    }
-
-}
 
 sub is_absolute {
   my $dir = shift;
@@ -1875,51 +1818,95 @@ sub create_prefix_path {
          }
 }
 
+
+
 ############################################################################
 #
 # Get the software, put it in the correct location
 #
 ############################################################################
 
-sub get_webwork {
-    my ( $prefix, $apps, $wwadmin ) = @_;
-    create_prefix_path($prefix);
-    chdir $prefix or die "Can't chdir to $prefix";
-    my $ww2_repo =
-      get_webwork2_repo(WEBWORK2_REPO);   #WEBWORK2_REPO constant defined at top
-    my $ww2_cmd = [$apps->{git},'clone',$ww2_repo];
-
-    my $pg_repo = get_pg_repo(PG_REPO);    #PG_REPO constant defined at top
-    my $pg_cmd = [$apps->{git},'clone',$pg_repo];
-
-    my $opl_repo = get_opl_repo(OPL_REPO);    #OPL_REPO constant defined at top
-    my $opl_cmd = [$apps->{git},'clone',$opl_repo];
+sub get_code {
+    my ($repo_name,$repo, $git) = @_;
+    my $cmd = [$git,'clone',$repo];
 
     my $buffer;
-    my $ww2_success = run_command($ww2_cmd);
+    my $success = run_command($cmd);
 
-    if ($ww2_success) {
-        print_and_log("Fetched webwork2 successfully.\n");
+    if ($success) {
+        print_and_log("Fetched $repo_name successfully.\n");
     } else {
-        print_and_log("Couldn't get webwork2!");
+        print_and_log("Couldn't get $repo_name!");
     }
-    my $pg_success = run_command($pg_cmd);
-    if ($pg_success) {
-        print_and_log("Fetched pg successfully!");
-    } else {
-        print_and_log("Couldn't get pg!");
-    }
+}
 
-    make_path( 'libraries', { owner => $wwadmin, group => $wwadmin } );
-    make_path( 'courses',   { owner => $wwadmin, group => $wwadmin } );
-    chdir "$prefix/libraries";
+sub get_branch {
+  my ($repo_name,$git) = @_;
 
-    my $opl_success = run_command($opl_cmd);;
-    if ($opl_success) {
-        print_and_log("Fetched OPL successfully");
-    } else {
-        print_and_log("Couldn't get OPL!");
-    }
+  my $cmd = [$git,'branch','-r'];
+  my $output = run_command($cmd);
+  my $string = join('',@{$output});
+  $string =~ s/\n//g;
+  my @branches = split(/\s{2,}/,$string);
+  shift(@branches);
+my $print_me = <<END;
+#######################################################################
+#
+#  Here you are given the opportunity to check out a specific branch
+#  of the $repo_name code repository.  For a standard installation,
+#  accept the default 'master' branch.  
+#
+#######################################################################
+END
+  my $prompt = "Please select a branch:";
+  my $default = 'origin/master';
+  my $remote_branch = get_reply({
+      print_me => $print_me,
+      prompt => $prompt,
+      choices => \@branches,
+      default => $default,
+    });
+  if($remote_branch eq 'origin/master') {
+    print_and_log("Great, we'll stick with the master branch.");
+    return ('master','origin/master');
+  } else {
+    (my $local_branch = $remote_branch) =~ s/origin\///;
+    my $print_me = <<END;
+#######################################################################
+#
+# Please enter a name for the local branch that will track the remote
+# branch $remote_branch.  You may want to change the default if you plan 
+# to set up more than one remote on this working copy.
+#
+#######################################################################
+END
+    my $prompt = "Local branch name:";
+    my $default = $local_branch;
+    $local_branch = get_reply({
+        print_me => $print_me,
+        prompt => $prompt,
+        default => $default,
+      });
+    #TODO: check that this isn't master and is otherwise valid
+    return ($local_branch,$remote_branch);
+  }
+}
+
+sub switch_branch {
+  my ($local_branch,$remote_branch, $git) = @_;
+  my $fetch_cmd = [$git,'fetch','origin'];
+  my $fetch = run_command($fetch_cmd);
+  unless($fetch) {
+    print_and_log("Couldn't do git fetch so we can't switch branches.");
+    return;
+  }
+  my $checkout_cmd = [$git,'checkout','-b',$local_branch,$remote_branch];
+  my $checkout = run_command($checkout_cmd);
+  if($checkout) {
+    print_and_log("Successfully switched branch!");
+  } else {
+    print_and_log("Could not switch branch!");
+  }
 }
 
 #############################################################
@@ -2428,12 +2415,56 @@ get_storage_engine();
 print_and_log(<<EOF);
 #######################################################################
 #
-#  Now I'm going to download the webwork code.  This will take a couple
-#  of minutes.
+#  Now I'm going to create the $WW_PREFIX directory
 # 
 ######################################################################
 EOF
-get_webwork( $WW_PREFIX, $apps );
+create_prefix_path($WW_PREFIX);
+chdir $WW_PREFIX or die "Can't chdir to $WW_PREFIX";
+
+make_path( 'libraries', { owner => $wwadmin, group => $wwadmin } );
+make_path( 'courses',   { owner => $wwadmin, group => $wwadmin } );
+
+
+print_and_log(<<EOF);
+##########################################################################################
+#
+# There are two bundles of code to download that comprise the webwork system: The 'webwork2'
+# code constitutes the web application, and the 'pg' code which defines the language in
+# which webwork problems are written and is responsible for translating webwork problem
+# for display on the web or in print, answer checking, etc.
+#
+# We're about to download that code and the WeBWorK Open Problem Library.  Most users
+# will want to download the code from the standard github repositories.  But some users
+# will want to use their own custom repositories.  Here we ask where you would like to
+# download webwork2, pg, and the OPL from.  To accept the defaults, and download the code 
+# from the standard repositories, just hit enter. Otherwise, enter your custom urls.  
+#
+# After selecting the repository to download from, you then be given an opportunity
+# to switch to a branch of that repository if you want to use something other than the
+# master branch.
+#
+###########################################################################################
+EOF
+sleep(1);
+
+my $ww2_repo = get_repo('webwork2',WEBWORK2_REPO);   #WEBWORK2_REPO constant defined at top
+get_code('webwork2', $ww2_repo, $apps->{git} );
+my ($local_ww2_branch,$remote_ww2_branch) = get_branch('webwork2',$apps->{git});
+switch_branch($local_ww2_branch,$remote_ww2_branch,'git') if $local_ww2_branch ne 'master';
+
+
+my $pg_repo = get_repo('pg',PG_REPO);    #PG_REPO constant defined at top
+get_code('pg',$pg_repo, $apps->{git});
+my $pg_branch = get_branch('pg',$apps->{git});
+my ($local_pg_branch,$remote_pg_branch) = get_branch('pg',$apps->{git});
+switch_branch($local_pg_branch,$remote_pg_branch,'git') if $local_pg_branch ne 'master';
+
+
+
+chdir "$WW_PREFIX/libraries";
+my $opl_repo = get_repo('OPL',OPL_REPO);    #OPL_REPO constant defined at top
+get_code('opl',$opl_repo, $apps->{git});
 
 print_and_log(<<EOF);
 #######################################################################
