@@ -2450,12 +2450,15 @@ sleep(1);
 
 my $ww2_repo = get_repo('webwork2',WEBWORK2_REPO);   #WEBWORK2_REPO constant defined at top
 get_code('webwork2', $ww2_repo, $apps->{git} );
+
+chdir("$WW_PREFIX/webwork2");
 my ($local_ww2_branch,$remote_ww2_branch) = get_branch('webwork2',$apps->{git});
 switch_branch($local_ww2_branch,$remote_ww2_branch,'git') if $local_ww2_branch ne 'master';
-
+chdir($WW_PREFIX);
 
 my $pg_repo = get_repo('pg',PG_REPO);    #PG_REPO constant defined at top
 get_code('pg',$pg_repo, $apps->{git});
+chdir("$WW_PREFIX/pg");
 my $pg_branch = get_branch('pg',$apps->{git});
 my ($local_pg_branch,$remote_pg_branch) = get_branch('pg',$apps->{git});
 switch_branch($local_pg_branch,$remote_pg_branch,'git') if $local_pg_branch ne 'master';
