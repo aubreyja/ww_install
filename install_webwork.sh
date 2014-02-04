@@ -210,7 +210,7 @@ clean_exit () {
 echo "## Download the latest webwork installer"
 $WWINSTALLDOWNLOAD 
 
-echo "## Unzipping the installer"
+echo "## Extracting the installer"
 tar -xzf $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
