@@ -248,7 +248,6 @@ sub run_command {
             prompt=>$prompt,
             default=>$default,
             });
-        return 0;
         if ($continue eq "Exit") {
             print_and_log("Bye. Please report this error asap.");
             die "Exiting..."

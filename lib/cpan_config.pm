@@ -6,7 +6,7 @@ $CPAN::Config = {
                   'histfile' => $ENV{"HOME"}."/.cpan/histfile",
                   'unzip' => '/usr/bin/unzip',
                   'show_upload_date' => '0',
-                  'mbuild_install_build_command' => 'sudo ./Build',
+                  'mbuild_install_build_command' => './Build',
                   'yaml_load_code' => '0',
                   'urllist' => [
                                  'http://cpan.erlbaum.net/',
@@ -22,7 +22,7 @@ $CPAN::Config = {
                   'connect_to_internet_ok' => '1',
                   'getcwd' => 'cwd',
                   'prefer_external_tar' => '1',
-                  'make_install_make_command' => 'sudo /usr/bin/make',
+                  'make_install_make_command' => '/usr/bin/make',
                   'no_proxy' => '',
                   'build_cache' => '100',
                   'make_arg' => '',
