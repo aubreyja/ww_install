@@ -7,7 +7,7 @@ MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
 BRANCH=master
-WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.zip
+WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
 
@@ -211,7 +211,7 @@ echo "## Download the latest webwork installer"
 $WWINSTALLDOWNLOAD 
 
 echo "## Unzipping the installer"
-gunzip $LOCALINSTALLER
+tar -xzf $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
 mv $TMPDIR/webwork_install.log .
