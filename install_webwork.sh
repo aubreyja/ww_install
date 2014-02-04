@@ -222,7 +222,7 @@ if [ $PREREQUISITES -eq 1 ]; then
   wait
 fi
 
-sudo perl ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW
+perl ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW
 wait
 
 if [ -f "launch_browser.sh" ]; then
@@ -232,13 +232,13 @@ fi
 
 move_install_log () {
 if [ -d "$WEBWORK_ROOT" ]; then
-    sudo mv webwork_install.log $WEBWORK_ROOT/logs
+    mv webwork_install.log $WEBWORK_ROOT/logs
     echo "webwork_install.log can be found in $WEBWORK_ROOT/logs"
 elif [ -d "$HOME" ]; then
     cp webwork_install.log $HOME
     echo "webwork_install.log can be found in $HOME"
 else
-    sudo mv webwork_install.log $TMPDIR
+    mv webwork_install.log $TMPDIR
     echo "webwork_install.log can be found in $TMPDIR"
 fi
 }
