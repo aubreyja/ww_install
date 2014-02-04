@@ -185,7 +185,7 @@ sleep 2
 
 echo "Working in $TMPDIR"
 
-LOCALINSTALLER="ww_install.zip"
+LOCALINSTALLER="ww_install.tar.gz"
 
 echo
 if type curl >/dev/null 2>&1; then
