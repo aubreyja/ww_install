@@ -211,7 +211,7 @@ echo "## Download the latest webwork installer"
 $WWINSTALLDOWNLOAD 
 
 echo "## Unzipping the installer"
-unzip $LOCALINSTALLER
+gunzip $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
 mv $TMPDIR/webwork_install.log .
