@@ -329,7 +329,7 @@ my $apache22Layouts = {
         SSLConfig    => '/usr/local/apache2/conf/extra/httpd-ssl.conf',
         ErrorLog     => '/usr/local/apache2/logs/error_log',
         AccessLog    => '/usr/local/apache2/logs/access_log',
-        ctl          => '/usr/local/apache2/bin/apachectl',
+        Binary          => '/usr/local/apache2/bin/apachectl',
         User         => '',
         Group        => '',
     },
@@ -415,6 +415,22 @@ my $apache22Layouts = {
         Binary       => '/usr/sbin/apachectl',
         User         => 'wwwrun',
         Group        => 'www',
+    },
+};
+
+my $apache24Layouts = {
+    httpd24 => {    #Apache 2.4 default layout
+        MPMDir       => '',
+        ServerRoot   => '/usr/local/apache2',
+        DocumentRoot => '/usr/local/apache2/htdocs',
+        ConfigFile   => '/usr/local/apache2/conf/httpd.conf',
+        OtherConfig  => '/usr/local/apache2/conf/extra',
+        SSLConfig    => '/usr/local/apache2/conf/extra/httpd-ssl.conf',
+        ErrorLog     => '/usr/local/apache2/logs/error_log',
+        AccessLog    => '/usr/local/apache2/logs/access_log',
+        Binary          => '/usr/local/apache2/bin/apachectl',
+        User         => '',
+        Group        => '',
     },
 };
 
@@ -2296,8 +2312,9 @@ sub restart_apache {
 sub write_launch_browser_script {
     my ( $dir, $url ) = @_;
 
-    #We want to open the browser as the user that logged in, not root.
-    my $username = $ENV{SUDO_USER};
+    #We want to open the browser as the user that logged in, not root if
+    #using sudo. 
+    my $username = $ENV{SUDO_USER} || $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
 
    #Remember that we used User::pwent which overrides the builtin pw* functions.
     my $pw  = getpwnam($username);
@@ -2314,6 +2331,7 @@ sub write_launch_browser_script {
       || can_run('www-browser')
       || can_run('gnome-open')
       || can_run('firefox');
+    return unless $browser;
     open( my $out, ">", "launch_browser.sh" )
       or die "Can't open launch_browser.sh: $!";
     print $out "#!/usr/bin/env bash\n\n";

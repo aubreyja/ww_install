@@ -33,7 +33,7 @@ To install [WeBWorK](https://github.com/openwebwork):
 
 1. Get the `install_webwork.sh` script:
 
-  `wget https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
+  `wget --no-check-certificate https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
   
   or if you prefer
   

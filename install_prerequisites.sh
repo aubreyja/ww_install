@@ -61,17 +61,17 @@ then
   if [ -e "/etc/fedora-release" ]
   then
     printf "%b\n" "# We've got Fedora"
-    MYSQLSTART=' systemctl start mysqld.service'
-    MYSQLENABLE=' systemctl enable mysqld.service'
-    APACHESTART=' systemctl start httpd.service'
-    APACHEENABLE=' systemctl enable httpd.service'
+    MYSQLSTART='systemctl start mysqld.service'
+    MYSQLENABLE='systemctl enable mysqld.service'
+    APACHESTART='systemctl start httpd.service'
+    APACHEENABLE='systemctl enable httpd.service'
     CPANOPT='-j lib/cpan_config.pm'
   else 
     printf "%b\n" "# We've got a relative of RedHat which is not Fedora"
-    MYSQLSTART=' service mysqld start'
-    MYSQLENABLE=' chkconfig mysqld on'
-    APACHESTART=' service httpd start'
-    APACHEENABLE=' chkconfig httpd on'
+    MYSQLSTART='service mysqld start'
+    MYSQLENABLE='chkconfig mysqld on'
+    APACHESTART='service httpd start'
+    APACHEENABLE='chkconfig httpd on'
     #CPANOPT=''
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
