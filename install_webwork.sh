@@ -218,11 +218,11 @@ mv $TMPDIR/webwork_install.log .
 
 if [ $PREREQUISITES -eq 1 ]; then
   echo "Installing prerequisites..."
-  source install_prerequisites.sh 
+  source ./bin/install_prerequisites.sh 
   wait
 fi
 
-perl ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW
+perl ./bin/ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW
 wait
 
 if [ -f "launch_browser.sh" ]; then
