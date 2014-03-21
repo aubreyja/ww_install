@@ -62,7 +62,7 @@ repo and opens it in (typically) `/tmp`.  Then it runs `install_prerequisites.sh
 When `ww_install.pl` exits, it attempts to open webwork in the system's default web browser, copies 
 webwork_install.log to your top level webwork directory (e.g. `/opt/webwork`) and then deletes the downloaded installation package.
 
-### install_prerequisites.sh
+### bin/install_prerequisites.sh
 
 If your system does not have all of the prerequisites installed, then the `install_prerequisites.sh` script 
 might help.  The goal of that script is to install all of the software that WeBWorK depends on. This is also
@@ -72,7 +72,7 @@ on getting it to install prereqs on other systems such as OpenSUSE and Magia, bu
 need to have these prerequisites already installed.  If you would like to fill it out for your favorite 
 linux distro or unix system, I will happily accept pull requests.
 
-### ww_install.pl
+### bin/ww_install.pl
 
 The goal of `ww_install.pl` is to install WeBWorK on any system on which the prerequisites are already installed.  
 
@@ -103,6 +103,13 @@ on your system for webwork to run.
 
 The `conf/` subdirectory contains copies of config files or snippets of config files that this installation package
 will ask to modify.
+
+The `deb/` subdirectory contains work (in progress) toward creating a 
+debian archive for installing webwork.
+
+The `rpms/` subdirectory is Mark Hamrick's work toward creating a webwork
+rpm (as a submodule, so I can easily get a hold if it when/if I eventually
+start looking at it).
 
 Other Resources
 ----------------
