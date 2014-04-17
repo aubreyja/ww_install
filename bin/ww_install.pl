@@ -397,15 +397,6 @@ my $apache24Layouts = {
     },
 };
 
-my %linux = (
-    'DISTRIB_ID'          => '',
-    'DISTRIB_RELEASE'     => '',
-    'DISTRIB_CODENAME'    => '',
-    'DISTRIB_DESCRIPTION' => '',
-    'release_file'        => '',
-    'pattern'             => ''
-);
-
 sub get_os {
     my $os;
     if ( $^O eq "darwin" ) {

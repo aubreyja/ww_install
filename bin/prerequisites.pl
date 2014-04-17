@@ -3,12 +3,112 @@
 use strict;
 use warnings;
 
-use '../lib';
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Linux::Distribution qw(distribution_name distribution_version);
+use cpan_config;
 
+use Term::UI;
+use Term::ReadLine;
+
+use IPC::Cmd qw(can_run run);
+
+use Config;
+use CPAN;
+
+###############################################################################################
+# Create a new Term::Readline object for interactivity
+#Don't worry people with spurious warnings.
+###############################################################################################
+$Term::UI::VERBOSE = 0;
+my $term = Term::ReadLine->new('');
+
+#########################################################################################
+#
+# Defaults - each of these values is passed as a default to some config question
+#
+########################################################################################
+
+use constant WEBWORK2_REPO => 'https://github.com/openwebwork/webwork2.git';
+use constant PG_REPO       => 'https://github.com/openwebwork/pg.git';
+use constant OPL_REPO =>
+  'https://github.com/openwebwork/webwork-open-problem-library.git';
+use constant MATHJAX_REPO => "https://github.com/mathjax/MathJax.git";
+
+use constant WW_PREFIX => '/opt/webwork/';
+use constant ROOT_URL  => 'http://localhost';
+use constant WW_URL    => '/webwork2';
+
+use constant SMTP_SERVER => 'localhost';
+use constant SMTP_SENDER => 'webwork@localhost';
+
+use constant WW_DB     => 'webwork';
+use constant WWDB_USER => 'webworkWrite';
+
+$ENV{PERL_MM_USE_DEFAULT}=1;
+$ENV{PERL_MM_NONINTERACTIVE}=1;
+$ENV{AUTOMATED_TESTING}=1;
+
+#######################################################################################
+#
+# Constants that control behavior IPC::Cmd::run
+#
+# ####################################################################################
+
+use constant IPC_CMD_TIMEOUT =>
+  6000;    #Sets maximum time system commands will be allowed to run
+use constant IPC_CMD_VERBOSE => 1;    #Controls whether all output of a command
+                                      #should be printed to STDOUT/STDERR
 sub print_and_log {
   my $msg = shift;
   print "$msg\n";
+}
+
+sub writelog {
+  my $msg = shift;
+  print "$msg\n";
+}
+
+sub run_command {
+    my $cmd = shift; #should be an array reference
+    my (
+        $success, $error_message, $full_buf,
+        $stdout_buf, $stderr_buf
+      )
+      = run(
+        command => $cmd,
+        verbose => IPC_CMD_VERBOSE,
+        timeout => IPC_CMD_TIMEOUT
+      );
+      my $cmd_string = join(' ',@$cmd);
+      writelog("Running [".$cmd_string."]:\n");
+      writelog("STDOUT: ",@$stdout_buf) if @$stdout_buf;
+      writelog("STDERR: ",@$stderr_buf) if @$stderr_buf;
+      if (!$success) {
+        writelog($error_message) if $error_message;
+        my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
+            "We have logged the error message, if any. We suggest that you exit now and ".
+            "report the error at https://github.com/aubreyja/ww_install ".
+            "If you are certain the error is harmless, then you may continue the installation ".
+            "at your own risk.";
+        my $choices = ["Continue the installation", "Exit"];
+        my $prompt = "What would you like to do about this?";
+        my $default = "Exit";
+        my $continue = get_reply({
+            print_me=>$print_me,
+            prompt=>$prompt,
+            default=>$default,
+            });
+        if ($continue eq "Exit") {
+            print_and_log("Bye. Please report this error asap.");
+            die "Exiting..."
+        } else {
+            print_and_log("You chose to continue in spite of an error. There is a very good".
+                          " chance this will end badly.\n");
+        }
+      } else {
+        return 1;
+      }
 }
 
 sub get_os {
@@ -256,6 +356,7 @@ $prerequisites->{ubuntu} = {
     prefork_mpm => 'apache2-mpm-prefork',
   },
 };
+
 #foreach my $os (keys $applications) {
 #  print "$os => \n";
 #  foreach my $ver (keys $applications->{$os}) {
@@ -267,28 +368,61 @@ $prerequisites->{ubuntu} = {
 #}
 
 my $os = get_os();
+my %packages = (%{$prerequisites->{$os->{name}}->{common}}, %{$prerequisites->{$os->{name}}->{$os->{version}}});
+
 print "$os->{name}\n";
 print "$os->{version}\n";
-my %packages = (%{$prerequisites->{$os->{name}}->{common}}, %{$prerequisites->{$os->{name}}->{$os->{version}}});
-#foreach (keys %packages) {
-#  print "$_ => $packages{$_}\n";
-#}
 
-my %seen = ();
+
+my %packages_seen = ();
 foreach (values %packages) {
-  $seen{$_}++ unless $_ eq 'CPAN';
+  $packages_seen{$_}++ unless $_ eq 'CPAN';
 }
-my @uniq = keys %seen;
+my @packages_to_install = keys %packages_seen;
 
-foreach(@uniq) {
-  print "$_\n";
-}
-
-my @cpan;
+my @cpan_to_install = ();
 foreach(keys %packages) {
-  push(@cpan, $_) if $packages{$_} eq 'CPAN';
+  push(@cpan_to_install, $_) if $packages{$_} eq 'CPAN';
 }
 
-foreach(@cpan) {
-  print "CPAN $_\n";
+sub apt_get_install {
+  my @packages = @_;
+  #make sure we don't try to get anything off of 
+  #a cdrom. (Allowing it causes script to hang 
+  # on Debian 7)
+  #sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
+  my $cmd = ['apt-get','install','-y --allow-unauthenticated',@packages];
+  run_command(['apt-get','-y','update']);
+  run_command(['apt-get','-y','upgrade']);
+  run_command($cmd);
 }
+
+sub add_epel {
+#ARCH=$(uname -m)
+#MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
+#cat <<EOM >/etc/yum.repos.d/epel-bootstrap.repo
+#[epel]
+#name=Bootstrap EPEL
+#mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$MAJORVER&arch=$ARCH
+#failovermethod=priority
+#enabled=0
+#gpgcheck=0
+#EOM
+#     yum --enablerepo=epel -y install epel-release
+#     rm -f /etc/yum.repos.d/epel-bootstrap.repo
+}
+
+sub yum_install {
+  my @packages = @_;
+  my $cmd = ['yum','-y','install',@packages];
+  run_command($cmd);
+}
+
+sub cpan_install {
+  my @modules = @_;
+  CPAN::install(@modules);
+}
+
+cpan_install(@cpan_to_install); #pass cpan opts depending on perl version
+
+
