@@ -3,8 +3,9 @@
 use strict;
 use warnings;
 
-use lib '../lib'; #For helpful noncore perl modules
-
+#For helpful noncore perl modules
+use FindBin;
+use lib "$FindBin::Bin/../lib"; 
 #Core Perl Modules
 use Config;
 use Cwd;
