@@ -1,0 +1,22 @@
+Template: webwork/ready
+Type: boolean
+Description: Are you ready?
+Welcome to the WeBWorK.  This installation script will ask you a few questions and then attempt to install 
+WeBWorK on your system. To complete the installation
+.
+  (a) You must be connected to the internet.
+  (b) You must have administrative privliges on this machine, and
+  (c) The mysql server must be running
+.
+Also, you should have already gone through the process of setting up the
+root mysql account and securing your mysql server.  If you haven't done this 
+or aren't sure if it has been done then exit this script and do
+'sudo service mysqld start' to start mysql, and then 'mysql_secure_installation' to 
+secure the server and set the root password.  Once you know the root mysql 
+password then you can come back to this script and install webwork.  
+
+Template: foo/baz
+Type: boolean
+Description: Clear enough, no?
+This is another question, of boolean type.
+
