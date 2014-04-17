@@ -3,14 +3,14 @@
 use strict;
 use warnings;
 
-use lib 'lib';
+use lib '../lib'; #For helpful noncore perl modules
 
+#Core Perl Modules
 use Config;
 use Cwd;
 
 use Data::Dumper;
 use DateTime;
-use DateTime::TimeZone;    #non-core!
 use DBI;
 
 use File::Path qw(make_path remove_tree);
@@ -30,10 +30,15 @@ use Sys::Hostname;
 
 use Term::UI;
 use Term::ReadLine;
-use Term::ReadPassword; #to be found in lib/
 
 use User::pwent;
 
+#to be found in lib/
+use Term::ReadPassword; 
+use Linux::Distribution;
+
+#non-core
+use DateTime::TimeZone; 
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
@@ -269,49 +274,6 @@ sub run_command {
 # Others....
 # ##################################################################################################
 
-my %release_files = (
-    'gentoo-release'        => 'gentoo',
-    'fedora-release'        => 'fedora',
-    'centos-release'        => 'centos',
-    'enterprise-release'    => 'oracle enterprise linux',
-    'turbolinux-release'    => 'turbolinux',
-    'mandrake-release'      => 'mandrake',
-    'mandrakelinux-release' => 'mandrakelinux',
-    'debian_version'        => 'debian',
-    'debian_release'        => 'debian',
-    'SuSE-release'          => 'suse',
-    'knoppix-version'       => 'knoppix',
-    'yellowdog-release'     => 'yellowdog',
-    'slackware-version'     => 'slackware',
-    'slackware-release'     => 'slackware',
-    'redflag-release'       => 'redflag',
-    'redhat-release'        => 'redhat',
-    'redhat_version'        => 'redhat',
-    'conectiva-release'     => 'conectiva',
-    'immunix-release'       => 'immunix',
-    'tinysofa-release'      => 'tinysofa',
-    'trustix-release'       => 'trustix',
-    'adamantix_version'     => 'adamantix',
-    'yoper-release'         => 'yoper',
-    'arch-release'          => 'arch',
-    'libranet_version'      => 'libranet',
-    'va-release'            => 'va-linux',
-    'pardus-release'        => 'pardus',
-);
-
-my %version_match = (
-    'gentoo'  => 'Gentoo Base System release (.*)',
-    'debian'  => '(.+)',
-    'suse'    => 'VERSION = (.*)',
-    'fedora'  => 'Fedora(?: Core)? release (\d+) \(',
-    'redflag' => 'Red Flag (?:Desktop|Linux) (?:release |\()(.*?)(?: \(.+)?\)',
-    'redhat'  => 'Red Hat(?: Enterprise)? Linux(?: Server)? release (.*) \(',
-    'oracle enterprise linux' => 'Enterprise Linux Server release (.+) \(',
-    'slackware'               => '^Slackware (.+)$',
-    'pardus'                  => '^Pardus (.+)$',
-    'centos'     => '^CentOS(?: Linux)? release (.+)(?:\s\(Final\))',
-    'scientific' => '^Scientific Linux release (.+) \(',
-);
 
 #Apache 2.2 locations for various operating systems
 #From http://wiki.apache.org/httpd/DistrosDefaultLayout
@@ -483,112 +445,6 @@ sub get_os {
     }
     return $os;
 }
-
-#Subroutines to find linux distribution and version
-
-sub distribution_name {
-    my $release_files_directory = '/etc';
-    my $standard_release_file   = 'lsb-release';
-
-    my $distro = get_lsb_info();
-    if ($distro) {
-        return $distro if ($distro);
-    }
-
-    foreach (qw(enterprise-release fedora-release)) {
-        if ( -f "$release_files_directory/$_"
-            && !-l "$release_files_directory/$_" )
-        {
-            if ( -f "$release_files_directory/$_"
-                && !-l "$release_files_directory/$_" )
-            {
-                $linux{'DISTRIB_ID'}   = $release_files{$_};
-                $linux{'release_file'} = $_;
-                return $linux{'DISTRIB_ID'};
-            }
-        }
-    }
-
-    foreach ( keys %release_files ) {
-        if ( -f "$release_files_directory/$_"
-            && !-l "$release_files_directory/$_" )
-        {
-            if ( -f "$release_files_directory/$_"
-                && !-l "$release_files_directory/$_" )
-            {
-                if ( $release_files{$_} eq 'redhat' ) {
-                    foreach my $rhel_deriv ( 'centos', 'scientific', ) {
-                        $linux{'pattern'}      = $version_match{$rhel_deriv};
-                        $linux{'release_file'} = 'redhat-release';
-                        my $file_info = get_file_info();
-                        if ($file_info) {
-                            $linux{'DISTRIB_ID'}   = $rhel_deriv;
-                            $linux{'release_file'} = $_;
-                            return $linux{'DISTRIB_ID'};
-                        }
-                    }
-                    $linux{'pattern'} = '';
-                }
-                $linux{'release_file'} = $_;
-                $linux{'DISTRIB_ID'}   = $release_files{$_};
-                return $linux{'DISTRIB_ID'};
-            }
-        }
-    }
-    undef;
-}
-
-sub distribution_version {
-    my $release_files_directory = '/etc';
-    my $standard_release_file   = 'lsb-release';
-    my $release;
-    return $release if ( $release = get_lsb_info('DISTRIB_RELEASE') );
-    if ( !$linux{'DISTRIB_ID'} ) {
-        distribution_name() or die 'No version because no distro.';
-    }
-    $linux{'pattern'}         = $version_match{ $linux{'DISTRIB_ID'} };
-    $release                  = get_file_info();
-    $linux{'DISTRIB_RELEASE'} = $release;
-    return $release;
-}
-
-sub get_lsb_info {
-    my $field                   = shift || 'DISTRIB_ID';
-    my $release_files_directory = '/etc';
-    my $standard_release_file   = 'lsb-release';
-    my $tmp                     = $linux{'release_file'};
-    if ( -r "$release_files_directory/" . $standard_release_file ) {
-        $linux{'release_file'} = $standard_release_file;
-        $linux{'pattern'}      = $field . '=(.+)';
-        my $info = get_file_info();
-        if ($info) {
-            $linux{$field} = $info;
-            return $info;
-        }
-    }
-    $linux{'release_file'} = $tmp;
-    $linux{'pattern'}      = '';
-    undef;
-}
-
-sub get_file_info {
-    my $release_files_directory = '/etc';
-    my $standard_release_file   = 'lsb-release';
-    open my $fh, '<', "$release_files_directory/" . $linux{'release_file'}
-      or die 'Cannot open file: '
-      . $release_files_directory . '/'
-      . $linux{'release_file'};
-    my $info = '';
-    local $_;
-    while (<$fh>) {
-        chomp $_;
-        ($info) = $_ =~ m/$linux{'pattern'}/;
-        return "\L$info" if $info;
-    }
-    undef;
-}
-
-#End of linux-finding subroutines.
 
 sub get_existing_users {
     my $envir       = shift;
