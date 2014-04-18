@@ -10,6 +10,7 @@ use cpan_config;
 
 use Term::UI;
 use Term::ReadLine;
+use File::Copy;
 
 use IPC::Cmd qw(can_run run);
 
@@ -385,16 +386,42 @@ foreach(keys %packages) {
   push(@cpan_to_install, $_) if $packages{$_} eq 'CPAN';
 }
 
-sub apt_get_install {
-  my @packages = @_;
+sub backup_file {
+  my $fullpath = $_;
+  my (undef,$dir,$file) = File::Spec->splitpath($fullpath);
+  copy($fullpath,$dir."/".$file.".bak");
+  #add error handling...
+  #add success reporting
+}
+
+sub slurp_file {
+  my $fullpath = shift;
+  open(my $fh,'<',$fullpath) or print_and_log("Couldn't find $fullpath: $!");
+  return unless $fh;
+  my $string = do { local($/); <$fh> };
+  close($fh);
+  return $string;
+}
+
+sub edit_sources_list {
   #make sure we don't try to get anything off of 
   #a cdrom. (Allowing it causes script to hang 
   # on Debian 7)
   #sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
-  my $cmd = ['apt-get','install','-y --allow-unauthenticated',@packages];
+  my $sources_list = shift;
+  backup_file($sources_list);
+  my $string = slurp_file($sources_list);
+  open(my $new,'>',$sources_list);
+  $string =~ s/deb\s+cdrom/#deb cdrom/g;
+  print $new $string;
+  print_and_log("Modified $sources_list to remove cdrom from list of package repositories.");
+}
+
+sub apt_get_install {
+  my @packages = @_;
   run_command(['apt-get','-y','update']);
   run_command(['apt-get','-y','upgrade']);
-  run_command($cmd);
+  run_command(['apt-get','install','-y --allow-unauthenticated',@packages]);
 }
 
 sub add_epel {
@@ -414,8 +441,8 @@ sub add_epel {
 
 sub yum_install {
   my @packages = @_;
-  my $cmd = ['yum','-y','install',@packages];
-  run_command($cmd);
+  run_command(['yum','-y','update']);
+  run_command(['yum','-y','install',@packages]);
 }
 
 sub cpan_install {
@@ -423,6 +450,8 @@ sub cpan_install {
   CPAN::install(@modules);
 }
 
-cpan_install(@cpan_to_install); #pass cpan opts depending on perl version
+#cpan_install(@cpan_to_install); #pass cpan opts depending on perl version
+
+edit_sources_list('sources.list');
 
 
