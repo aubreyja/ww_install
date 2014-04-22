@@ -2065,8 +2065,8 @@ sub configure_shell {
     #export PATH=$PATH:/opt/webwork/webwork2/bin
     #export WEBWORK_ROOT=/opt/webwork/webwork2
     
-    my $user = $ENV{SUDO_USER};
-    my @users = ('root',$wwadmin,$user);
+    my @users = ('root',$wwadmin);
+    @users = push(@users,$ENV{SUDO_USER}) if $ENV{SUDO_USER};
     my @unique = do { my %seen; grep { !$seen{$_}++ } @users };
     foreach(@unique) {
         #Remember that we used User::pwent which overrides the builtin pw* functions.
