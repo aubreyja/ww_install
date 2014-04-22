@@ -425,18 +425,24 @@ sub apt_get_install {
 }
 
 sub add_epel {
-#ARCH=$(uname -m)
-#MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
-#cat <<EOM >/etc/yum.repos.d/epel-bootstrap.repo
-#[epel]
-#name=Bootstrap EPEL
-#mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$MAJORVER&arch=$ARCH
-#failovermethod=priority
-#enabled=0
-#gpgcheck=0
-#EOM
-#     yum --enablerepo=epel -y install epel-release
-#     rm -f /etc/yum.repos.d/epel-bootstrap.repo
+  my $arch = `rpm -q --queryformat "%{ARCH}" \$(rpm -q --whatprovides /etc/redhat-release)`;
+  #or: ARCH=$(uname -m)
+
+  my $ver = `rpm -q --queryformat "%{VERSION}" \$(rpm -q --whatprovides /etc/redhat-release)`;
+  my $majorver = substr($ver,0,1);
+  #or: MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
+  open(my $fh,'>','/etc/yum.repos.d/epel-bootstrap.repo');
+  print $fh <<EOM;
+[epel]
+name=Bootstrap EPEL
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$majorver&arch=$arch
+failovermethod=priority
+enabled=0
+gpgcheck=0
+EOM
+  close($fh);
+  run_command(['yum', '--enablerepo=epel', '-y', 'install', 'epel-release']);
+  unlink('/etc/yum.repos.d/epel-bootstrap.repo');
 }
 
 sub yum_install {
@@ -452,6 +458,6 @@ sub cpan_install {
 
 #cpan_install(@cpan_to_install); #pass cpan opts depending on perl version
 
-edit_sources_list('sources.list');
+#edit_sources_list('sources.list');
 
 
