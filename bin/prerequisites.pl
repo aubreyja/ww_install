@@ -369,7 +369,8 @@ $prerequisites->{ubuntu} = {
 #}
 
 my $os = get_os();
-my %packages = (%{$prerequisites->{$os->{name}}->{common}}, %{$prerequisites->{$os->{name}}->{$os->{version}}});
+my %version_packages = %{$prerequisites->{$os->{name}}->{$os->{version}}} if $prerequisites->{$os->{name}}->{$os->{version}};
+my %packages = (%{$prerequisites->{$os->{name}}->{common}}, %version_packages);
 
 print "$os->{name}\n";
 print "$os->{version}\n";
@@ -431,7 +432,8 @@ sub add_epel {
   my $ver = `rpm -q --queryformat "%{VERSION}" \$(rpm -q --whatprovides /etc/redhat-release)`;
   my $majorver = substr($ver,0,1);
   #or: MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
-  open(my $fh,'>','/etc/yum.repos.d/epel-bootstrap.repo');
+  open(my $fh,'>','/etc/yum.repos.d/epel-bootstrap.repo') 
+    or die "Couldn't open /etc/yum.repos.d/epel-bootstrap.repo for writing: $!";
   print $fh <<EOM;
 [epel]
 name=Bootstrap EPEL
