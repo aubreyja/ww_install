@@ -458,6 +458,62 @@ sub cpan_install {
   CPAN::install(@modules);
 }
 
+sub install_prerequisites {
+  my $os = shift;
+  if(-e '/etc/redhat-release') {
+      #printf "%b\n" "# We've got a relative of RedHat which is not Fedora"
+      #MYSQLSTART='service mysqld start'
+      #MYSQLENABLE='chkconfig mysqld on'
+      #APACHESTART='service httpd start'
+      #APACHEENABLE='chkconfig httpd on'
+      #CPANOPT=''
+      #printf "%b\n" "# Adding EPEL repository...."
+      #add_epel
+    if($os->{name} eq 'redhat') {
+    } elsif($os->{name} eq 'fedora') {
+      #printf "%b\n" "# We've got Fedora"
+      #MYSQLSTART='systemctl start mysqld.service'
+      #MYSQLENABLE='systemctl enable mysqld.service'
+      #APACHESTART='systemctl start httpd.service'
+      #APACHEENABLE='systemctl enable httpd.service'
+      #CPANOPT='-j lib/cpan_config.pm'
+    }
+    #yum -y update
+    #yum_install
+    #cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization
+    #$MYSQLSTART
+    #$MYSQLENABLE
+    #$APACHESTART
+    #$APACHEENABLE
+    #/usr/bin/mysql_secure_installation
+  } elsif(-e '/etc/debian_version') {
+    #apt-get -y update
+    # apt-get -y upgrade
+    # apt_get_install
+    # cpan -j lib/cpan_config.pm XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
+    # a2enmod apreq
+    # apache2ctl restart
+  } elsif(-e '/etc/SuSE-release') {
+    #zypper install gcc make subversion git wget texlive texlive-latex netpbm gd mysql-community-server mysql-community-server-client apache2 apache2-devel apache2-prefork perl perl-base perl-ExtUtils-XSBuilder perl-libwww-perl perl-GD perl-Tie-IxHash perl-TimeDate perl-DateTime perl-DBI perl-SQL-Abstract perl-DBD-mysql perl-OSSP-uuid perl-Email-Address perl-Exception-Class perl-URI perl-HTML-Parser perl-HTML-Tagset perl-HTML-Template perl-Iterator perl-XML-Parser perl-XML-Writer perl-Iterator-Util perl-JSON perl-Mail-Sender perl-MIME-tools perl-Net-IP perl-Net-SSLeay perl-IO-Socket-SSL perl-ldap-ssl perl-PadWalker perl-PHP-Serialization perl-SOAP-Lite perl-Locale-Maketext-Lexicon apache2-mod_perl apache2-mod_perl-devel
+    #cpan -j lib/cpan_config.pm Apache::Test Pod::WSDL String::ShellQuote UUID::Tiny XML::Parser::EasyTree
+    ##openSUSE doesn't seem to provide a package for libapreq2, meaning no way to get Apache2::Request or Apache2::Cookie without compiling from source
+    ##Once they get this working, wil be able to do add Apache2::Modules repository to get libapreq2 via
+    #zypper ar -f http://download.opensuse.org/repositories/Apache:/Modules/Apache_openSUSE_12.2/Apache:Modules.repo #obviously this will have to be generalized
+    #then add libapreq2 perl-Apache2-Request perl-Apache2-Cookie to install list above. 
+    ##In the meantime, here we go:
+    #wget http://search.cpan.org/CPAN/authors/id/I/IS/ISAAC/libapreq2-2.13.tar.gz
+    #tar -xzf libapreq2-2.13.tar.gz
+    #cd libapreq2-2.13
+    #perl Makefile.PL --with-apache2-apxs=/usr/sbin/apxs2
+    #make
+    #make install
+    #cd ..
+    #rm -rf libapreq2-2.13/
+    #rm libapreq2-2.13.tar.gz
+  }
+}
+
+}
 #cpan_install(@cpan_to_install); #pass cpan opts depending on perl version
 
 #edit_sources_list('sources.list');
