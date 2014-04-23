@@ -403,20 +403,20 @@ sub get_os {
         $os->{type} = "unix";
         $os->{name} = "darwin";
         chomp( $os->{version} = `sw_vers -productVersion` );
-        chomp( $os->{arch}    = `uname -p` );
+        chomp( $os->{arch}    = `uname -m` );
         print_and_log("Great, you're on Mac running OS X $$os{version} on $$os{arch} hardware.");
     } elsif ( $^O eq "freebsd" ) {
         $os->{type} = "unix";
         $os->{name} = "freebsd";
         chomp( $os->{version} = `uname -r` );
-        chomp( $os->{arch}    = `uname -p` );
+        chomp( $os->{arch}    = `uname -m` );
         print_and_log("I see - rocking it on FreeBSD $$os{version} on $$os{arch} hardware.");
     } elsif ( $^O eq "linux" )
     {    #Now we're going to have to look more closely to get specific distro
         $os->{type}    = "linux";
         $os->{name}    = distribution_name();
         $os->{version} = distribution_version();
-        chomp( $os->{arch} = `uname -p` );
+        chomp( $os->{arch} = `uname -m` );
         print_and_log("Linux, yay! That's my favorite. I see you're running $$os{name} "
           . "version $$os{version} on $$os{arch} hardware. This will be easy.\n");
     } elsif ( $^O eq "MSWin32" ) {
@@ -426,7 +426,7 @@ sub get_os {
         $os->{type}    = $^O;
         $os->{name}    = distribution_name();
         $os->{version} = distribution_version();
-        chomp( $os->{arch} = `uname -p` );
+        chomp( $os->{arch} = `uname -m` );
         print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware. "
           . "This script mostly finds the information it needs at run time. But, there are a few "
           . "places where we have hard coded OS specific details into data structures built into the "
