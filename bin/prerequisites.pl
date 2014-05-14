@@ -455,36 +455,36 @@ sub yum_install {
 
 sub cpan_install {
   my @modules = @_;
-  CPAN::install(@modules);
+  CPAN::install(@modules); #need to pass cpan options...
 }
 
 sub install_prerequisites {
-  my $os = shift;
+  #send in os_name, packages_to_install, cpan_to_install
   if(-e '/etc/redhat-release') {
-      #printf "%b\n" "# We've got a relative of RedHat which is not Fedora"
-      #MYSQLSTART='service mysqld start'
-      #MYSQLENABLE='chkconfig mysqld on'
-      #APACHESTART='service httpd start'
-      #APACHEENABLE='chkconfig httpd on'
-      #CPANOPT=''
-      #printf "%b\n" "# Adding EPEL repository...."
-      #add_epel
+    my $MYSQLSTART=['service', 'mysqld', 'start'];
+    my $MYSQLENABLE=['chkconfig', 'mysqld', 'on'];
+    my $APACHESTART=['service', 'httpd', 'start'];
+    my $APACHEENABLE=['chkconfig', 'httpd', 'on'];
+    my $CPANOPT=''
     if($os->{name} eq 'redhat') {
+      print_and_log("\n# We've got a relative of RedHat which is not Fedora");
+      print_and_log("\n# Adding EPEL repository....");
+      add_epel();
     } elsif($os->{name} eq 'fedora') {
-      #printf "%b\n" "# We've got Fedora"
-      #MYSQLSTART='systemctl start mysqld.service'
-      #MYSQLENABLE='systemctl enable mysqld.service'
-      #APACHESTART='systemctl start httpd.service'
-      #APACHEENABLE='systemctl enable httpd.service'
-      #CPANOPT='-j lib/cpan_config.pm'
+      print_and_log("\n# We've got Fedora");
+      $MYSQLSTART=['systemctl','start', 'mysqld.service'];
+      $MYSQLENABLE=['systemctl', 'enable', 'mysqld.service'];
+      $APACHESTART=['systemctl', 'start', 'httpd.service'];
+      $APACHEENABLE=['systemctl', 'enable', 'httpd.service'];
+      $CPANOPT='-j lib/cpan_config.pm'
     }
-    #yum -y update
-    #yum_install
-    #cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization
-    #$MYSQLSTART
-    #$MYSQLENABLE
-    #$APACHESTART
-    #$APACHEENABLE
+  }
+  yum_install(@packages_to_install);
+  cpan_install(@cpan_to_install);
+  run_command($MYSQLSTART);
+  run_command($MYSQLENABLE);
+  run_command($APACHESTART);
+  run_command($APACHEENABLE);
     #/usr/bin/mysql_secure_installation
   } elsif(-e '/etc/debian_version') {
     #apt-get -y update
