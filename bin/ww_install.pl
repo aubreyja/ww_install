@@ -851,7 +851,7 @@ sub install_prerequisites {
     }
     yum_install(@packages_to_install);
     install_cpanm();
-    cpanm_install(@cpan_to_install);
+    cpan_install(@cpan_to_install);
     run_command($MYSQLSTART);
     run_command($MYSQLENABLE);
     run_command($APACHESTART);
