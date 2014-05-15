@@ -372,10 +372,6 @@ my $os = get_os();
 my %version_packages = %{$prerequisites->{$os->{name}}->{$os->{version}}} if $prerequisites->{$os->{name}}->{$os->{version}};
 my %packages = (%{$prerequisites->{$os->{name}}->{common}}, %version_packages);
 
-print "$os->{name}\n";
-print "$os->{version}\n";
-
-
 my %packages_seen = ();
 foreach (values %packages) {
   $packages_seen{$_}++ unless $_ eq 'CPAN';
@@ -453,9 +449,18 @@ sub yum_install {
   run_command(['yum','-y','install',@packages]);
 }
 
+sub install_cpamn {
+  CPAN::install('App::cpanminus');
+}
+
 sub cpan_install {
   my @modules = @_;
-  CPAN::install(@modules); #need to pass cpan options...
+  CPAN::install(@modules); #cpan options loaded above
+}
+
+sub cpanm_install {
+  my @modules = @_;
+  run_command(['cpanm',@modules]);
 }
 
 sub install_prerequisites {
@@ -465,7 +470,6 @@ sub install_prerequisites {
     my $MYSQLENABLE=['chkconfig', 'mysqld', 'on'];
     my $APACHESTART=['service', 'httpd', 'start'];
     my $APACHEENABLE=['chkconfig', 'httpd', 'on'];
-    my $CPANOPT=''
     if($os->{name} eq 'redhat') {
       print_and_log("\n# We've got a relative of RedHat which is not Fedora");
       print_and_log("\n# Adding EPEL repository....");
@@ -476,16 +480,15 @@ sub install_prerequisites {
       $MYSQLENABLE=['systemctl', 'enable', 'mysqld.service'];
       $APACHESTART=['systemctl', 'start', 'httpd.service'];
       $APACHEENABLE=['systemctl', 'enable', 'httpd.service'];
-      $CPANOPT='-j lib/cpan_config.pm'
     }
-  }
-  yum_install(@packages_to_install);
-  cpan_install(@cpan_to_install);
-  run_command($MYSQLSTART);
-  run_command($MYSQLENABLE);
-  run_command($APACHESTART);
-  run_command($APACHEENABLE);
-    #/usr/bin/mysql_secure_installation
+    yum_install(@packages_to_install);
+    install_cpanm();
+    cpanm_install(@cpan_to_install);
+    run_command($MYSQLSTART);
+    run_command($MYSQLENABLE);
+    run_command($APACHESTART);
+    run_command($APACHEENABLE);
+    run_command(['/usr/bin/mysql_secure_installation']);
   } elsif(-e '/etc/debian_version') {
     #apt-get -y update
     # apt-get -y upgrade
@@ -510,12 +513,8 @@ sub install_prerequisites {
     #cd ..
     #rm -rf libapreq2-2.13/
     #rm libapreq2-2.13.tar.gz
-  }
+  } #etc...and more distros!
 }
 
-}
-#cpan_install(@cpan_to_install); #pass cpan opts depending on perl version
-
-#edit_sources_list('sources.list');
 
 
