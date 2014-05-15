@@ -3,11 +3,15 @@
 use strict;
 use warnings;
 
-#For helpful noncore perl modules
 use FindBin;
 use lib "$FindBin::Bin/../lib"; 
+use cpan_config;
+use Term::ReadPassword; 
+use Linux::Distribution qw(distribution_name distribution_version);
+
 #Core Perl Modules
 use Config;
+use CPAN;
 use Cwd;
 
 use Data::Dumper;
@@ -34,9 +38,6 @@ use Term::ReadLine;
 
 use User::pwent;
 
-#to be found in lib/
-use Term::ReadPassword; 
-use Linux::Distribution;
 
 #non-core
 use DateTime::TimeZone; 
@@ -184,6 +185,211 @@ my @modulesList = qw(
   XML::Writer
   XMLRPC::Lite
 );
+
+my $prerequisites = {
+  redhat =>
+  {
+    common => {
+      mkdir => 'coreutils',
+      mv => 'coreutils',
+      gcc => 'gcc',
+      make => 'make',
+      patch => 'patch',
+      system_config => 'system-config-services',
+      tar => 'tar',
+      gzip => 'gzip',
+      unzip => 'coreutils',
+      dvipng => 'dvipng',
+      netpbm => 'netpbm-progs',  #provides giftopnm, ppmtopgm, pnmtops, pnmtopng, 
+                          #and pgntopnm
+      git => 'git',
+      svn => 'subversion',
+
+      apache2 => 'httpd',
+      mysql => 'mysql',
+      #mysql_server => 'mysql-server',
+      #ssh_server => 'openssh-server',
+
+      preview_latex => 'tex-preview',
+      texlive => 'texlive-latex', 
+      'Apache2::Request' => 'perl-libapreq2',#perl-libapreq2, mod_perl?
+      'Apache2::Cookie' => 'perl-libapreq2',
+      'Apache2::ServerRec' => 'mod_perl',
+      'Apache2::ServerUtil' => 'mod_perl',
+      'Benchmark' => 'perl',
+      'Carp' => 'perl',
+      'CGI' => 'perl-CGI',
+      'CPAN' => 'perl-CPAN',
+      'Data::Dumper' => 'perl',
+      'Data::UUID' => 'uuid-perl',
+      'Date::Format' => 'perl-TimeDate',
+      'Date::Parse' => 'perl-TimeDate',
+      'DateTime' => 'perl-DateTime',
+      'DBD::mysql' => 'perl-DBD-mysql',
+      'DBI' => 'perl-DBI',
+      'Digest::MD5' => 'perl',
+      'Email::Address' => 'perl-Email-Address',
+      'Errno' => 'perl',
+      'Exception::Class' => 'perl-Exception-Class',
+      'File::Copy' => 'perl',
+      'File::Find' => 'perl',
+      'File::Find::Rule' => 'perl-File-Find-Rule',
+      'File::Path' => 'perl',
+      'File::Spec' => 'perl',
+      'File::stat' => 'perl',
+      'File::Temp' => 'perl',
+      'GD' => 'perl-GD perl-GDGraph',
+      'Getopt::Long' => 'perl',
+      'Getopt::Std' => 'perl',
+      'HTML::Entities' => 'perl-HTML-parser',
+      'HTML::Scrubber' => 'perl-HTML-Scrubber',
+      'HTML::Tagset' => 'perl-HTML-Tagset',
+      'HTML::Template' => 'CPAN',
+      'IO::File' => 'perl',
+      'IPC::Cmd' => 'perl-IPC-Cmd',
+      'Iterator' => 'CPAN',
+      'Iterator::Util' => 'CPAN',
+      'JSON' => 'perl-JSON',
+      'Locale::Maketext::Lexicon' => 'perl-Locale-Maketext-Lexicon',
+      'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
+      'Mail::Sender' => 'perl-Mail-Sender',
+      'MIME::Base64' => 'perl',
+      'Net::IP' => 'perl-Net-IP',
+      'Net::LDAPS' => 'perl-LDAP',
+      'Net::OAuth' => 'perl-Net-OAuth',
+      'Net::SMTP' => 'perl',
+      'Opcode' => 'perl',
+      'PadWalker' => 'perl-PadWalker',
+      'PHP::Serialization' => 'CPAN',
+      'Pod::Usage' => 'perl',
+      'Pod::WSDL' => 'CPAN',
+      'Safe' => 'perl',
+      'Scalar::Util' => 'perl',
+      'SOAP::Lite' => 'perl-SOAP-Lite',
+      'Socket' => 'perl',
+      'SQL::Abstract' => 'perl-SQL-Abstract',
+      'String::ShellQuote' => 'perl-String-ShellQuote',
+      'Term::UI' => 'perl-Term-UI',
+      'Text::CSV' => 'perl-Text-CSV',
+      'Text::Wrap' => 'perl',
+      'Tie::IxHash' => 'perl-Tie-IxHash',
+      'Time::HiRes' => 'perl-Time-HiRes',
+      'Time::Zone' => 'perl-TimeDate',
+      'URI::Escape' => 'perl',
+      'UUID::Tiny' => 'CPAN',
+      'XML::Parser' => 'perl-XML-Parser',
+      'XML::Parser::EasyTree' => 'CPAN',
+      'XML::Writer' => 'perl-XML-Writer',
+      'XMLRPC::Lite' => 'perl-SOAP-Lite',
+    }
+  },
+  debian =>
+  {
+    common => {
+      mkdir => 'coreutils',
+      mv => 'coreutils',
+      gcc => 'gcc',
+      make => 'make',
+      tar => 'tar',
+      gzip => 'gzip',
+      unzip => 'unzip',
+      dvipng => 'dvipng',
+      netpbm => 'netpbm',  #provides giftopnm, ppmtopgm, pnmtops, pnmtopng, 
+                          #and pgntopnm
+      git => 'git',
+      svn => 'subversion',
+
+      apache2 => 'apache2',
+      mysql => 'mysql-client',
+      mysql_server => 'mysql-server',
+      ssh_server => 'openssh-server',
+
+      preview_latex => 'preview-latex-style',
+      texlive => 'texlive-latex-base', 
+      'Apache2::Request' => 'libapache2-request-perl',
+      'Apache2::Cookie' => 'libapache2-request-perl',
+      'Apache2::ServerRec' => 'libapache2-mod-perl2',
+      'Apache2::ServerUtil' => 'libapache2-mod-perl2',
+      'Benchmark' => 'perl-modules',
+      'Carp' => 'perl-base',
+      'CGI' => 'perl-modules',
+      'Data::Dumper' => 'perl',
+      'Data::UUID' => 'libossp-uuid-perl',
+      'Date::Format' => 'libtimedate-perl',
+      'Date::Parse' => 'libtimedate-perl',
+      'DateTime' => 'libdatetime-perl',
+      'DBD::mysql' => 'libdbd-mysql-perl',
+      'DBI' => 'libdbi-perl',
+      'Digest::MD5' => 'perl',
+      'Email::Address' => 'libemail-address-perl',
+      'Errno' => 'perl-base',
+      'Exception::Class' => 'libexception-class-perl',
+      'ExtUtils::XSBuilder' => 'libextutils-xsbuilder-perl',
+      'File::Copy' => 'perl-modules',
+      'File::Find' => 'perl-modules',
+      'File::Find::Rule' => 'libfile-find-rule-perl',
+      'File::Path' => 'perl-modules',
+      'File::Spec' => 'perl-modules',
+      'File::stat' => 'perl-modules',
+      'File::Temp' => 'perl-modules',
+      'GD' => 'libgd-gd2-perl',
+      'Getopt::Long' => 'perl-base',
+      'Getopt::Std' => 'perl-modules',
+      'HTML::Entities' => '',
+      'HTML::Scrubber' => 'libhtml-scrubber-perl',
+      'HTML::Tagset' => '',
+      'HTML::Template' => 'CPAN',
+      'IO::File' => '',
+      'Iterator' => 'CPAN',
+      'Iterator::Util' => 'CPAN',
+      'JSON' => 'libjson-perl',
+      'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
+      'Locale::Maketext::Simple' => '',
+      'Mail::Sender' => 'libmail-sender-perl',
+      'MIME::Base64' => 'libmime-tools-perl',
+      'Net::IP' => 'libnet-ip-perl',
+      'Net::LDAPS' => 'libnet-ldap-perl',
+      'Net::OAuth' => 'libnet-oauth-perl',
+      'Net::SMTP' => 'perl-modules',
+      'Opcode' => 'perl',
+      'PadWalker' => 'libpadwalker-perl',
+      'PHP::Serialization' => 'libphp-serialization-perl',
+      'Pod::Usage' => 'perl-modules',
+      'Pod::WSDL' => 'libpod-wsdl-perl',
+      'Safe' => 'perl-modules',
+      'Scalar::Util' => 'perl-base',
+      'SOAP::Lite' => 'libsoap-lite-perl',
+      'Socket' => 'perl-base',
+      'SQL::Abstract' => 'libsql-abstract-perl',
+      'String::ShellQuote' => 'libstring-shellquote-perl',
+      'Text::CSV' => 'libtext-csv-perl',
+      'Text::Wrap' => 'perl-base',
+      'Tie::IxHash' => 'libtie-ixhash-perl',
+      'Time::HiRes' => 'perl',
+      'Time::Zone' => 'libtimedate-perl',
+      'URI::Escape' => 'liburi-perl',
+      'UUID::Tiny' => 'libuuid-tiny-perl',
+      'XML::Parser' => 'libxml-parser-perl',
+      'XML::Parser::EasyTree' => 'CPAN',
+      'XML::Writer' => 'libxml-writer-perl',
+      'XMLRPC::Lite' => 'libsoap-lite-perl',
+    },
+  },
+};
+
+$prerequisites-> {fedora} = {
+  common => $prerequisites->{redhat}->{common},
+};
+
+$prerequisites->{ubuntu} = {
+  common => $prerequisites->{debian}->{common},
+  12.04 => {
+    prefork_mpm => 'apache2-mpm-prefork',
+  },
+  13.04 => {
+    prefork_mpm => 'apache2-mpm-prefork',
+  },
+};
 
 ###########################################################
 #
@@ -473,6 +679,22 @@ sub group_exists {
     return 1 if $groups{$group};
 }
 
+sub backup_file {
+  my $fullpath = $_;
+  my (undef,$dir,$file) = File::Spec->splitpath($fullpath);
+  copy($fullpath,$dir."/".$file.".bak");
+  #add error handling...
+  #add success reporting
+}
+
+sub slurp_file {
+  my $fullpath = shift;
+  open(my $fh,'<',$fullpath) or print_and_log("Couldn't find $fullpath: $!");
+  return unless $fh;
+  my $string = do { local($/); <$fh> };
+  close($fh);
+  return $string;
+}
 ############################################################################################
 #
 # Script Util Subroutines:  The script is based on Term::Readline to interact with user
@@ -528,6 +750,137 @@ sub confirm_answer {
     }
 }
 
+######################################################
+#
+# Prerequisite Handling
+#
+#######################################################
+
+sub edit_sources_list {
+  #make sure we don't try to get anything off of 
+  #a cdrom. (Allowing it causes script to hang 
+  # on Debian 7)
+  #sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
+  my $sources_list = shift;
+  backup_file($sources_list);
+  my $string = slurp_file($sources_list);
+  open(my $new,'>',$sources_list);
+  $string =~ s/deb\s+cdrom/#deb cdrom/g;
+  print $new $string;
+  print_and_log("Modified $sources_list to remove cdrom from list of package repositories.");
+}
+
+sub apt_get_install {
+  my @packages = @_;
+  run_command(['apt-get','-y','update']);
+  run_command(['apt-get','-y','upgrade']);
+  run_command(['apt-get','install','-y --allow-unauthenticated',@packages]);
+}
+
+sub add_epel {
+  my $arch = `rpm -q --queryformat "%{ARCH}" \$(rpm -q --whatprovides /etc/redhat-release)`;
+  #or: ARCH=$(uname -m)
+
+  my $ver = `rpm -q --queryformat "%{VERSION}" \$(rpm -q --whatprovides /etc/redhat-release)`;
+  my $majorver = substr($ver,0,1);
+  #or: MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
+  open(my $fh,'>','/etc/yum.repos.d/epel-bootstrap.repo') 
+    or die "Couldn't open /etc/yum.repos.d/epel-bootstrap.repo for writing: $!";
+  print $fh <<EOM;
+[epel]
+name=Bootstrap EPEL
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$majorver&arch=$arch
+failovermethod=priority
+enabled=0
+gpgcheck=0
+EOM
+  close($fh);
+  run_command(['yum', '--enablerepo=epel', '-y', 'install', 'epel-release']);
+  unlink('/etc/yum.repos.d/epel-bootstrap.repo');
+}
+
+sub yum_install {
+  my @packages = @_;
+  run_command(['yum','-y','update']);
+  run_command(['yum','-y','install',@packages]);
+}
+
+sub install_cpanm {
+  CPAN::install('App::cpanminus');
+}
+
+sub cpan_install {
+  my @modules = @_;
+  CPAN::install(@modules); #cpan options loaded above
+}
+
+sub cpanm_install {
+  my @modules = @_;
+  run_command(['cpanm',@modules]);
+}
+
+sub install_prerequisites {
+  my $defaults = {
+   os => '',
+   packages => '',
+   cpan => '',
+  }; 
+  my $options = shift;
+  foreach(keys %$defaults) {
+    $options->{$_} = $options->{$_} // $defaults->{$_};
+  }
+  my $os = $options->{os};
+  my @packages_to_install = $options->{packages};
+  my @cpan_to_install = $options->{cpan};
+  #send in os_name, packages_to_install, cpan_to_install
+  if(-e '/etc/redhat-release') {
+    my $MYSQLSTART=['service', 'mysqld', 'start'];
+    my $MYSQLENABLE=['chkconfig', 'mysqld', 'on'];
+    my $APACHESTART=['service', 'httpd', 'start'];
+    my $APACHEENABLE=['chkconfig', 'httpd', 'on'];
+    if($os->{name} eq 'redhat') {
+      print_and_log("\n# We've got a relative of RedHat which is not Fedora");
+      print_and_log("\n# Adding EPEL repository....");
+      add_epel();
+    } elsif($os->{name} eq 'fedora') {
+      print_and_log("\n# We've got Fedora");
+      $MYSQLSTART=['systemctl','start', 'mysqld.service'];
+      $MYSQLENABLE=['systemctl', 'enable', 'mysqld.service'];
+      $APACHESTART=['systemctl', 'start', 'httpd.service'];
+      $APACHEENABLE=['systemctl', 'enable', 'httpd.service'];
+    }
+    yum_install(@packages_to_install);
+    install_cpanm();
+    cpanm_install(@cpan_to_install);
+    run_command($MYSQLSTART);
+    run_command($MYSQLENABLE);
+    run_command($APACHESTART);
+    run_command($APACHEENABLE);
+    run_command(['/usr/bin/mysql_secure_installation']);
+  } elsif(-e '/etc/debian_version') {
+    apt_get_install(@packages_to_install);
+    cpanm_install(@cpan_to_install);
+    run_command(['a2enmod','apreq']);
+    run_command(['apache2ctl', 'restart']);
+  } elsif(-e '/etc/SuSE-release') {
+    #zypper install gcc make subversion git wget texlive texlive-latex netpbm gd mysql-community-server mysql-community-server-client apache2 apache2-devel apache2-prefork perl perl-base perl-ExtUtils-XSBuilder perl-libwww-perl perl-GD perl-Tie-IxHash perl-TimeDate perl-DateTime perl-DBI perl-SQL-Abstract perl-DBD-mysql perl-OSSP-uuid perl-Email-Address perl-Exception-Class perl-URI perl-HTML-Parser perl-HTML-Tagset perl-HTML-Template perl-Iterator perl-XML-Parser perl-XML-Writer perl-Iterator-Util perl-JSON perl-Mail-Sender perl-MIME-tools perl-Net-IP perl-Net-SSLeay perl-IO-Socket-SSL perl-ldap-ssl perl-PadWalker perl-PHP-Serialization perl-SOAP-Lite perl-Locale-Maketext-Lexicon apache2-mod_perl apache2-mod_perl-devel
+    #cpan -j lib/cpan_config.pm Apache::Test Pod::WSDL String::ShellQuote UUID::Tiny XML::Parser::EasyTree
+    ##openSUSE doesn't seem to provide a package for libapreq2, meaning no way to get Apache2::Request or Apache2::Cookie without compiling from source
+    ##Once they get this working, wil be able to do add Apache2::Modules repository to get libapreq2 via
+    #zypper ar -f http://download.opensuse.org/repositories/Apache:/Modules/Apache_openSUSE_12.2/Apache:Modules.repo #obviously this will have to be generalized
+    #then add libapreq2 perl-Apache2-Request perl-Apache2-Cookie to install list above. 
+    ##In the meantime, here we go:
+    #wget http://search.cpan.org/CPAN/authors/id/I/IS/ISAAC/libapreq2-2.13.tar.gz
+    #tar -xzf libapreq2-2.13.tar.gz
+    #cd libapreq2-2.13
+    #perl Makefile.PL --with-apache2-apxs=/usr/sbin/apxs2
+    #make
+    #make install
+    #cd ..
+    #rm -rf libapreq2-2.13/
+    #rm libapreq2-2.13.tar.gz
+  } #etc...and more distros!
+}
 
 #####################################################
 #
@@ -2210,6 +2563,28 @@ get_selinux();
 my $envir = check_environment();
 my %siteDefaults;
 $siteDefaults{timezone} = $envir->{timezone};
+
+#Install Prerequisites
+my $os = $envir->{os};
+my %version_packages = %{$prerequisites->{$os->{name}}->{$os->{version}}} if $prerequisites->{$os->{name}}->{$os->{version}};
+my %packages = (%{$prerequisites->{$os->{name}}->{common}}, %version_packages);
+
+my %packages_seen = ();
+foreach (values %packages) {
+  $packages_seen{$_}++ unless $_ eq 'CPAN';
+}
+my @packages_to_install = keys %packages_seen;
+
+my @cpan_to_install = ();
+foreach(keys %packages) {
+  push(@cpan_to_install, $_) if $packages{$_} eq 'CPAN';
+}
+
+install_prerequisites({
+    os => $os,
+    packages => @packages_to_install,
+    cpan => @cpan_to_install});
+
 
 #Get apache version, path to config file, server user and group;
 my $apache         = check_apache( $envir, $apache22Layouts );

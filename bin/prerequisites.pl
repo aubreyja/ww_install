@@ -490,12 +490,10 @@ sub install_prerequisites {
     run_command($APACHEENABLE);
     run_command(['/usr/bin/mysql_secure_installation']);
   } elsif(-e '/etc/debian_version') {
-    #apt-get -y update
-    # apt-get -y upgrade
-    # apt_get_install
-    # cpan -j lib/cpan_config.pm XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
-    # a2enmod apreq
-    # apache2ctl restart
+    apt_get_install(@packages_to_install);
+    cpanm_install(@cpan_to_install);
+    run_command(['a2enmod','apreq']);
+    run_command(['apache2ctl', 'restart']);
   } elsif(-e '/etc/SuSE-release') {
     #zypper install gcc make subversion git wget texlive texlive-latex netpbm gd mysql-community-server mysql-community-server-client apache2 apache2-devel apache2-prefork perl perl-base perl-ExtUtils-XSBuilder perl-libwww-perl perl-GD perl-Tie-IxHash perl-TimeDate perl-DateTime perl-DBI perl-SQL-Abstract perl-DBD-mysql perl-OSSP-uuid perl-Email-Address perl-Exception-Class perl-URI perl-HTML-Parser perl-HTML-Tagset perl-HTML-Template perl-Iterator perl-XML-Parser perl-XML-Writer perl-Iterator-Util perl-JSON perl-Mail-Sender perl-MIME-tools perl-Net-IP perl-Net-SSLeay perl-IO-Socket-SSL perl-ldap-ssl perl-PadWalker perl-PHP-Serialization perl-SOAP-Lite perl-Locale-Maketext-Lexicon apache2-mod_perl apache2-mod_perl-devel
     #cpan -j lib/cpan_config.pm Apache::Test Pod::WSDL String::ShellQuote UUID::Tiny XML::Parser::EasyTree
