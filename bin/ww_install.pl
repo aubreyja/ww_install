@@ -40,7 +40,7 @@ use User::pwent;
 
 
 #non-core
-use DateTime::TimeZone; 
+#use DateTime::TimeZone; 
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
@@ -1360,9 +1360,9 @@ EOF
     print_and_log("And your hostname is " . $envir->{host});
     $envir->{perl} = $^V;
     print_and_log("You're running Perl " . $envir->{perl});
-    my $timezone = DateTime::TimeZone->new( name => 'local' );
-    $envir->{timezone} = $timezone->name;
-    print_and_log("Your timezone is " . $envir->{timezone});
+    #my $timezone = DateTime::TimeZone->new( name => 'local' );
+    #$envir->{timezone} = $timezone->name;
+    #print_and_log("Your timezone is " . $envir->{timezone});
     $envir->{os}          = get_os();
     $envir->{passwd_file} = "/etc/passwd" if -e "/etc/passwd";
     $envir->{group_file}  = "/etc/group" if -e "/etc/group";
@@ -2562,7 +2562,7 @@ get_selinux();
 #Get os, host, perl version, timezone
 my $envir = check_environment();
 my %siteDefaults;
-$siteDefaults{timezone} = $envir->{timezone};
+#$siteDefaults{timezone} = $envir->{timezone};
 
 #Install Prerequisites
 my $os = $envir->{os};
