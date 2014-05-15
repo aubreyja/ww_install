@@ -449,7 +449,7 @@ sub yum_install {
   run_command(['yum','-y','install',@packages]);
 }
 
-sub install_cpamn {
+sub install_cpanm {
   CPAN::install('App::cpanminus');
 }
 
