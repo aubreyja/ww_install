@@ -850,7 +850,7 @@ sub install_prerequisites {
       $APACHEENABLE=['systemctl', 'enable', 'httpd.service'];
     }
     yum_install(@packages_to_install);
-    install_cpanm();
+    #install_cpanm();
     cpan_install(@cpan_to_install);
     run_command($MYSQLSTART);
     run_command($MYSQLENABLE);
