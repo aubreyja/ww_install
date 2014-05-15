@@ -822,16 +822,16 @@ sub cpanm_install {
 sub install_prerequisites {
   my $defaults = {
    os => '',
-   packages => '',
-   cpan => '',
+   packages => [],
+   cpan => [],
   }; 
   my $options = shift;
   foreach(keys %$defaults) {
     $options->{$_} = $options->{$_} // $defaults->{$_};
   }
   my $os = $options->{os};
-  my @packages_to_install = $options->{packages};
-  my @cpan_to_install = $options->{cpan};
+  my @packages_to_install = @{$options->{packages}};
+  my @cpan_to_install = @{$options->{cpan}};
   #send in os_name, packages_to_install, cpan_to_install
   if(-e '/etc/redhat-release') {
     my $MYSQLSTART=['service', 'mysqld', 'start'];
@@ -2582,8 +2582,8 @@ foreach(keys %packages) {
 
 install_prerequisites({
     os => $os,
-    packages => @packages_to_install,
-    cpan => @cpan_to_install});
+    packages => [@packages_to_install],
+    cpan => [@cpan_to_install]});
 
 
 #Get apache version, path to config file, server user and group;
