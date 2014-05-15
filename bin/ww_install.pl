@@ -401,7 +401,7 @@ $prerequisites->{ubuntu} = {
 if (!open(LOG,">> ../webwork_install.log")) {
     die "Unable to open log file.\n";
 } else {
-    print LOG 'This is ww_install.pl '.DateTime->now."\n\n";
+    print LOG 'This is ww_install.pl '.localtime."\n\n";
 }
 
 sub writelog {
