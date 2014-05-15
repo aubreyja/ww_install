@@ -207,7 +207,7 @@ my $prerequisites = {
 
       apache2 => 'httpd',
       mysql => 'mysql',
-      #mysql_server => 'mysql-server',
+      mysql_server => 'mysql-server',
       #ssh_server => 'openssh-server',
 
       preview_latex => 'tex-preview',
