@@ -796,7 +796,7 @@ gpgcheck=0
 EOM
   close($fh);
   run_command(['yum', '--enablerepo=epel', '-y', 'install', 'epel-release']);
-  unlink('/etc/yum.repos.d/epel-bootstrap.repo');
+  #unlink('/etc/yum.repos.d/epel-bootstrap.repo');
 }
 
 sub yum_install {
