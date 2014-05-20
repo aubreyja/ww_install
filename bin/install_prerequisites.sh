@@ -27,6 +27,7 @@ yum_install () {
      yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser
      yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
      yum -y install perl-File-Find-Rule #ww2.8
+     yum -y install mod_fcgid #ww3
 }
 
 apt_get_install () {
@@ -54,6 +55,7 @@ apt_get_install () {
      apt-get $APTOPTS install libxml-writer-perl libpod-wsdl-perl libjson-perl libtext-csv-perl 
      apt-get $APTOPTS install libhtml-scrubber-perl 
      apt-get $APTOPTS install libfile-find-rule-perl #ww2.8
+     apt-get $APTOPTS install libapache2-mod-fcgid #ww3
 }
 
 if [ -e "/etc/redhat-release" ]
@@ -79,6 +81,9 @@ then
    yum -y update
   yum_install
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization
+   #ww3
+   cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils
+   cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
   $MYSQLSTART
   $MYSQLENABLE
   $APACHESTART
@@ -89,8 +94,13 @@ then
      apt-get -y update
      apt-get -y upgrade
      apt_get_install
-     cpan -j lib/cpan_config.pm XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
+     CPANOPT='-j lib/cpan_config.pm'
+     cpan $CPANOPT XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
+   #ww3
+     cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils
+     cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
      a2enmod apreq
+     a2enmod fcgid
      apache2ctl restart
 elif [ -e "/etc/SuSE-release" ]
 then
