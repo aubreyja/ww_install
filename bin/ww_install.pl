@@ -1288,8 +1288,8 @@ sub enable_mpm_prefork {
 	my $a2enmod_cmd = ['a2dismod','mpm_event'];
 	my $success = run_command($a2enmod_cmd);
 
-	my $a2enmod_cmd = ['a2enmod','mpm_prefork'];
-	my $success = run_command($a2enmod_cmd);
+	$a2enmod_cmd = ['a2enmod','mpm_prefork'];
+	$success = run_command($a2enmod_cmd);
 
 	print_and_log("Enabled MPM Prefork\n");
     }
