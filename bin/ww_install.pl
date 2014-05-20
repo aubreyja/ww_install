@@ -119,7 +119,7 @@ my @apache2ModulesList = qw(
 
 my @apache2SharedModules  = qw(
   mpm_prefork
-  fcgid_mdoule
+  fcgid_module
   perl_module
   apreq_module
 );
