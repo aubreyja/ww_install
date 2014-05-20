@@ -45,7 +45,7 @@ apt_get_install () {
      apt-get $APTOPTS install dvipng netpbm unzip
      apt-get $APTOPTS install preview-latex-style texlive-latex-base 
      apt-get $APTOPTS install mysql-server openssh-server
-     apt-get $APTOPTS install apache2-mpm-prefork libapreq2 libapache2-request-perl 
+     apt-get $APTOPTS install apache2 libapache2-request-perl 
      apt-get $APTOPTS install libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl 
      apt-get $APTOPTS install libexception-class-perl libextutils-xsbuilder-perl libgd-gd2-perl 
      apt-get $APTOPTS install liblocale-maketext-lexicon-perl libmime-tools-perl libnet-ip-perl 
