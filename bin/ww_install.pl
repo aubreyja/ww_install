@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use version; 
 
 use lib 'lib';
 
@@ -2102,13 +2103,33 @@ sub write_localOverrides_conf {
     }
 }
 
+sub write_webwork3_conf {
+    my ( $WW_PREFIX, $DB_PWD, $conf_dir ) = @_;
+    open( my $in, "<", "$conf_dir/webwork3.conf.dist" )
+      or die "Can't open $conf_dir/localOverrides.conf.dist for reading: $!";
+    open( my $out, ">", "$conf_dir/webwork3.conf" )
+      or die "Can't open $conf_dir/webwork3.conf for writing: $!";
+    while (<$in>) {
+        if (/^webwork_dir/) {
+            print $out "webwork_dir: \"${WW_PREFIX}webwork2\"\n";
+        } elsif (/^pg_dir/) {
+            print $out "pg_dir: \"${WW_PREFIX}pg\n";
+	} elsif (/^\s+password/) {
+            print $out "        password: '$DB_PWD'";
+        } else {
+            print $out $_;
+        }
+    }
+}
+
 sub write_webwork_apache2_config {
     my $webwork_dir = shift;
+    my $config_file = shift;
     my $conf_dir    = "$webwork_dir/conf";
-    open( my $in, "<", "$conf_dir/webwork.apache2-config.dist" )
-      or die "Can't open $conf_dir/webwork.apache2-config.dist for reading: $!";
-    open( my $out, ">", "$conf_dir/webwork.apache2-config" )
-      or die "Can't open $conf_dir/webwork.apache2-config for writing: $!";
+    open( my $in, "<", "$conf_dir/${config_file}.dist" )
+      or die "Can't open $conf_dir/${config_file}.dist for reading: $!";
+    open( my $out, ">", "$conf_dir/${config_file}" )
+      or die "Can't open $conf_dir/${config_file} for writing: $!";
     while (<$in>) {
         next if /^\#/;
         if (/^my\s\$webwork_dir/) {
@@ -2521,7 +2542,18 @@ write_site_conf(
 
 write_localOverrides_conf( $WW_PREFIX, "$webwork_dir/conf" );
 
-write_webwork_apache2_config("$webwork_dir");
+my $apache_config_file;
+
+if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
+    $apache_config_file = 'webwork.apache2.4-config';
+} else {
+    $apache_config_file = 'webwork.apache2.4-config';
+}
+
+write_webwork_apache2_config("$webwork_dir", $apache_config_file);
+
+write_webwork3_conf($WW_PREFIX,$database_password, "$webwork_dir/conf") 
+    if -e "$WW_PREFIX/conf/webwork3.conf.dist";
 
 print_and_log(<<EOF);
 #######################################################################
@@ -2540,7 +2572,7 @@ print_and_log(<<EOF);
 EOF
 
 symlink(
-    "$webwork_dir/conf/webwork.apache2-config",
+    "$webwork_dir/conf/$apache_config_file",
     $apache->{root} . "/conf.d/webwork.conf"
 );
 
