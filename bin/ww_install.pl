@@ -1990,7 +1990,9 @@ sub get_webwork {
 
     if ($ww2_success) {
         print_and_log("Fetched webwork2 successfully.\n");
+        chdir "$prefix/webwork2";
         run_command(['git','checkout','-b','ww3','origin/ww3']);
+        chdir $prefix;
     } else {
         print_and_log("Couldn't get webwork2!");
     }
