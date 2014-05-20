@@ -114,6 +114,14 @@ my @apache2ModulesList = qw(
   Apache2::Cookie
   Apache2::ServerRec
   Apache2::ServerUtil
+  
+);
+
+my @apache2SharedModules  = qw(
+  mpm_prefork
+  fcgid_module
+  perl_module
+  apreq_module
 );
 
 my @modulesList = qw(
@@ -432,6 +440,21 @@ my $apache24Layouts = {
         Binary          => '/usr/local/apache2/bin/apachectl',
         User         => '',
         Group        => '',
+    },
+    ubuntu => {    #Checked 12.04
+        MPMDir       => '',
+	MPMConfFile  => '/etc/apache/mods-available/mpm_prefork.conf',
+        ServerRoot   => '/etc/apache2',
+        DocumentRoot => '/var/www',
+        ConfigFile   => '/etc/apache2/apache2.conf',
+        OtherConfig  => '/etc/apache2/conf-enabled',
+        SSLConfig    => '',
+        Modules      => '/etc/apache2/mods-enabled',
+        ErrorLog     => '/var/log/apache2/error.log',
+        AccessLog    => '/var/log/apache2/access.log',
+        Binary       => '/usr/sbin/apache2ctl',
+        User         => 'www-data',
+        Group        => 'www-data',
     },
 };
 
@@ -1016,7 +1039,7 @@ END
     {
         print
 "Sounds good. We will not create a separate webwork data group. Instead we'lljust use the webserver's group.\n";
-        return $apache->{group};
+        return $apache->{Group};
     } elsif ( $answer eq "No, a separate webwork data group already exists"
         && $confirmed->{status} )
     {
@@ -1073,9 +1096,9 @@ sub create_wwdata_group {
         }
         my $new_gid = max(@gids) + 1;
         if ( $wwadmin eq 'root' ) {
-            print $out "$group:*:$new_gid:" . $apache->{user} . "\n";
+            print $out "$group:*:$new_gid:" . $apache->{User} . "\n";
         } else {
-            print $out "$group:*:$new_gid:" . $apache->{user} . ",$wwadmin\n";
+            print $out "$group:*:$new_gid:" . $apache->{User} . ",$wwadmin\n";
         }
         return $group;
     }
@@ -1177,7 +1200,7 @@ EOF
 }
 
 sub check_apache {
-    my ( $envir, $apache22Layouts ) = @_;
+    my ( $envir ) = @_;
 
     print_and_log(<<EOF);
 ###################################################################
@@ -1218,32 +1241,83 @@ EOF
     }
     close(HTTPD);
 
+    return $apache; 
+}
+
+sub get_apache_user_group {
+    my ( $apache, $envir, $apacheLayout ) = @_;
+
 #Determining apache user/group is hard. Sometimes it's in the main conf file.
 #Here we check that, but maybe we should check all conf files under /etc/apache2?
-    open( HTTPDCONF, $apache->{conf} ) or die "Can't do this: $!";
-    while (<HTTPDCONF>) {
-        if (/^User/) {
-            ( undef, $apache->{user} ) = split;
-        } elsif (/^Group/) {
-            ( undef, $apache->{group} ) = split;
-        }
-    }
-    close(HTTPDCONF);
-
     #Make sure we didn't get a bogus user/group from httpd.conf
     my $os_name = $envir->{os}->{name};
     my %users   = map { $_ => 1 } @{ $envir->{existing_users} };
     my %groups  = map { $_ => 1 } @{ $envir->{existing_groups} };
+    unless (($apache->{User} && 
+	 $apache->{Group}) &&
+	($users{$apache->{User}} &&
+	$groups{$apache->{Group}})) {
 
-    #if the apache user/group from httpd.conf doesn't make sense, then
-    #get a hard-coded value from %apache22Layouts.
-    unless ( $users{ $apache->{user} } && $groups{ $apache->{group} } ) {
-        $apache->{user}  = $apache22Layouts->{$os_name}->{User};
-        $apache->{group} = $apache22Layouts->{$os_name}->{Group};
+	open( HTTPDCONF, $apache->{conf} ) or die "Can't do this: $!";
+	
+	while (<HTTPDCONF>) {
+	    if (/^User/) {
+		( undef, $apache->{User} ) = split;
+	    } elsif (/^Group/) {
+		( undef, $apache->{Group} ) = split;
+	    }
+	}
+	close(HTTPDCONF);
+	
     }
-    print_and_log("Apache runs as user " . $apache->{user});
-    print_and_log("Apache runs in group " . $apache->{group});
+
+    print_and_log("Apache runs as user " . $apache->{User});
+    print_and_log("Apache runs in group " . $apache->{Group});
     return $apache;
+}
+
+
+sub enable_mpm_prefork {
+    my ( $apache, $envir ) = @_;
+
+    return if (version->parse($apache->{version}) < version->parse('2.4.00'));
+
+    my $os_name = $envir->{os}->{name};
+
+    if (can_run('a2enmod')) {
+	my $a2enmod_cmd = ['a2dismod','mpm_event'];
+	my $success = run_command($a2enmod_cmd);
+
+	$a2enmod_cmd = ['a2enmod','mpm_prefork'];
+	$success = run_command($a2enmod_cmd);
+
+	print_and_log("Enabled MPM Prefork\n");
+    }
+}
+
+sub check_apache_modules {
+    my ( $apache, $envir ) = @_;
+    my %module_hash;
+
+    open( HTTPD, $apache->{binary} . " -M |" ) or die "Can't do this: $!";
+
+    # check to see if mpm and fcgid are installed
+    while (<HTTPD>) {
+	foreach my $module (@apache2SharedModules) {
+	    if (/$module/) {
+		$module_hash{$module} = 1;
+	    }
+	}
+    }
+
+    close(HTTPD);
+
+    foreach my $module (@apache2SharedModules) {
+	if (!$module_hash{$module}) {
+	    print_and_log("*Apache module $module not enabled!\n");
+            die;
+	}
+    }
 }
 
 ####################################################################
@@ -2063,9 +2137,9 @@ sub write_site_conf {
         } elsif (/^\$server_root_url/) {
             print $out "\$server_root_url = \"$server_root_url\";\n";
         } elsif (/^\$server_userID/) {
-            print $out "\$server_userID = \"" . $apache->{user} . "\";\n";
+            print $out "\$server_userID = \"" . $apache->{User} . "\";\n";
         } elsif (/^\$server_groupID/) {
-            print $out "\$server_groupID = \"" . $apache->{group} . "\";\n";
+            print $out "\$server_groupID = \"" . $apache->{Group} . "\";\n";
         } elsif (/^\$database_dsn/) {
             print $out "\$database_dsn = \"$database_dsn\";\n";
         } elsif (/^\$database_username/) {
@@ -2164,7 +2238,40 @@ END
     });
 
    
-  $print_me = <<END;
+  #Make a backup copy of the apache config file
+  copy($httpd_conf,$dir."/".$file.".bak")
+    or die "Couldn't copy $httpd_conf to ".$dir.$file.".bak: $!\n";
+  print_and_log("Backed up $httpd_conf to ".$dir.$file.".bak");
+
+  #Open apache config file for reading 
+  open(my $fh, '<',$httpd_conf)
+    or die "Couldn't open $httpd_conf for reading: $!\n";
+  #read it into a string
+  my $string = do { local($/); <$fh> };
+  close($fh);
+
+  #Make replacements
+  if($string =~ /(Timeout\s+\d+)/s) {
+   $string =~ s/$1/Timeout $timeout/;
+  }
+
+  #Open apache config file for writing and write!
+  open($fh, '>',$httpd_conf)
+    or die "Couldn't open $httpd_conf for writing: $!\n";
+  print $fh $string;
+  print_and_log("Set Timeout $timeout in $httpd_conf");
+  close($fh);
+}
+
+
+sub edit_mpm_conf {
+  my $apache = shift;
+  my $httpd_conf = $apache->{MPMConfFile} || $apache->{conf};
+
+  my (undef,$dir,$file) = File::Spec->splitpath($httpd_conf);
+
+  my $print_me = <<END;
+
 ###################################################################
 #
 # Now I would like to modify the prefork MPM
@@ -2177,8 +2284,8 @@ END
 # 
 ######################################################################
 END
-  $prompt = "Please enter a value for prefork MaxClients:";
-  $default = 20;
+  my $prompt = "Please enter a value for prefork MaxClients:";
+  my $default = 20;
   my $max_clients = get_reply({
       print_me => $print_me,
       prompt => $prompt,
@@ -2204,24 +2311,27 @@ END
   my $string = do { local($/); <$fh> };
   close($fh);
 
-  #Make replacements
-  if($string =~ /(Timeout\s+\d+)/s) {
-   $string =~ s/$1/Timeout $timeout/;
+  my $clients_directive = 'MaxClients';
+  my $request_directive = 'MaxRequestsPerChild';
+
+  if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
+      $clients_directive = 'MaxRequestWorkers';
+      $request_directive = 'MaxConnectionsPerChild';
   }
-  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?(MaxClients\s+\d+).*?\<\/IfModule\>/s) {
-    $string =~ s/$1/MaxClients           $max_clients/;
+
+  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?($clients_directive\s+\d+).*?\<\/IfModule\>/s) {
+    $string =~ s/$1/$clients_directive           $max_clients/;
   }
-  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?(MaxRequestsPerChild\s*\d+).*?\<\/IfModule\>/s) {
-    $string =~ s/$1/MaxRequestsPerChild $max_requests_per_child/;
+  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?($request_directive\s*\d+).*?\<\/IfModule\>/s) {
+    $string =~ s/$1/$request_directive $max_requests_per_child/;
   }
 
   #Open apache config file for writing and write!
   open($fh, '>',$httpd_conf)
     or die "Couldn't open $httpd_conf for writing: $!\n";
   print $fh $string;
-  print_and_log("Set Timeout $timeout in $httpd_conf");
-  print_and_log("Set prefork MaxClients $max_clients in $httpd_conf");
-  print_and_log("Set prefork MaxRequestsPerChild $max_requests_per_child in $httpd_conf");
+  print_and_log("Set prefork $clients_directive $max_clients in $httpd_conf");
+  print_and_log("Set prefork $request_directive $max_requests_per_child in $httpd_conf");
   close($fh);
 }
 
@@ -2386,9 +2496,31 @@ my %siteDefaults;
 $siteDefaults{timezone} = $envir->{timezone};
 
 #Get apache version, path to config file, server user and group;
-my $apache         = check_apache( $envir, $apache22Layouts );
-my $server_userID  = $apache->{user};
-my $server_groupID = $apache->{group};
+my $apache = check_apache( $envir );
+
+#Put the information from the layout in the apache object;
+my %layout;
+if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
+    %layout = $apache24Layouts->{$envir->{os}->{name}}; 
+} else {
+    %layout = $apache22Layouts->{$envir->{os}->{name}};
+}
+
+foreach my $key (keys %layout) {
+    $apache->{$key} = $layout{$key};
+}
+
+#enable mpm prefork
+enable_mpm_prefork($apache,$envir);
+
+#check and see if our modules are enabled
+check_apache_modules($apache,$envir);
+
+#get the apache user and group, eithe from the layout or from the system
+$apache = get_apache_user_group($apache,$envir);
+
+my $server_userID  = $apache->{User};
+my $server_groupID = $apache->{Group};
 
 #Check perl prerequisites
 print_and_log(<<EOF);
@@ -2548,7 +2680,7 @@ my $apache_config_file;
 if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
     $apache_config_file = 'webwork.apache2.4-config';
 } else {
-    $apache_config_file = 'webwork.apache2.4-config';
+    $apache_config_file = 'webwork.apache2-config';
 }
 
 write_webwork_apache2_config("$webwork_dir", $apache_config_file);
@@ -2574,10 +2706,12 @@ EOF
 
 symlink(
     "$webwork_dir/conf/$apache_config_file",
-    $apache->{root} . "/conf.d/webwork.conf"
+    "$apache->{OtherConfig}/webwork.conf"
 );
 
 edit_httpd_conf($apache);
+
+edit_mpm_conf($apache);
 
 print_and_log(<<EOF);
 #######################################################################
