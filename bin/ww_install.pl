@@ -441,9 +441,9 @@ my $apache24Layouts = {
         User         => '',
         Group        => '',
     },
-    ubuntu => {    #Checked 12.04
+    ubuntu => {    #Checked 13.10
         MPMDir       => '',
-	MPMConfFile  => '/etc/apache/mods-available/mpm_prefork.conf',
+	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
         ServerRoot   => '/etc/apache2',
         DocumentRoot => '/var/www',
         ConfigFile   => '/etc/apache2/apache2.conf',
@@ -455,6 +455,21 @@ my $apache24Layouts = {
         Binary       => '/usr/sbin/apache2ctl',
         User         => 'www-data',
         Group        => 'www-data',
+    },
+    fedora => {
+	MPMDir       => '',
+	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
+        ServerRoot   => '/etc/httpd',
+        DocumentRoot => '/var/www/html',
+        ConfigFile   => '/etc/httpd/conf/httpd.conf',
+        OtherConfig  => '/etc/httpd/conf.d',
+        SSLConfig    => '',
+        Modules      => '/etc/httpd/modules',           #symlink
+        ErrorLog     => '/var/log/httpd/error_log',
+        AccessLog    => '/var/log/httpd/access_log',
+        Binary       => '/usr/sbin/apachectl',
+        User         => 'apache',
+        Group        => 'apache',
     },
 };
 
@@ -1120,6 +1135,7 @@ sub change_owner {
     my $owner     = shift;
     my @dirs      = @_;
     my $full_path = can_run('chown');
+    
     my $cmd       = [ $full_path, '-R', $owner, @dirs ];
     my $success = run_command($cmd);
     if ($success) {
@@ -1127,12 +1143,13 @@ sub change_owner {
     } else {
         print_and_log("There was an error changing ownership of @dirs to $owner.");
     }
+    
 }
 
 # chmod -R g+w DATA ../courses htdocs/tmp logs tmp
 # find DATA/ ../courses/ htdocs/tmp logs/ tmp/ -type d -a ! -name CVS -exec chmod g+s {}
 sub change_data_dir_permissions {
-    my ( $gid, $courses, $data, $htdocs_tmp, $logs, $tmp ) = @_;
+    my ( $gid, $courses, $data, $htdocs_tmp, $logs, $tmp, $webwork3log ) = @_;
     my $chmod = can_run('chmod');
     my $cmd =
       [ $chmod, '-R', 'g+w', $courses, $data, $htdocs_tmp, $logs, $tmp ];
@@ -1158,6 +1175,31 @@ sub change_data_dir_permissions {
         print_and_log("Error. Could not add sticky bit.");
     }
 }
+
+sub change_webwork3_log_permissions {
+    my $owner     = shift;
+    my $webwork3log = shift;
+
+    my $full_path = can_run('chown');
+    my $cmd       = [ $full_path, '-R', $owner, $webwork3log ];
+    my $success = run_command($cmd);
+    if ($success) {
+        print_and_log("Changed ownership of $webwork3log to $owner.");
+    } else {
+        print_and_log("There was an error changing ownership $webwork3log to $owner.");
+    }
+
+    $full_path = can_run('chmod');
+     $cmd =
+	 [ $full_path, '-R', 'g+w', $webwork3log ];
+    my $chmod_success = run_command($cmd);
+    if ($chmod_success) {
+        print_and_log("Made the directory $webwork3log group writable.\n");
+    } else {
+        print_and_log("Could not make $webwork3log group writable!");
+    }
+}
+
 
 ####################################################################
 #
@@ -2286,7 +2328,7 @@ sub edit_mpm_conf {
 # 
 ######################################################################
 END
-  my $prompt = "Please enter a value for prefork MaxClients:";
+  my $prompt = "Please enter a value for prefork MaxClients/MaxRequestWorkers:";
   my $default = 20;
   my $max_clients = get_reply({
       print_me => $print_me,
@@ -2294,7 +2336,7 @@ END
       default => $default,
     });
 
-  $prompt = "Please enter a value for prefork MaxRequestsPerChild:";
+  $prompt = "Please enter a value for prefork MaxRequestsPerChild/MaxConnectionsPerChild:";
   $default = 100;
   my $max_requests_per_child = get_reply({
       prompt => $prompt,
@@ -2501,15 +2543,15 @@ $siteDefaults{timezone} = $envir->{timezone};
 my $apache = check_apache( $envir );
 
 #Put the information from the layout in the apache object;
-my %layout;
+my $layout;
 if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
-    %layout = $apache24Layouts->{$envir->{os}->{name}}; 
+    $layout = $apache24Layouts->{$envir->{os}->{name}}; 
 } else {
-    %layout = $apache22Layouts->{$envir->{os}->{name}};
+    $layout = $apache22Layouts->{$envir->{os}->{name}};
 }
 
-foreach my $key (keys %layout) {
-    $apache->{$key} = $layout{$key};
+foreach my $key (keys %$layout) {
+    $apache->{$key} = $layout->{$key};
 }
 
 #enable mpm prefork
@@ -2808,6 +2850,11 @@ change_data_dir_permissions(
     "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp",
     "$webwork_dir/logs", "$webwork_dir/tmp"
 );
+
+my $webwork3log = "$webwork_dir/logs";
+if (-e $webwork3log) {
+    change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
+}
 
 print_and_log(<<EOF);
 ######################################################
