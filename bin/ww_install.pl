@@ -2706,10 +2706,18 @@ print_and_log(<<EOF);
 #######################################################################
 EOF
 
-symlink(
-    "$webwork_dir/conf/$apache_config_file",
-    "$apache->{OtherConfig}/webwork.conf"
-);
+my $ln = can_run('ln');
+my $cmd = [$ln, '-s', "$webwork_dir/conf/$apache_config_file", "$apache->{OtherConfig}/webwork.conf"];
+my $success = run_command($cmd);;
+
+if ($success) {
+
+    print_and_log("Added webwork's apache config file to apache.");
+
+} else {
+    print_and_log("Couldn't add webwork's apache config file to apache.");
+}
+}
 
 edit_httpd_conf($apache);
 
