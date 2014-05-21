@@ -2230,11 +2230,11 @@ sub write_webwork3_conf {
       or die "Can't open $conf_dir/webwork3.conf for writing: $!";
     while (<$in>) {
         if (/^webwork_dir/) {
-            print $out "webwork_dir: \"${WW_PREFIX}webwork2\"\n";
+            print $out "webwork_dir: \"${WW_PREFIX}/webwork2\"\n";
         } elsif (/^pg_dir/) {
-            print $out "pg_dir: \"${WW_PREFIX}pg\n";
+            print $out "pg_dir: \"${WW_PREFIX}/pg\"\n";
 	} elsif (/^\s+password/) {
-            print $out "        password: '$DB_PWD'";
+            print $out "        password: '$DB_PWD'\n";
         } else {
             print $out $_;
         }
@@ -2365,9 +2365,12 @@ END
 
   if($string =~ /\<IfModule mpm\_prefork\_module\>.*?($clients_directive\s+\d+).*?\<\/IfModule\>/s) {
     $string =~ s/$1/$clients_directive           $max_clients/;
-  }
+  } else {
+      $string .= "\n $clients_directive           $max_clients\n";
   if($string =~ /\<IfModule mpm\_prefork\_module\>.*?($request_directive\s*\d+).*?\<\/IfModule\>/s) {
     $string =~ s/$1/$request_directive $max_requests_per_child/;
+  } else {
+      $string .= "\n $request_directive           $max_requests_per_child\n";
   }
 
   #Open apache config file for writing and write!
