@@ -80,7 +80,7 @@ then
   fi
    yum -y update
   yum_install
-   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization
+   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization Env
    #ww3
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils YAML Template
    cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp

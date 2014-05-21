@@ -2730,7 +2730,7 @@ if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
 write_webwork_apache2_config("$webwork_dir", $apache_config_file);
 
 write_webwork3_conf($WW_PREFIX,$database_password, "$webwork_dir/conf") 
-    if -e "$WW_PREFIX/conf/webwork3.conf.dist";
+    if -e "$WW_PREFIX/webwork2/conf/webwork3.conf.dist";
 
 print_and_log(<<EOF);
 #######################################################################
@@ -2851,10 +2851,18 @@ change_data_dir_permissions(
     "$webwork_dir/logs", "$webwork_dir/tmp"
 );
 
-my $webwork3log = "$webwork_dir/logs";
+my $webwork3log = "$webwork_dir/webwork3/logs";
+
 if (-e $webwork3log) {
     change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
+    #temporary hack until logs is in the git repo
+} else {
+    my $full_path = can_run('mkdir');
+    my $cmd = [$full_path,$webwork3log]; #set SELinux in permissive mode
+    my $success = run_command($cmd);  
+    change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
 }
+    
 
 print_and_log(<<EOF);
 ######################################################
