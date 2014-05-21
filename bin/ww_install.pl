@@ -2032,7 +2032,7 @@ sub unpack_jsMath_fonts {
     if ($success) {
         print_and_log("Unpacked jsMath fonts successfully!");
     } else {
-        print_and_log("Could not unpack jsMath fonts!");
+        print_and_log("Could not unpack jsMath fonts! Maybe it doesn't matter.");
     }
     
 }
@@ -2716,7 +2716,6 @@ if ($success) {
 
 } else {
     print_and_log("Couldn't add webwork's apache config file to apache.");
-}
 }
 
 edit_httpd_conf($apache);
