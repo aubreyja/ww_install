@@ -118,6 +118,7 @@ my @apache2ModulesList = qw(
 );
 
 my @apache2SharedModules  = qw(
+  mpm_prefork
   fcgid_module
   perl_module
   apreq_module
@@ -1338,10 +1339,6 @@ sub check_apache_modules {
     my ( $apache, $envir ) = @_;
     my %module_hash;
 
-    if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
-	push @apache2SharedModules, 'mpm-prefork';
-    }
-    
     open( HTTPD, $apache->{binary} . " -M |" ) or die "Can't do this: $!";
 
     # check to see if mpm and fcgid are installed
