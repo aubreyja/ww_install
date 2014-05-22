@@ -118,7 +118,6 @@ my @apache2ModulesList = qw(
 );
 
 my @apache2SharedModules  = qw(
-  mpm_prefork
   fcgid_module
   perl_module
   apreq_module
@@ -1324,8 +1323,6 @@ sub enable_mpm_prefork {
 
     return if (version->parse($apache->{version}) < version->parse('2.4.00'));
 
-    my $os_name = $envir->{os}->{name};
-
     if (can_run('a2enmod')) {
 	my $a2enmod_cmd = ['a2dismod','mpm_event'];
 	my $success = run_command($a2enmod_cmd);
@@ -1341,6 +1338,10 @@ sub check_apache_modules {
     my ( $apache, $envir ) = @_;
     my %module_hash;
 
+    if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
+	push @apache2SharedModules, 'mpm-prefork';
+    }
+    
     open( HTTPD, $apache->{binary} . " -M |" ) or die "Can't do this: $!";
 
     # check to see if mpm and fcgid are installed
@@ -2559,7 +2560,7 @@ foreach my $key (keys %$layout) {
 }
 
 #enable mpm prefork
-enable_mpm_prefork($apache,$envir);
+enable_mpm_prefork($apache);
 
 #check and see if our modules are enabled
 check_apache_modules($apache,$envir);
