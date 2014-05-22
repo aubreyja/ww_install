@@ -2367,6 +2367,7 @@ END
     $string =~ s/$1/$clients_directive           $max_clients/;
   } else {
       $string .= "\n $clients_directive           $max_clients\n";
+  }
   if($string =~ /\<IfModule mpm\_prefork\_module\>.*?($request_directive\s*\d+).*?\<\/IfModule\>/s) {
     $string =~ s/$1/$request_directive $max_requests_per_child/;
   } else {
@@ -2506,7 +2507,7 @@ sub write_launch_browser_script {
     #Get preferred web browser
     my $browser =
          can_run('xdg-open')
-      || can_run('x-www-browser')
+	 || can_run('x-www-browser')
       || can_run('www-browser')
       || can_run('gnome-open')
       || can_run('firefox');
