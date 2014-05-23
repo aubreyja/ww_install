@@ -2375,12 +2375,12 @@ END
       $request_directive = 'MaxConnectionsPerChild';
   }
 
-  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?($clients_directive\s+\d+).*?\<\/IfModule\>/s) {
+  if($string =~ /\<IfModule (mpm\_prefork\_module|prefork\.c)\>.*?($clients_directive\s+\d+).*?\<\/IfModule\>/s) {
     $string =~ s/$1/$clients_directive           $max_clients/;
   } else {
       $string .= "\n $clients_directive           $max_clients\n";
   }
-  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?($request_directive\s*\d+).*?\<\/IfModule\>/s) {
+  if($string =~ /\<IfModule (mpm\_prefork\_module|prefork\.c)\>.*?($request_directive\s*\d+).*?\<\/IfModule\>/s) {
     $string =~ s/$1/$request_directive $max_requests_per_child/;
   } else {
       $string .= "\n $request_directive           $max_requests_per_child\n";
