@@ -2077,6 +2077,9 @@ sub get_webwork {
 
 sub unpack_jsMath_fonts {
     my $webwork_dir = shift;
+    
+    # check if jsMath even exists, since it doesn't anymore
+    return if (!(-e "$webwork_dir/htdocs/jsMath/jsMath-fonts.tar.gz"));
 
     # cd /opt/webwork/webwork2/htdocs/jsMath
     chdir("$webwork_dir/htdocs/jsMath");
