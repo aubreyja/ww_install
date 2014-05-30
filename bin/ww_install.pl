@@ -36,8 +36,8 @@ use Term::ReadPassword; #to be found in lib/
 use User::pwent;
 
 use IO::Handle qw();
-STDOUT->autoflush(0);
-STDERR->autoflush(0);
+STDOUT->autoflush(1);
+STDERR->autoflush(1);
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
@@ -699,7 +699,7 @@ sub get_reply {
   foreach(keys %$defaults) {
     $options->{$_} = $options->{$_} // $defaults->{$_};
   }
-  my $answer = $term->get_reply(
+  my $answer = get_reply(
     print_me => $options->{print_me},
     prompt => $options->{prompt},
     choices => $options->{choices},
@@ -722,7 +722,7 @@ sub get_reply {
 #For confirming answers
 sub confirm_answer {
     my $answer  = shift;
-    my $confirm = $term->get_reply(
+    my $confirm = get_reply(
         print_me => "Ok, you entered: $answer. Please confirm.",
         prompt   => "Well? ",
         choices  => [ "Looks good.", "Change my answer.", "Quit." ],
@@ -907,7 +907,7 @@ END
     my $ww_admin  = undef;
 
     my $prompt = "Shall I create a webwork admin user?";
-    $answer = $term->get_reply(
+    $answer = get_reply(
         print_me => $print_me,
         prompt   => $prompt,
         choices  => [
@@ -933,7 +933,7 @@ END
     } elsif ( $answer eq "No, a separate webwork admin user already exists"
         && $confirmed->{status} )
     {
-        $ww_admin = $term->get_reply(
+        $ww_admin = get_reply(
             print_me =>
 'Please enter the username of the webwork admin user. Note that this user must already exist on the system.',
             prompt  => 'webwork admin username:',
@@ -958,7 +958,7 @@ END
 
 sub create_wwadmin_user {
     my $envir   = shift;
-    my $wwadmin = $term->get_reply(
+    my $wwadmin = get_reply(
         print_me => "You chose to create a webwork admin user.",
         prompt   => "Please enter a username for the webwork admin user.",
         default  => "wwadmin",
@@ -969,12 +969,12 @@ sub create_wwadmin_user {
         get_wwadmin_user($envir);
     } else {
 
-        my $wwadmin_pw = $term->get_reply(
+        my $wwadmin_pw = get_reply(
             prompt =>
               "Please enter an initial password for the webwork admin user.",
             default => "wwadmin",
         );
-        my $wwadmin_shell = $term->get_reply(
+        my $wwadmin_shell = get_reply(
             prompt =>
               "Please enter a default shell for the webwork admin user.",
             default => $ENV{SHELL},
@@ -1050,7 +1050,7 @@ END
     my $group     = undef;
 
     my $prompt = "Shall I create a webwork data group? ";
-    $answer = $term->get_reply(
+    $answer = get_reply(
         print_me => $print_me,
         prompt   => $prompt,
         choices  => [
@@ -1076,7 +1076,7 @@ END
     } elsif ( $answer eq "No, a separate webwork data group already exists"
         && $confirmed->{status} )
     {
-        $group = $term->get_reply(
+        $group = get_reply(
             print_me =>
 'Please enter the group name of the webwork data group. Note that this group must already exist on the system.',
             prompt  => 'webwork data group name: ',
@@ -1102,7 +1102,7 @@ END
 #Create webwork data group and add webserver and wwadmin (if user is not root)
 sub create_wwdata_group {
     my ( $envir, $apache, $wwadmin ) = @_;
-    my $group = $term->get_reply(
+    my $group = get_reply(
         print_me => "You chose to create a webwork data group.",
         prompt   => "What would you like to call the group?",
         default  => "wwdata",
@@ -1472,7 +1472,7 @@ sub get_webwork2_repo {
 ###########################################################################################
 END
 
-    my $repo = $term->get_reply(
+    my $repo = get_reply(
         print_me => $print_me,
         prompt   => 'Where would you like to download webwork2 from?',
         default => $default,    #constant defined at top
@@ -1491,7 +1491,7 @@ END
 
 sub get_pg_repo {
     my $default = shift;
-    my $repo    = $term->get_reply(
+    my $repo    = get_reply(
 
         #print_me => $print_me,
         prompt => 'Where would you like to download pg from?',
@@ -1511,7 +1511,7 @@ sub get_pg_repo {
 
 sub get_opl_repo {
     my $default = shift;
-    my $repo    = $term->get_reply(
+    my $repo    = get_reply(
         #print_me => $print_me,
         prompt  => 'Where would you like to download the OPL from?',
         default => $default,
@@ -1537,7 +1537,7 @@ sub is_absolute {
     return { answer => $dir, status => 1 };
   } else {
     my $abs_dir = File::Spec->rel2abs($dir);
-    my $fix = $term->get_reply(
+    my $fix = get_reply(
        print_me => "I need an absolute path, but you gave me a relative path.",
        prompt => "How do you want me to fix this? ",
        choices => [ "Go back", "I really meant $abs_dir", "Quit" ],
@@ -1558,7 +1558,7 @@ sub check_path {
  my $exists = -e $given;
  return { answer => $given, status=> 1} unless $exists;
 
- my $reply = $term->get_reply( 
+ my $reply = get_reply( 
       print_me => "Error! You gave me a path which already exists on the filesystem.",       
       choices => ['Enter new location',"Delete existing $given and use that location","Quit"],
       prompt => 'How would you like to proceed?',
@@ -1621,7 +1621,7 @@ sub get_root_url {
 # hook up ssl.
 #################################################################
 END
-    my $answer = $term->get_reply(
+    my $answer = get_reply(
         print_me => $print_me,
         prompt   => 'Server root url:',
         default  => $default,
@@ -1660,7 +1660,7 @@ sub get_webwork_url {
 #################################################################
 END
     my $prompt = "Relative location of webwork handler:";
-    my $answer = $term->get_reply(
+    my $answer = get_reply(
         print_me => $print_me,
         prompt   => $prompt,
         default  => $default,
@@ -1691,7 +1691,7 @@ sub get_smtp_server {
 #################################################################
 END
     my $prompt = "SMTP server:";
-    my $answer = $term->get_reply(
+    my $answer = get_reply(
         print_me => $print_me,
         prompt   => $prompt,
         default  => $default,
@@ -1716,7 +1716,7 @@ sub get_smtp_sender {
 ##############################################################################
 END
     my $prompt = "SMTP sender:";
-    my $answer = $term->get_reply(
+    my $answer = get_reply(
         print_me => $print_me,
         prompt   => $prompt,
         default  => $default,
