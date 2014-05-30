@@ -35,10 +35,6 @@ use Term::ReadPassword; #to be found in lib/
 
 use User::pwent;
 
-use IO::Handle qw();
-STDOUT->autoflush(1);
-STDERR->autoflush(1);
-
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
 #Don't worry people with spurious warnings.
@@ -2543,6 +2539,11 @@ sub write_launch_browser_script {
 # Now we finally come to the actual installation procedure
 #
 ###############################################################
+
+select(STDERR);
+$| = 1;
+select(STDOUT);
+$| = 1;
 
 #We'll use this later
 my $installer_dir = getcwd();
