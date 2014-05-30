@@ -37,6 +37,7 @@ use User::pwent;
 
 use IO::Handle qw();
 STDOUT->autoflush(1);
+STDERR->autoflush(1);
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
