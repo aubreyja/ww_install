@@ -35,6 +35,8 @@ use Term::ReadPassword; #to be found in lib/
 
 use User::pwent;
 
+use IO::Handle qw();
+STDOUT->autoflush(1);
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
