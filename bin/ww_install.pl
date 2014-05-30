@@ -30,6 +30,9 @@ use Pod::Usage;
 use Sys::Hostname;
 
 use Term::UI;
+BEGIN {
+    $ENV{PERL_RL} = 'Perl';
+}
 use Term::ReadLine;
 use Term::ReadPassword; #to be found in lib/
 
