@@ -208,6 +208,8 @@ if (!open(LOG,">> ../webwork_install.log")) {
 sub writelog {
     while ($_ = shift) {
         chomp();
+	select(LOG);
+	$| = 1;
         print LOG "$_\n";
     }
 }
@@ -215,7 +217,11 @@ sub writelog {
 sub print_and_log {
     while ($_=shift) {
         chomp();
+	select(STDOUT);
+	$| = 1;
         print "$_\n";
+	select(LOG);
+	$| = 1;
         print LOG "$_\n";
     }
 }
