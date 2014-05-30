@@ -30,9 +30,6 @@ use Pod::Usage;
 use Sys::Hostname;
 
 use Term::UI;
-BEGIN {
-    $ENV{PERL_RL} = 'Perl';
-}
 use Term::ReadLine;
 use Term::ReadPassword; #to be found in lib/
 
@@ -702,8 +699,10 @@ sub get_reply {
   foreach(keys %$defaults) {
     $options->{$_} = $options->{$_} // $defaults->{$_};
   }
+  print $options->{print_me},
+
   my $answer = $term->get_reply(
-    print_me => $options->{print_me},
+#    print_me => $options->{print_me},
     prompt => $options->{prompt},
     choices => $options->{choices},
     default => $options->{default},
@@ -725,8 +724,9 @@ sub get_reply {
 #For confirming answers
 sub confirm_answer {
     my $answer  = shift;
+    print "Ok, you entered: $answer. Please confirm.";
     my $confirm = $term->get_reply(
-        print_me => "Ok, you entered: $answer. Please confirm.",
+#        print_me => "Ok, you entered: $answer. Please confirm.",
         prompt   => "Well? ",
         choices  => [ "Looks good.", "Change my answer.", "Quit." ],
         default  => "Looks good."
