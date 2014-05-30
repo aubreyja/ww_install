@@ -227,7 +227,7 @@ wait
 
 if [ -f "launch_browser.sh" ]; then
   echo "Running launch_browser.sh"
-  source launch_browser.sh 
+  bash launch_browser.sh 
 fi
 
 move_install_log () {
