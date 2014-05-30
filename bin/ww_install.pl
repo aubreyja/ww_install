@@ -208,8 +208,6 @@ if (!open(LOG,">> ../webwork_install.log")) {
 sub writelog {
     while ($_ = shift) {
         chomp();
-	select(LOG);
-	$| = 1;
         print LOG "$_\n";
     }
 }
@@ -217,11 +215,8 @@ sub writelog {
 sub print_and_log {
     while ($_=shift) {
         chomp();
-	select(STDOUT);
-	$| = 1;
         print "$_\n";
-	select(LOG);
-	$| = 1;
+	STDOUT->flush();
         print LOG "$_\n";
     }
 }
@@ -706,7 +701,7 @@ sub get_reply {
     $options->{$_} = $options->{$_} // $defaults->{$_};
   }
   print $options->{print_me},
-
+  STDOUT->flush();
   my $answer = $term->get_reply(
 #    print_me => $options->{print_me},
     prompt => $options->{prompt},
@@ -731,6 +726,7 @@ sub get_reply {
 sub confirm_answer {
     my $answer  = shift;
     print "Ok, you entered: $answer. Please confirm.";
+    STDOUT->flush();
     my $confirm = $term->get_reply(
 #        print_me => "Ok, you entered: $answer. Please confirm.",
         prompt   => "Well? ",
