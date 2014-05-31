@@ -201,7 +201,6 @@ my @modulesList = qw(
 if (!open(LOG,">> ../webwork_install.log")) {
     die "Unable to open log file.\n";
 } else {
-    LOG->autoflush(1);
     print LOG 'This is ww_install.pl '.DateTime->now."\n\n";
 }
 
@@ -216,7 +215,6 @@ sub print_and_log {
     while ($_=shift) {
         chomp();
         print "$_\n";
-	STDOUT->flush();
         print LOG "$_\n";
     }
 }
@@ -700,10 +698,9 @@ sub get_reply {
   foreach(keys %$defaults) {
     $options->{$_} = $options->{$_} // $defaults->{$_};
   }
-  print $options->{print_me},
-  STDOUT->flush();
+
   my $answer = $term->get_reply(
-#    print_me => $options->{print_me},
+    print_me => $options->{print_me},
     prompt => $options->{prompt},
     choices => $options->{choices},
     default => $options->{default},
@@ -726,9 +723,9 @@ sub get_reply {
 sub confirm_answer {
     my $answer  = shift;
     print "Ok, you entered: $answer. Please confirm.";
-    STDOUT->flush();
+
     my $confirm = $term->get_reply(
-#        print_me => "Ok, you entered: $answer. Please confirm.",
+        print_me => "Ok, you entered: $answer. Please confirm.",
         prompt   => "Well? ",
         choices  => [ "Looks good.", "Change my answer.", "Quit." ],
         default  => "Looks good."
