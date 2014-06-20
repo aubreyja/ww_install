@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use version; 
 
 use lib 'lib';
 
@@ -34,6 +35,9 @@ use Term::ReadPassword; #to be found in lib/
 
 use User::pwent;
 
+use IO::Handle qw();
+STDOUT->autoflush(1);
+STDERR->autoflush(1);
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
@@ -113,6 +117,14 @@ my @apache2ModulesList = qw(
   Apache2::Cookie
   Apache2::ServerRec
   Apache2::ServerUtil
+  
+);
+
+my @apache2SharedModules  = qw(
+  mpm_prefork
+  fcgid_module
+  perl_module
+  apreq_module
 );
 
 my @modulesList = qw(
@@ -361,7 +373,21 @@ my $apache22Layouts = {
         User         => 'www-data',
         Group        => 'www-data',
     },
-    rhel => {    #And Fedora Core, CentOS...checked Fedora 17, CentOS 6
+    rhel => {    
+        MPMDir       => 'server/mpm/prefork',
+        ServerRoot   => '/etc/httpd',
+        DocumentRoot => '/var/www/html',
+        ConfigFile   => '/etc/httpd/conf/httpd.conf',
+        OtherConfig  => '/etc/httpd/conf.d',
+        SSLConfig    => '',
+        Modules      => '/etc/httpd/modules',           #symlink
+        ErrorLog     => '/var/log/httpd/error_log',
+        AccessLog    => '/var/log/httpd/access_log',
+        Binary       => '/usr/sbin/apachectl',
+        User         => 'apache',
+        Group        => 'apache',
+    },
+    centos => {    
         MPMDir       => 'server/mpm/prefork',
         ServerRoot   => '/etc/httpd',
         DocumentRoot => '/var/www/html',
@@ -431,6 +457,36 @@ my $apache24Layouts = {
         Binary          => '/usr/local/apache2/bin/apachectl',
         User         => '',
         Group        => '',
+    },
+    ubuntu => {    #Checked 13.10
+        MPMDir       => '',
+	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
+        ServerRoot   => '/etc/apache2',
+        DocumentRoot => '/var/www',
+        ConfigFile   => '/etc/apache2/apache2.conf',
+        OtherConfig  => '/etc/apache2/conf-enabled',
+        SSLConfig    => '',
+        Modules      => '/etc/apache2/mods-enabled',
+        ErrorLog     => '/var/log/apache2/error.log',
+        AccessLog    => '/var/log/apache2/access.log',
+        Binary       => '/usr/sbin/apache2ctl',
+        User         => 'www-data',
+        Group        => 'www-data',
+    },
+    fedora => {
+	MPMDir       => '',
+	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
+        ServerRoot   => '/etc/httpd',
+        DocumentRoot => '/var/www/html',
+        ConfigFile   => '/etc/httpd/conf/httpd.conf',
+        OtherConfig  => '/etc/httpd/conf.d',
+        SSLConfig    => '',
+        Modules      => '/etc/httpd/modules',           #symlink
+        ErrorLog     => '/var/log/httpd/error_log',
+        AccessLog    => '/var/log/httpd/access_log',
+        Binary       => '/usr/sbin/apachectl',
+        User         => 'apache',
+        Group        => 'apache',
     },
 };
 
@@ -642,6 +698,7 @@ sub get_reply {
   foreach(keys %$defaults) {
     $options->{$_} = $options->{$_} // $defaults->{$_};
   }
+
   my $answer = $term->get_reply(
     print_me => $options->{print_me},
     prompt => $options->{prompt},
@@ -665,6 +722,8 @@ sub get_reply {
 #For confirming answers
 sub confirm_answer {
     my $answer  = shift;
+    print "Ok, you entered: $answer. Please confirm.";
+
     my $confirm = $term->get_reply(
         print_me => "Ok, you entered: $answer. Please confirm.",
         prompt   => "Well? ",
@@ -1015,7 +1074,7 @@ END
     {
         print
 "Sounds good. We will not create a separate webwork data group. Instead we'lljust use the webserver's group.\n";
-        return $apache->{group};
+        return $apache->{Group};
     } elsif ( $answer eq "No, a separate webwork data group already exists"
         && $confirmed->{status} )
     {
@@ -1072,9 +1131,9 @@ sub create_wwdata_group {
         }
         my $new_gid = max(@gids) + 1;
         if ( $wwadmin eq 'root' ) {
-            print $out "$group:*:$new_gid:" . $apache->{user} . "\n";
+            print $out "$group:*:$new_gid:" . $apache->{User} . "\n";
         } else {
-            print $out "$group:*:$new_gid:" . $apache->{user} . ",$wwadmin\n";
+            print $out "$group:*:$new_gid:" . $apache->{User} . ",$wwadmin\n";
         }
         return $group;
     }
@@ -1096,6 +1155,7 @@ sub change_owner {
     my $owner     = shift;
     my @dirs      = @_;
     my $full_path = can_run('chown');
+    
     my $cmd       = [ $full_path, '-R', $owner, @dirs ];
     my $success = run_command($cmd);
     if ($success) {
@@ -1103,12 +1163,13 @@ sub change_owner {
     } else {
         print_and_log("There was an error changing ownership of @dirs to $owner.");
     }
+    
 }
 
 # chmod -R g+w DATA ../courses htdocs/tmp logs tmp
 # find DATA/ ../courses/ htdocs/tmp logs/ tmp/ -type d -a ! -name CVS -exec chmod g+s {}
 sub change_data_dir_permissions {
-    my ( $gid, $courses, $data, $htdocs_tmp, $logs, $tmp ) = @_;
+    my ( $gid, $courses, $data, $htdocs_tmp, $logs, $tmp, $webwork3log ) = @_;
     my $chmod = can_run('chmod');
     my $cmd =
       [ $chmod, '-R', 'g+w', $courses, $data, $htdocs_tmp, $logs, $tmp ];
@@ -1134,6 +1195,31 @@ sub change_data_dir_permissions {
         print_and_log("Error. Could not add sticky bit.");
     }
 }
+
+sub change_webwork3_log_permissions {
+    my $owner     = shift;
+    my $webwork3log = shift;
+
+    my $full_path = can_run('chown');
+    my $cmd       = [ $full_path, '-R', $owner, $webwork3log ];
+    my $success = run_command($cmd);
+    if ($success) {
+        print_and_log("Changed ownership of $webwork3log to $owner.");
+    } else {
+        print_and_log("There was an error changing ownership $webwork3log to $owner.");
+    }
+
+    $full_path = can_run('chmod');
+     $cmd =
+	 [ $full_path, '-R', 'g+w', $webwork3log ];
+    my $chmod_success = run_command($cmd);
+    if ($chmod_success) {
+        print_and_log("Made the directory $webwork3log group writable.\n");
+    } else {
+        print_and_log("Could not make $webwork3log group writable!");
+    }
+}
+
 
 ####################################################################
 #
@@ -1176,7 +1262,7 @@ EOF
 }
 
 sub check_apache {
-    my ( $envir, $apache22Layouts ) = @_;
+    my ( $envir ) = @_;
 
     print_and_log(<<EOF);
 ###################################################################
@@ -1217,32 +1303,81 @@ EOF
     }
     close(HTTPD);
 
+    return $apache; 
+}
+
+sub get_apache_user_group {
+    my ( $apache, $envir, $apacheLayout ) = @_;
+
 #Determining apache user/group is hard. Sometimes it's in the main conf file.
 #Here we check that, but maybe we should check all conf files under /etc/apache2?
-    open( HTTPDCONF, $apache->{conf} ) or die "Can't do this: $!";
-    while (<HTTPDCONF>) {
-        if (/^User/) {
-            ( undef, $apache->{user} ) = split;
-        } elsif (/^Group/) {
-            ( undef, $apache->{group} ) = split;
-        }
-    }
-    close(HTTPDCONF);
-
     #Make sure we didn't get a bogus user/group from httpd.conf
     my $os_name = $envir->{os}->{name};
     my %users   = map { $_ => 1 } @{ $envir->{existing_users} };
     my %groups  = map { $_ => 1 } @{ $envir->{existing_groups} };
+    unless (($apache->{User} && 
+	 $apache->{Group}) &&
+	($users{$apache->{User}} &&
+	$groups{$apache->{Group}})) {
 
-    #if the apache user/group from httpd.conf doesn't make sense, then
-    #get a hard-coded value from %apache22Layouts.
-    unless ( $users{ $apache->{user} } && $groups{ $apache->{group} } ) {
-        $apache->{user}  = $apache22Layouts->{$os_name}->{User};
-        $apache->{group} = $apache22Layouts->{$os_name}->{Group};
+	open( HTTPDCONF, $apache->{conf} ) or die "Can't do this: $!";
+	
+	while (<HTTPDCONF>) {
+	    if (/^User/) {
+		( undef, $apache->{User} ) = split;
+	    } elsif (/^Group/) {
+		( undef, $apache->{Group} ) = split;
+	    }
+	}
+	close(HTTPDCONF);
+	
     }
-    print_and_log("Apache runs as user " . $apache->{user});
-    print_and_log("Apache runs in group " . $apache->{group});
+
+    print_and_log("Apache runs as user " . $apache->{User});
+    print_and_log("Apache runs in group " . $apache->{Group});
     return $apache;
+}
+
+
+sub enable_mpm_prefork {
+    my ( $apache, $envir ) = @_;
+
+    return if (version->parse($apache->{version}) < version->parse('2.4.00'));
+
+    if (can_run('a2enmod')) {
+	my $a2enmod_cmd = ['a2dismod','mpm_event'];
+	my $success = run_command($a2enmod_cmd);
+
+	$a2enmod_cmd = ['a2enmod','mpm_prefork'];
+	$success = run_command($a2enmod_cmd);
+
+	print_and_log("Enabled MPM Prefork\n");
+    }
+}
+
+sub check_apache_modules {
+    my ( $apache, $envir ) = @_;
+    my %module_hash;
+
+    open( HTTPD, $apache->{binary} . " -M |" ) or die "Can't do this: $!";
+
+    # check to see if mpm and fcgid are installed
+    while (<HTTPD>) {
+	foreach my $module (@apache2SharedModules) {
+	    if (/$module/) {
+		$module_hash{$module} = 1;
+	    }
+	}
+    }
+
+    close(HTTPD);
+
+    foreach my $module (@apache2SharedModules) {
+	if (!$module_hash{$module}) {
+	    print_and_log("*Apache module $module not enabled!\n");
+            die;
+	}
+    }
 }
 
 ####################################################################
@@ -1915,6 +2050,9 @@ sub get_webwork {
 
     if ($ww2_success) {
         print_and_log("Fetched webwork2 successfully.\n");
+        chdir "$prefix/webwork2";
+        run_command(['git','checkout','-b','ww3','origin/ww3']);
+        chdir $prefix;
     } else {
         print_and_log("Couldn't get webwork2!");
     }
@@ -1945,6 +2083,9 @@ sub get_webwork {
 
 sub unpack_jsMath_fonts {
     my $webwork_dir = shift;
+    
+    # check if jsMath even exists, since it doesn't anymore
+    return if (!(-e "$webwork_dir/htdocs/jsMath/jsMath-fonts.tar.gz"));
 
     # cd /opt/webwork/webwork2/htdocs/jsMath
     chdir("$webwork_dir/htdocs/jsMath");
@@ -1954,7 +2095,7 @@ sub unpack_jsMath_fonts {
     if ($success) {
         print_and_log("Unpacked jsMath fonts successfully!");
     } else {
-        print_and_log("Could not unpack jsMath fonts!");
+        print_and_log("Could not unpack jsMath fonts! Maybe it doesn't matter.");
     }
     
 }
@@ -2061,9 +2202,9 @@ sub write_site_conf {
         } elsif (/^\$server_root_url/) {
             print $out "\$server_root_url = \"$server_root_url\";\n";
         } elsif (/^\$server_userID/) {
-            print $out "\$server_userID = \"" . $apache->{user} . "\";\n";
+            print $out "\$server_userID = \"" . $apache->{User} . "\";\n";
         } elsif (/^\$server_groupID/) {
-            print $out "\$server_groupID = \"" . $apache->{group} . "\";\n";
+            print $out "\$server_groupID = \"" . $apache->{Group} . "\";\n";
         } elsif (/^\$database_dsn/) {
             print $out "\$database_dsn = \"$database_dsn\";\n";
         } elsif (/^\$database_username/) {
@@ -2102,13 +2243,33 @@ sub write_localOverrides_conf {
     }
 }
 
+sub write_webwork3_conf {
+    my ( $WW_PREFIX, $DB_PWD, $conf_dir ) = @_;
+    open( my $in, "<", "$conf_dir/webwork3.conf.dist" )
+      or die "Can't open $conf_dir/localOverrides.conf.dist for reading: $!";
+    open( my $out, ">", "$conf_dir/webwork3.conf" )
+      or die "Can't open $conf_dir/webwork3.conf for writing: $!";
+    while (<$in>) {
+        if (/^webwork_dir/) {
+            print $out "webwork_dir: \"${WW_PREFIX}/webwork2\"\n";
+        } elsif (/^pg_dir/) {
+            print $out "pg_dir: \"${WW_PREFIX}/pg\"\n";
+	} elsif (/^\s+password/) {
+            print $out "        password: '$DB_PWD'\n";
+        } else {
+            print $out $_;
+        }
+    }
+}
+
 sub write_webwork_apache2_config {
     my $webwork_dir = shift;
+    my $config_file = shift;
     my $conf_dir    = "$webwork_dir/conf";
-    open( my $in, "<", "$conf_dir/webwork.apache2-config.dist" )
-      or die "Can't open $conf_dir/webwork.apache2-config.dist for reading: $!";
-    open( my $out, ">", "$conf_dir/webwork.apache2-config" )
-      or die "Can't open $conf_dir/webwork.apache2-config for writing: $!";
+    open( my $in, "<", "$conf_dir/${config_file}.dist" )
+      or die "Can't open $conf_dir/${config_file}.dist for reading: $!";
+    open( my $out, ">", "$conf_dir/${config_file}" )
+      or die "Can't open $conf_dir/${config_file} for writing: $!";
     while (<$in>) {
         next if /^\#/;
         if (/^my\s\$webwork_dir/) {
@@ -2142,7 +2303,40 @@ END
     });
 
    
-  $print_me = <<END;
+  #Make a backup copy of the apache config file
+  copy($httpd_conf,$dir."/".$file.".bak")
+    or die "Couldn't copy $httpd_conf to ".$dir.$file.".bak: $!\n";
+  print_and_log("Backed up $httpd_conf to ".$dir.$file.".bak");
+
+  #Open apache config file for reading 
+  open(my $fh, '<',$httpd_conf)
+    or die "Couldn't open $httpd_conf for reading: $!\n";
+  #read it into a string
+  my $string = do { local($/); <$fh> };
+  close($fh);
+
+  #Make replacements
+  if($string =~ /(Timeout\s+\d+)/s) {
+   $string =~ s/$1/Timeout $timeout/;
+  }
+
+  #Open apache config file for writing and write!
+  open($fh, '>',$httpd_conf)
+    or die "Couldn't open $httpd_conf for writing: $!\n";
+  print $fh $string;
+  print_and_log("Set Timeout $timeout in $httpd_conf");
+  close($fh);
+}
+
+
+sub edit_mpm_conf {
+  my $apache = shift;
+  my $httpd_conf = $apache->{MPMConfFile} || $apache->{conf};
+
+  my (undef,$dir,$file) = File::Spec->splitpath($httpd_conf);
+
+  my $print_me = <<END;
+
 ###################################################################
 #
 # Now I would like to modify the prefork MPM
@@ -2155,15 +2349,15 @@ END
 # 
 ######################################################################
 END
-  $prompt = "Please enter a value for prefork MaxClients:";
-  $default = 20;
+  my $prompt = "Please enter a value for prefork MaxClients/MaxRequestWorkers:";
+  my $default = 20;
   my $max_clients = get_reply({
       print_me => $print_me,
       prompt => $prompt,
       default => $default,
     });
 
-  $prompt = "Please enter a value for prefork MaxRequestsPerChild:";
+  $prompt = "Please enter a value for prefork MaxRequestsPerChild/MaxConnectionsPerChild:";
   $default = 100;
   my $max_requests_per_child = get_reply({
       prompt => $prompt,
@@ -2182,24 +2376,31 @@ END
   my $string = do { local($/); <$fh> };
   close($fh);
 
-  #Make replacements
-  if($string =~ /(Timeout\s+\d+)/s) {
-   $string =~ s/$1/Timeout $timeout/;
+  my $clients_directive = 'MaxClients';
+  my $request_directive = 'MaxRequestsPerChild';
+
+  if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
+      $clients_directive = 'MaxRequestWorkers';
+      $request_directive = 'MaxConnectionsPerChild';
   }
-  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?(MaxClients\s+\d+).*?\<\/IfModule\>/s) {
-    $string =~ s/$1/MaxClients           $max_clients/;
+
+  if($string =~ /\<IfModule (mpm\_prefork\_module|prefork\.c)\>.*?($clients_directive\s+\d+).*?\<\/IfModule\>/s) {
+    $string =~ s/$2/$clients_directive           $max_clients/;
+  } else {
+      $string .= "\n $clients_directive           $max_clients\n";
   }
-  if($string =~ /\<IfModule mpm\_prefork\_module\>.*?(MaxRequestsPerChild\s*\d+).*?\<\/IfModule\>/s) {
-    $string =~ s/$1/MaxRequestsPerChild $max_requests_per_child/;
+  if($string =~ /\<IfModule (mpm\_prefork\_module|prefork\.c)\>.*?($request_directive\s*\d+).*?\<\/IfModule\>/s) {
+    $string =~ s/$2/$request_directive $max_requests_per_child/;
+  } else {
+      $string .= "\n $request_directive           $max_requests_per_child\n";
   }
 
   #Open apache config file for writing and write!
   open($fh, '>',$httpd_conf)
     or die "Couldn't open $httpd_conf for writing: $!\n";
   print $fh $string;
-  print_and_log("Set Timeout $timeout in $httpd_conf");
-  print_and_log("Set prefork MaxClients $max_clients in $httpd_conf");
-  print_and_log("Set prefork MaxRequestsPerChild $max_requests_per_child in $httpd_conf");
+  print_and_log("Set prefork $clients_directive $max_clients in $httpd_conf");
+  print_and_log("Set prefork $request_directive $max_requests_per_child in $httpd_conf");
   close($fh);
 }
 
@@ -2327,7 +2528,7 @@ sub write_launch_browser_script {
     #Get preferred web browser
     my $browser =
          can_run('xdg-open')
-      || can_run('x-www-browser')
+	 || can_run('x-www-browser')
       || can_run('www-browser')
       || can_run('gnome-open')
       || can_run('firefox');
@@ -2335,7 +2536,7 @@ sub write_launch_browser_script {
     open( my $out, ">", "launch_browser.sh" )
       or die "Can't open launch_browser.sh: $!";
     print $out "#!/usr/bin/env bash\n\n";
-    print $out "$browser $url\n";
+    print $out "su -c \"$browser $url\" $username\n";
     close($out);
     chown $uid, $gid, "launch_browser.sh";
 }
@@ -2364,9 +2565,31 @@ my %siteDefaults;
 $siteDefaults{timezone} = $envir->{timezone};
 
 #Get apache version, path to config file, server user and group;
-my $apache         = check_apache( $envir, $apache22Layouts );
-my $server_userID  = $apache->{user};
-my $server_groupID = $apache->{group};
+my $apache = check_apache( $envir );
+
+#Put the information from the layout in the apache object;
+my $layout;
+if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
+    $layout = $apache24Layouts->{$envir->{os}->{name}}; 
+} else {
+    $layout = $apache22Layouts->{$envir->{os}->{name}};
+}
+
+foreach my $key (keys %$layout) {
+    $apache->{$key} = $layout->{$key};
+}
+
+#enable mpm prefork
+enable_mpm_prefork($apache);
+
+#check and see if our modules are enabled
+check_apache_modules($apache,$envir);
+
+#get the apache user and group, eithe from the layout or from the system
+$apache = get_apache_user_group($apache,$envir);
+
+my $server_userID  = $apache->{User};
+my $server_groupID = $apache->{Group};
 
 #Check perl prerequisites
 print_and_log(<<EOF);
@@ -2521,7 +2744,18 @@ write_site_conf(
 
 write_localOverrides_conf( $WW_PREFIX, "$webwork_dir/conf" );
 
-write_webwork_apache2_config("$webwork_dir");
+my $apache_config_file;
+
+if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
+    $apache_config_file = 'webwork.apache2.4-config';
+} else {
+    $apache_config_file = 'webwork.apache2-config';
+}
+
+write_webwork_apache2_config("$webwork_dir", $apache_config_file);
+
+write_webwork3_conf($WW_PREFIX,$database_password, "$webwork_dir/conf") 
+    if -e "$WW_PREFIX/webwork2/conf/webwork3.conf.dist";
 
 print_and_log(<<EOF);
 #######################################################################
@@ -2539,12 +2773,21 @@ print_and_log(<<EOF);
 #######################################################################
 EOF
 
-symlink(
-    "$webwork_dir/conf/webwork.apache2-config",
-    $apache->{root} . "/conf.d/webwork.conf"
-);
+my $ln = can_run('ln');
+my $cmd = [$ln, '-s', "$webwork_dir/conf/$apache_config_file", "$apache->{OtherConfig}/webwork.conf"];
+my $success = run_command($cmd);;
+
+if ($success) {
+
+    print_and_log("Added webwork's apache config file to apache.");
+
+} else {
+    print_and_log("Couldn't add webwork's apache config file to apache.");
+}
 
 edit_httpd_conf($apache);
+
+edit_mpm_conf($apache);
 
 print_and_log(<<EOF);
 #######################################################################
@@ -2632,6 +2875,19 @@ change_data_dir_permissions(
     "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp",
     "$webwork_dir/logs", "$webwork_dir/tmp"
 );
+
+my $webwork3log = "$webwork_dir/webwork3/logs";
+
+if (-e $webwork3log) {
+    change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
+    #temporary hack until logs is in the git repo
+} else {
+    my $full_path = can_run('mkdir');
+    my $cmd = [$full_path,$webwork3log]; #set SELinux in permissive mode
+    my $success = run_command($cmd);  
+    change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
+}
+    
 
 print_and_log(<<EOF);
 ######################################################

@@ -27,6 +27,7 @@ yum_install () {
      yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser
      yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
      yum -y install perl-File-Find-Rule #ww2.8
+     yum -y install mod_fcgid perl-Dancer perl-Pod-WSDL #ww3
 }
 
 apt_get_install () {
@@ -44,16 +45,17 @@ apt_get_install () {
      apt-get $APTOPTS install dvipng netpbm unzip
      apt-get $APTOPTS install preview-latex-style texlive-latex-base 
      apt-get $APTOPTS install mysql-server openssh-server
-     apt-get $APTOPTS install apache2-mpm-prefork libapreq2 libapache2-request-perl 
+     apt-get $APTOPTS install apache2-mpm-prefork libapache2-request-perl 
      apt-get $APTOPTS install libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl 
      apt-get $APTOPTS install libexception-class-perl libextutils-xsbuilder-perl libgd-gd2-perl 
      apt-get $APTOPTS install liblocale-maketext-lexicon-perl libmime-tools-perl libnet-ip-perl 
-     apt-get $APTOPTS install libnet-ldap-perl libnet-oauth-perl libossp-uuid-perl libpadwalker-perl 
+     apt-get $APTOPTS install libnet-ldap-perl libnet-oauth-perl libossp-uuid-perl libpadwalker-perl libyaml-perl libtemplate-perl 
      apt-get $APTOPTS install libphp-serialization-perl libsoap-lite-perl libsql-abstract-perl 
      apt-get $APTOPTS install libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl 
      apt-get $APTOPTS install libxml-writer-perl libpod-wsdl-perl libjson-perl libtext-csv-perl 
      apt-get $APTOPTS install libhtml-scrubber-perl 
      apt-get $APTOPTS install libfile-find-rule-perl #ww2.8
+     apt-get $APTOPTS install libapache2-mod-fcgid #ww3
 }
 
 if [ -e "/etc/redhat-release" ]
@@ -78,7 +80,10 @@ then
   fi
    yum -y update
   yum_install
-   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL UUID::Tiny HTML::Template PHP::Serialization
+   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env
+   #ww3
+   cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils YAML Template
+   cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp Pod::WSDL
   $MYSQLSTART
   $MYSQLENABLE
   $APACHESTART
@@ -89,8 +94,13 @@ then
      apt-get -y update
      apt-get -y upgrade
      apt_get_install
-     cpan -j lib/cpan_config.pm XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
+     CPANOPT='-j lib/cpan_config.pm'
+     cpan $CPANOPT XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
+   #ww3
+     cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils
+     cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
      a2enmod apreq
+     a2enmod fcgid
      apache2ctl restart
 elif [ -e "/etc/SuSE-release" ]
 then

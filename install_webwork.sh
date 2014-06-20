@@ -6,7 +6,7 @@ INTERACTIVE=''
 MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
-BRANCH=master
+BRANCH=ww3
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
@@ -164,7 +164,7 @@ fi
 
 cd $TMPDIR || exit 1
 
-exec 1> >(tee -a webwork_install.log) 2> >(tee -a webwork_install.log >&2)
+#stdbuf -i0 -o0 -e0 exec 1> >(tee -a webwork_install.log) 2> >(tee -a webwork_install.log >&2)
 
 date
 echo "
@@ -227,7 +227,7 @@ wait
 
 if [ -f "launch_browser.sh" ]; then
   echo "Running launch_browser.sh"
-  source launch_browser.sh 
+  bash launch_browser.sh 
 fi
 
 move_install_log () {
