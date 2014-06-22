@@ -21,10 +21,10 @@ yum_install () {
      yum -y install perl-CPAN perl-DateTime perl-Email-Address 
      yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
      yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender 
-     yum -y install perl-PHP-Serialization perl-PadWalker 
+     yum -y install perl-PHP-Serialization perl-PadWalker
      yum -y install perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote 
      yum -y install perl-Tie-IxHash uuid-perl perl-IPC-Cmd perl-Term-UI 
-     yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser
+     yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser perl-XML-Writer
      yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
      yum -y install perl-File-Find-Rule #ww2.8
      yum -y install mod_fcgid perl-Dancer perl-Pod-WSDL #ww3
