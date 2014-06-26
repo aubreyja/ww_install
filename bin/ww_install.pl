@@ -2881,13 +2881,7 @@ my $webwork3log = "$webwork_dir/webwork3/logs";
 if (-e $webwork3log) {
     change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
     #temporary hack until logs is in the git repo
-} else {
-    my $full_path = can_run('mkdir');
-    my $cmd = [$full_path,$webwork3log]; #set SELinux in permissive mode
-    my $success = run_command($cmd);  
-    change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
 }
-    
 
 print_and_log(<<EOF);
 ######################################################
