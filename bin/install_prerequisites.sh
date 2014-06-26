@@ -80,7 +80,7 @@ then
   fi
    yum -y update
   yum_install
-   cpan $CPANOPT YAML XML::SemanticDiff
+   cpan $CPANOPT YAML Module::Build
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env Test::XML Pod::WSDL
    #ww3
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
