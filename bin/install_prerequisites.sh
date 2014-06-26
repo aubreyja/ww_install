@@ -80,10 +80,10 @@ then
   fi
    yum -y update
   yum_install
-   cpan $CPANOPT -f Test::XML Pod::WSDL # for some reason these don't install without force in fedora/centos
-   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env
+   cpan $CPANOPT YAML # yaml is needed for PodWSDL
+   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env Pod::WSDL
    #ww3
-   cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils YAML Template
+   cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
    cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
   $MYSQLSTART
   $MYSQLENABLE
