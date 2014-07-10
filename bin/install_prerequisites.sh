@@ -53,7 +53,7 @@ apt_get_install () {
      apt-get $APTOPTS install libphp-serialization-perl libsoap-lite-perl libsql-abstract-perl 
      apt-get $APTOPTS install libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl 
      apt-get $APTOPTS install libxml-writer-perl libpod-wsdl-perl libjson-perl libtext-csv-perl 
-     apt-get $APTOPTS install libhtml-scrubber-perl 
+     apt-get $APTOPTS install libhtml-scrubber-perl texlive-generic-recommended texlive-fonts-recommended
      apt-get $APTOPTS install libfile-find-rule-perl #ww2.8
      apt-get $APTOPTS install libapache2-mod-fcgid #ww3
 }
