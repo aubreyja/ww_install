@@ -20,7 +20,7 @@ yum_install () {
      yum -y install dvipng netpbm netpbm-progs tex-preview git subversion system-config-services
      yum -y install perl-CPAN perl-DateTime perl-Email-Address 
      yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
-     yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender 
+     yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-Time-HiRes
      yum -y install perl-PHP-Serialization perl-PadWalker
      yum -y install perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote 
      yum -y install perl-Tie-IxHash uuid-perl perl-IPC-Cmd perl-Term-UI 
