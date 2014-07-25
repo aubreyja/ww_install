@@ -74,7 +74,7 @@ then
     APACHESTART='service httpd start'
     APACHEENABLE='chkconfig httpd on'
     #CPAN on centos isn't new enough to have the -j
-    #CPANOPT='-j lib/cpan_config.pm'
+    CPANOPT='lib/cpan_config.pm'
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
   fi
