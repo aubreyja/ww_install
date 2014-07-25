@@ -73,7 +73,8 @@ then
     MYSQLENABLE='chkconfig mysqld on'
     APACHESTART='service httpd start'
     APACHEENABLE='chkconfig httpd on'
-    CPANOPT='-j lib/cpan_config.pm'
+    #CPAN on centos isn't new enough to have the -j
+    #CPANOPT='-j lib/cpan_config.pm'
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
   fi
