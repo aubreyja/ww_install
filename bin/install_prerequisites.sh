@@ -18,7 +18,7 @@ EOM
 yum_install () {
      yum -y install make patch gcc libapreq2 mod_perl mysql-server 
      yum -y install dvipng netpbm netpbm-progs tex-preview git subversion system-config-services
-     yum -y install perl-CPAN perl-DateTime perl-Email-Address 
+     yum -y install perl-CPAN perl-DateTime perl-Email-Address perl-YAML
      yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
      yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-Time-HiRes
      yum -y install perl-PHP-Serialization perl-PadWalker
@@ -80,9 +80,9 @@ then
   fi
    yum -y update
   yum_install
-   cpan $CPANOPT YAML Module::Build
    # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL
-   cpan $CPANOPT Fatal XML::SAX Test::XML
+   cpan $CPANOPT Module::Build Fatal XML::SAX
+   cpan $CPANOPT Test::XML    
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env Pod::WSDL
    #ww3
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
