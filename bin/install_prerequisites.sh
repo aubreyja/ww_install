@@ -75,6 +75,7 @@ then
     APACHEENABLE='chkconfig httpd on'
     #CPAN on centos isn't new enough to have the -j so we have to do it manually
     #CPANOPT='-j lib/cpan_config.pm'
+    mkdir --parents ~/.cpan/CPAN
     cp lib/cpan_config.pm ~/.cpan/CPAN/MyConfig.pm
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
