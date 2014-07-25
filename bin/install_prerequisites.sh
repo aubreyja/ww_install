@@ -82,7 +82,7 @@ then
   yum_install
    cpan $CPANOPT YAML Module::Build
    # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL
-   cpan $CPANOPT Faltal XML::SAX Test::XML
+   cpan $CPANOPT Fatal XML::SAX Test::XML
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env Pod::WSDL
    #ww3
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
