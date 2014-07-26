@@ -18,7 +18,7 @@ EOM
 yum_install () {
      yum -y install make patch gcc libapreq2 mod_perl mysql-server 
      yum -y install dvipng netpbm netpbm-progs tex-preview git subversion system-config-services
-     yum -y install perl-CPAN perl-DateTime perl-Email-Address
+     yum -y install perl-CPAN perl-YAML perl-DateTime perl-Email-Address
      yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
      yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-Time-HiRes
      yum -y install perl-PHP-Serialization perl-PadWalker
@@ -73,15 +73,17 @@ then
     MYSQLENABLE='chkconfig mysqld on'
     APACHESTART='service httpd start'
     APACHEENABLE='chkconfig httpd on'
-    #CPAN on centos isn't new enough to have the -j
+    #CPAN on centos isn't new enough to have the -j so we do it manually
     #CPANOPT='-j lib/cpan_config.pm'
+    mkdir --parents ~/.cpan/CPAN/
+    cp lib/cpan_config.pm ~/.cpan/CPAN/MyConfig.pm
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
   fi
    yum -y update
   yum_install
   # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL and Test::XML is broken
-   cpan $CPANOPT YAML Module::Build Fatal XML::SAX
+   cpan $CPANOPT Module::Build Fatal XML::SAX
    cpan $CPANOPT -f Test::XML    
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env Pod::WSDL
    #ww3
