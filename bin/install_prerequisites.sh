@@ -100,6 +100,7 @@ then
      apt_get_install
      CPANOPT='-j lib/cpan_config.pm'
      cpan $CPANOPT XML::Parser::EasyTree HTML::Template Iterator Iterator::Util Mail::Sender
+     cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite
    #ww3
      cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils
      cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
