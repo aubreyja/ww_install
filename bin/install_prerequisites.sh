@@ -82,7 +82,7 @@ then
    yum -y update
   yum_install
   # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL and Test::XML is broken
-#   cpan $CPANOPT Module::Build Fatal XML::SAX
+   cpan $CPANOPT Module::Build Fatal XML::SAX 
    cpan $CPANOPT -f Test::XML    
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env Pod::WSDL
    cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite
