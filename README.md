@@ -11,7 +11,7 @@ It has been tested and supported on
 *  Debian Wheezy
 *  Fedora 20
 *  Ubuntu 14.04
-*  CentOs 6
+*  CentOs 7
 
 On these systems it did install webwork. 
 
