@@ -165,7 +165,6 @@ fi
 cd $TMPDIR || exit 1
 
 #stdbuf -i0 -o0 -e0 exec 1> >(tee -a webwork_install.log) 2> >(tee -a webwork_install.log >&2)
-touch webwork_install.log
 
 date
 echo "
