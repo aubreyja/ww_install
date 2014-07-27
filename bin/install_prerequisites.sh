@@ -84,8 +84,8 @@ then
   # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL and Test::XML is broken
    cpan $CPANOPT Module::Build Fatal XML::SAX 
    cpan $CPANOPT -f Test::XML    
-   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env Pod::WSDL
-   cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite
+   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny PHP::Serialization Env Pod::WSDL
+   cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite HTML::Template
    #ww3
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
    cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
