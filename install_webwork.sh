@@ -214,7 +214,7 @@ echo "## Extracting the installer"
 tar -xzf $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
-mv $TMPDIR/webwork_install.log .
+#mv $TMPDIR/webwork_install.log .
 
 if [ $PREREQUISITES -eq 1 ]; then
   echo "Installing prerequisites..."
