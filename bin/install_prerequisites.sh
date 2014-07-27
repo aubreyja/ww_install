@@ -85,10 +85,12 @@ then
    cpan $CPANOPT Module::Build Fatal XML::SAX 
    cpan $CPANOPT -f Test::XML    
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny PHP::Serialization Env Pod::WSDL
-   cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite HTML::Template
+   cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite
    #ww3
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
    cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
+    #This needs to be last because of some sort of prereq issue. 
+   cpan $CPANOPT HTML::Template
   $MYSQLSTART
   $MYSQLENABLE
   $APACHESTART
