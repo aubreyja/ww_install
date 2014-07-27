@@ -473,6 +473,21 @@ my $apache24Layouts = {
         User         => 'www-data',
         Group        => 'www-data',
     },
+    centos => {    
+        MPMDir       => 'server/mpm/prefork',
+      	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
+        ServerRoot   => '/etc/httpd',
+        DocumentRoot => '/var/www/html',
+        ConfigFile   => '/etc/httpd/conf/httpd.conf',
+        OtherConfig  => '/etc/httpd/conf.d',
+        SSLConfig    => '',
+        Modules      => '/etc/httpd/modules',           #symlink
+        ErrorLog     => '/var/log/httpd/error_log',
+        AccessLog    => '/var/log/httpd/access_log',
+        Binary       => '/usr/sbin/apachectl',
+        User         => 'apache',
+        Group        => 'apache',
+    },
     fedora => {
 	MPMDir       => '',
 	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
