@@ -60,7 +60,7 @@ if(!$interactive) {
       "password (--mysql_root_pw) and the webwork database password ".
       "(--webwork_db_pw)"
       unless $mysql_root_password && $webwork_db_password;
-  Term::UI::AUTOREPLY = 1;
+  $Term::UI::AUTOREPLY = 1;
 }
 
 
