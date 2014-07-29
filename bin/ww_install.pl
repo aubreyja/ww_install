@@ -39,10 +39,38 @@ use IO::Handle qw();
 STDOUT->autoflush(1);
 STDERR->autoflush(1);
 
-###############################################################################################
+#########################################################
+#
+# Process Options
+#
+#########################################################
+
+my $interactive = 1;
+my $mysql_root_password = '';
+my $webwork_db_password = '';
+
+GetOptions(
+  'interactive!'=>\$interactive,
+  'mysql_root_pw=s' => \$mysql_root_password,
+  'webwork_db_pw=s' => \$webwork_db_password,
+);
+
+if(!$interactive) {
+  die "To run non-interactively you must specify both the mysql root ".
+      "password (--mysql_root_pw) and the webwork database password ".
+      "(--webwork_db_pw)"
+      unless $mysql_root_password && $webwork_db_password;
+  Term::UI::AUTOREPLY = 1;
+}
+
+
+#########################################################
+#
 # Create a new Term::Readline object for interactivity
 #Don't worry people with spurious warnings.
-###############################################################################################
+#
+#########################################################
+
 $Term::UI::VERBOSE = 0;
 my $term = Term::ReadLine->new('');
 
@@ -1773,6 +1801,9 @@ sub connect_to_database {
 
 sub get_mysql_root_password {
 
+  my $password = shift;
+  return $password if $password;
+
   print_and_log(<<END);
 ############################################################################
 # Please enter the root mysql password. 
@@ -1842,6 +1873,9 @@ sub change_storage_engine {
 # Is there an existing webwork db or would you like me to create one?
 
 sub get_webwork_database {
+    
+    my ($mysql_root_password, $webwork_db_password) = @_;
+
     my $print_me = <<END;
 #############################################################
 #  We now need to designate a MySQL database and database user
@@ -1888,7 +1922,7 @@ END
 # we'll need the root mysql password.
 # ##################################################################
 END
-      my $mysql_root_password = get_mysql_root_password();
+      my $mysql_root_password = get_mysql_root_password($mysql_root_password);
       my $print_me =<<END;
 ########################################################################
 # Thanks. I'll keep it secret. Please choose a name for the webwork 
@@ -1910,10 +1944,10 @@ END
         print_and_log("\n\nSorry, Charlie. That database already exists. Let's try".
           " this again.\n\n");
         sleep(2);
-        get_webwork_database();
+        get_webwork_database($mysql_root_password, $webwork_db_password);
       } else {
         my $username = get_database_username(WWDB_USER);
-        my $password = get_database_password();
+        my $password = get_database_password($webwork_db_password);
         create_database( $server, $mysql_root_password, $database,
             $username, $password );
         return ($database,$server,$username,$password);
@@ -1931,12 +1965,12 @@ END
         default => WW_DB,
       });
       my $username = get_database_username(WWDB_USER);
-      my $password = get_database_password();
+      my $password = get_database_password($webwork_db_password);
       my $can_connect = connect_to_database($server,$database,$username,$password);
       return ($database,$server,$username,$password) if $can_connect;
-      get_webwork_database(WW_DB);
+      get_webwork_database($mysql_root_password, $webwork_db_password);
     } else {
-      get_webwork_database(WW_DB);
+      get_webwork_database(W$mysql_root_password, $webwork_db_password);
     }
 }
 
@@ -1971,6 +2005,10 @@ END
 }
 
 sub get_database_password {
+    
+    my $password = shift;
+    return $password if $password;
+
     my $print_me = <<END;
 ##############################################################################
 # Now we need a password to identify the webwork database user.  Note that
@@ -2659,7 +2697,7 @@ $mail{smtpSender} = get_smtp_sender(SMTP_SENDER);    #constant defined at top
 #(7) $database_dsn = "dbi:mysql:webwork";
 #(8) $database_username = "webworkWrite";
 #(9) $database_password = "";
-my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database(WW_DB);  #constant defined at top
+my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database($mysql_root_password, $webwork_db_password);  #constant defined at top
 
 my $database_dsn        = get_dsn($ww_db,$database_server);
 

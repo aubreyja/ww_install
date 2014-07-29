@@ -6,7 +6,7 @@ INTERACTIVE=''
 MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
-BRANCH=ww3
+BRANCH=options
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
@@ -34,7 +34,7 @@ to webwork2/logs and then deletes the downloaded installation package.
 
   Print this help message.
 
-  -np, --no-prerequisites
+  -np, --noprerequisites
 
   Do not run install_prerequisites.sh before running ww_install.pl. Note that
   ww_install.pl will fail if WeBWorK's dependencies are not installed so be
@@ -49,7 +49,7 @@ to webwork2/logs and then deletes the downloaded installation package.
   want to be all cowboy and throw caution into the wind, then this option will
   silence verbose output.
 
-  -ni, --no-interactive
+  -ni, --nointeractive
 
   Run ww_install.pl non-interactively. This option requires setting both
   --mysql_root_pw and --webwork_db_pw.  All other webwork configuration 
@@ -103,16 +103,16 @@ do
             usage
             exit 0      # This is not an error, User asked help. Don't do "exit 1"
             ;;
-        -np | --no-prerequisites | --no-prereqs)
+        -np | --noprerequisites | --no-prerequisites | --no-prereqs)
             PREREQUISITES=0
             shift
             ;;
-        -nv | --no-verbose)
-            VERBOSE='--no-verbose' 
+        -nv | --noverbose | --no-verbose)
+            VERBOSE='--noverbose' 
             shift
             ;;
-        -ni | --no-interactive)
-            INTERACTIVE='--no-interactive' 
+        -ni | --nointeractive | --no-interactive)
+            INTERACTIVE='--nointeractive' 
             shift
             ;;
         --mysql_root_pw)
@@ -137,17 +137,17 @@ do
     esac
 done
 
-if [ "$INTERACTIVE" == "--no-interactive" ]
+if [ "$INTERACTIVE" == "--nointeractive" ]
   then
     if [ ! "$MYSQL_ROOT_PW" ]
       then
-        echo "ERROR: option --no-interactive requires setting both 
+        echo "ERROR: option --nointeractive requires setting both 
         --mysql_root_pw and --webwork_db_pw"
         exit 1
       fi
     if [ ! "$WEBWORK_DB_PW" ]
       then
-        echo "ERROR: option --no-interactive requires setting both 
+        echo "ERROR: option --nointeractive requires setting both 
         --mysql_root_pw and --webwork_db_pw"
         exit 1
     fi
