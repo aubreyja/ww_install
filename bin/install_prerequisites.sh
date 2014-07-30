@@ -18,16 +18,16 @@ EOM
 yum_install () {
      yum -y install make patch gcc libapreq2 mod_perl mysql-server 
      yum -y install dvipng netpbm netpbm-progs tex-preview git subversion system-config-services
-     yum -y install perl-CPAN perl-DateTime perl-Email-Address 
+     yum -y install perl-CPAN perl-YAML perl-DateTime perl-Email-Address
      yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
-     yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender 
-     yum -y install perl-PHP-Serialization perl-PadWalker 
+     yum -y install perl-Locale-Maketext-Lexicon perl-Mail-Sender perl-Time-HiRes
+     yum -y install perl-PHP-Serialization perl-PadWalker
      yum -y install perl-SOAP-Lite perl-SQL-Abstract perl-String-ShellQuote 
      yum -y install perl-Tie-IxHash uuid-perl perl-IPC-Cmd perl-Term-UI 
-     yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser
+     yum -y install perl-Exception-Class perl-Net-IP perl-XML-Parser perl-XML-Writer
      yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
      yum -y install perl-File-Find-Rule #ww2.8
-     yum -y install mod_fcgid perl-Dancer perl-Pod-WSDL #ww3
+     yum -y install mod_fcgid
 }
 
 apt_get_install () {
@@ -53,7 +53,7 @@ apt_get_install () {
      apt-get $APTOPTS install libphp-serialization-perl libsoap-lite-perl libsql-abstract-perl 
      apt-get $APTOPTS install libstring-shellquote-perl libtimedate-perl libuuid-tiny-perl libxml-parser-perl 
      apt-get $APTOPTS install libxml-writer-perl libpod-wsdl-perl libjson-perl libtext-csv-perl 
-     apt-get $APTOPTS install libhtml-scrubber-perl 
+     apt-get $APTOPTS install libhtml-scrubber-perl texlive-generic-recommended texlive-fonts-recommended
      apt-get $APTOPTS install libfile-find-rule-perl #ww2.8
      apt-get $APTOPTS install libapache2-mod-fcgid #ww3
 }
@@ -74,16 +74,23 @@ then
     MYSQLENABLE='chkconfig mysqld on'
     APACHESTART='service httpd start'
     APACHEENABLE='chkconfig httpd on'
-    #CPANOPT=''
+    #CPAN on centos isn't new enough to have the -j so we do it manually
+    CPANOPT='-j lib/cpan_config.pm'
     printf "%b\n" "# Adding EPEL repository...."
     add_epel
   fi
    yum -y update
   yum_install
-   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny HTML::Template PHP::Serialization Env
+  # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL and Test::XML is broken
+   cpan $CPANOPT Module::Build Fatal XML::SAX 
+   cpan $CPANOPT -f Test::XML    
+   cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny PHP::Serialization Env Pod::WSDL
+   cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite
    #ww3
-   cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils YAML Template
-   cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp Pod::WSDL
+   cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
+   cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
+    #This needs to be last because of some sort of prereq issue. 
+   cpan $CPANOPT HTML::Template
   $MYSQLSTART
   $MYSQLENABLE
   $APACHESTART

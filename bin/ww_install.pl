@@ -503,6 +503,21 @@ my $apache24Layouts = {
         User         => 'www-data',
         Group        => 'www-data',
     },
+    centos => {    
+        MPMDir       => 'server/mpm/prefork',
+      	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
+        ServerRoot   => '/etc/httpd',
+        DocumentRoot => '/var/www/html',
+        ConfigFile   => '/etc/httpd/conf/httpd.conf',
+        OtherConfig  => '/etc/httpd/conf.d',
+        SSLConfig    => '',
+        Modules      => '/etc/httpd/modules',           #symlink
+        ErrorLog     => '/var/log/httpd/error_log',
+        AccessLog    => '/var/log/httpd/access_log',
+        Binary       => '/usr/sbin/apachectl',
+        User         => 'apache',
+        Group        => 'apache',
+    },
     fedora => {
 	MPMDir       => '',
 	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
@@ -2090,7 +2105,7 @@ sub get_webwork {
     if ($ww2_success) {
         print_and_log("Fetched webwork2 successfully.\n");
         chdir "$prefix/webwork2";
-        run_command(['git','checkout','-b','ww3','origin/ww3']);
+#        run_command(['git','checkout','-b','ww3','origin/ww3']);
         chdir $prefix;
     } else {
         print_and_log("Couldn't get webwork2!");
@@ -2920,13 +2935,7 @@ my $webwork3log = "$webwork_dir/webwork3/logs";
 if (-e $webwork3log) {
     change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
     #temporary hack until logs is in the git repo
-} else {
-    my $full_path = can_run('mkdir');
-    my $cmd = [$full_path,$webwork3log]; #set SELinux in permissive mode
-    my $success = run_command($cmd);  
-    change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
 }
-    
 
 print_and_log(<<EOF);
 ######################################################

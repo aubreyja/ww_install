@@ -6,7 +6,7 @@ INTERACTIVE=''
 MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
-BRANCH=ww3
+BRANCH=master
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
@@ -214,7 +214,7 @@ echo "## Extracting the installer"
 tar -xzf $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
-mv $TMPDIR/webwork_install.log .
+#mv $TMPDIR/webwork_install.log .
 
 if [ $PREREQUISITES -eq 1 ]; then
   echo "Installing prerequisites..."
