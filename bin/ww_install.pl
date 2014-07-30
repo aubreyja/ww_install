@@ -55,7 +55,7 @@ GetOptions(
   'webwork_db_pw=s' => \$webwork_db_password,
 );
 
-print_and_log("Interactive mode: $interactive and !$interactive")
+print_and_log("Interactive mode: $interactive and !$interactive");
 $Term::UI::AUTOREPLY = !$interactive;
 
 if(!$interactive) {
