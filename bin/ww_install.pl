@@ -55,12 +55,14 @@ GetOptions(
   'webwork_db_pw=s' => \$webwork_db_password,
 );
 
+print_and_log("Interactive mode: $interactive and !$interactive")
+$Term::UI::AUTOREPLY = !$interactive;
+
 if(!$interactive) {
   die "To run non-interactively you must specify both the mysql root ".
       "password (--mysql_root_pw) and the webwork database password ".
       "(--webwork_db_pw)"
       unless $mysql_root_password && $webwork_db_password;
-  $Term::UI::AUTOREPLY = 1;
 }
 
 
@@ -1810,7 +1812,6 @@ sub get_mysql_root_password {
 #############################################################################
 
 END
-    my $password;
     while(1) {
       my $double_check;
       $password = read_password('MySQL root password: ');
