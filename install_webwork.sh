@@ -164,7 +164,7 @@ fi
 
 cd $TMPDIR || exit 1
 
-#stdbuf -i0 -o0 -e0 exec 1> >(tee -a webwork_install.log) 2> >(tee -a webwork_install.log >&2)
+exec 1> >(tee -a webwork_install.log) 2> >(tee -a webwork_install.log >&2)
 
 date
 echo "
@@ -218,6 +218,7 @@ mv $TMPDIR/webwork_install.log .
 
 if [ $PREREQUISITES -eq 1 ]; then
   echo "Installing prerequisites..."
+  export PERL_MM_USE_DEFAULT=1 #answer yes to any cpan questions
   source ./bin/install_prerequisites.sh 
   wait
 fi
