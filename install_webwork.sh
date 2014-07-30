@@ -6,7 +6,7 @@ INTERACTIVE=''
 MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
-BRANCH=master
+BRANCH=ww3
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
