@@ -458,6 +458,21 @@ my $apache24Layouts = {
         User         => '',
         Group        => '',
     },
+    debian => {    #Checked Jessie
+        MPMDir       => '',
+	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
+        ServerRoot   => '/etc/apache2',
+        DocumentRoot => '/var/www',
+        ConfigFile   => '/etc/apache2/apache2.conf',
+        OtherConfig  => '/etc/apache2/conf-enabled',
+        SSLConfig    => '',
+        Modules      => '/etc/apache2/mods-enabled',
+        ErrorLog     => '/var/log/apache2/error.log',
+        AccessLog    => '/var/log/apache2/access.log',
+        Binary       => '/usr/sbin/apache2ctl',
+        User         => 'www-data',
+        Group        => 'www-data',
+    },
     ubuntu => {    #Checked 13.10
         MPMDir       => '',
 	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
@@ -473,7 +488,7 @@ my $apache24Layouts = {
         User         => 'www-data',
         Group        => 'www-data',
     },
-    centos => {    
+    centos => {    #Checked CentOS 7
         MPMDir       => 'server/mpm/prefork',
       	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
         ServerRoot   => '/etc/httpd',
