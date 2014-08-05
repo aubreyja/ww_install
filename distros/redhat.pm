@@ -1,4 +1,6 @@
- $RedHat::prerequisites =
+package redhat;
+
+$prerequisites =
 {
   common => {
     mkdir => 'coreutils',
@@ -94,3 +96,5 @@
     'XMLRPC::Lite' => 'perl-SOAP-Lite',
   }
 };
+
+1;

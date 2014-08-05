@@ -1,4 +1,6 @@
-$Debian::prerequisites =
+package debian;
+
+$prerequisites =
 {
   common => {
     mkdir => 'coreutils',
@@ -89,4 +91,6 @@ $Debian::prerequisites =
     'XML::Writer' => 'libxml-writer-perl',
     'XMLRPC::Lite' => 'libsoap-lite-perl',
   },
-},
+};
+
+1;

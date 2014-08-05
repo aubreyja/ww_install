@@ -5,9 +5,11 @@ use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/../lib"; 
+use lib "$FindBin::Bin/../distros";
 use cpan_config;
 use Term::ReadPassword; 
 use Linux::Distribution qw(distribution_name distribution_version);
+use WeBWorK::Install::Utils qw(writelog print_and_log);
 
 #Core Perl Modules
 use Config;
@@ -16,7 +18,6 @@ use Cwd;
 
 use Data::Dumper;
 #use DateTime;
-use DBI;
 
 use File::Path qw(make_path remove_tree);
 use File::Spec;
@@ -42,18 +43,19 @@ use User::pwent;
 #non-core
 #use DateTime::TimeZone; 
 
-###############################################################################################
+######################################################################
 # Create a new Term::Readline object for interactivity
 #Don't worry people with spurious warnings.
-###############################################################################################
+######################################################################
 $Term::UI::VERBOSE = 0;
 my $term = Term::ReadLine->new('');
 
-#########################################################################################
+##################################################################
 #
-# Defaults - each of these values is passed as a default to some config question
+# Defaults - each of these values is passed as a default to 
+# some config question
 #
-########################################################################################
+###################################################################
 
 use constant WEBWORK2_REPO => 'https://github.com/openwebwork/webwork2.git';
 use constant PG_REPO       => 'https://github.com/openwebwork/pg.git';
@@ -71,13 +73,13 @@ use constant SMTP_SENDER => 'webwork@localhost';
 use constant WW_DB     => 'webwork';
 use constant WWDB_USER => 'webworkWrite';
 
-#########################################################################################
+#################################################################
 #
 # Prerequisites - keep in sync with webwork2/bin/check_modules.pl
-#		- right now we die if these aren't present, but later we'll offer
-#		  to intall missing prereqs
+#		- right now we die if these aren't present, 
+#                 but later we'll offer to install missing prereqs
 #
-########################################################################################
+################################################################
 
 my @apacheBinaries = qw(
   apache2
@@ -186,210 +188,6 @@ my @modulesList = qw(
   XMLRPC::Lite
 );
 
-my $prerequisites = {
-  redhat =>
-  {
-    common => {
-      mkdir => 'coreutils',
-      mv => 'coreutils',
-      gcc => 'gcc',
-      make => 'make',
-      patch => 'patch',
-      system_config => 'system-config-services',
-      tar => 'tar',
-      gzip => 'gzip',
-      unzip => 'coreutils',
-      dvipng => 'dvipng',
-      netpbm => 'netpbm-progs',  #provides giftopnm, ppmtopgm, pnmtops, pnmtopng, 
-                          #and pgntopnm
-      git => 'git',
-      svn => 'subversion',
-
-      apache2 => 'httpd',
-      mysql => 'mysql',
-      mysql_server => 'mysql-server',
-      #ssh_server => 'openssh-server',
-
-      preview_latex => 'tex-preview',
-      texlive => 'texlive-latex', 
-      'Apache2::Request' => 'perl-libapreq2',#perl-libapreq2, mod_perl?
-      'Apache2::Cookie' => 'perl-libapreq2',
-      'Apache2::ServerRec' => 'mod_perl',
-      'Apache2::ServerUtil' => 'mod_perl',
-      'Benchmark' => 'perl',
-      'Carp' => 'perl',
-      'CGI' => 'perl-CGI',
-      'CPAN' => 'perl-CPAN',
-      'Data::Dumper' => 'perl',
-      'Data::UUID' => 'uuid-perl',
-      'Date::Format' => 'perl-TimeDate',
-      'Date::Parse' => 'perl-TimeDate',
-      'DateTime' => 'perl-DateTime',
-      'DBD::mysql' => 'perl-DBD-mysql',
-      'DBI' => 'perl-DBI',
-      'Digest::MD5' => 'perl',
-      'Email::Address' => 'perl-Email-Address',
-      'Errno' => 'perl',
-      'Exception::Class' => 'perl-Exception-Class',
-      'File::Copy' => 'perl',
-      'File::Find' => 'perl',
-      'File::Find::Rule' => 'perl-File-Find-Rule',
-      'File::Path' => 'perl',
-      'File::Spec' => 'perl',
-      'File::stat' => 'perl',
-      'File::Temp' => 'perl',
-      'GD' => 'perl-GD perl-GDGraph',
-      'Getopt::Long' => 'perl',
-      'Getopt::Std' => 'perl',
-      'HTML::Entities' => 'perl-HTML-parser',
-      'HTML::Scrubber' => 'perl-HTML-Scrubber',
-      'HTML::Tagset' => 'perl-HTML-Tagset',
-      'HTML::Template' => 'CPAN',
-      'IO::File' => 'perl',
-      'IPC::Cmd' => 'perl-IPC-Cmd',
-      'Iterator' => 'CPAN',
-      'Iterator::Util' => 'CPAN',
-      'JSON' => 'perl-JSON',
-      'Locale::Maketext::Lexicon' => 'CPAN',
-      'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
-      'Mail::Sender' => 'perl-Mail-Sender',
-      'MIME::Base64' => 'perl',
-      'Net::IP' => 'perl-Net-IP',
-      'Net::LDAPS' => 'perl-LDAP',
-      'Net::OAuth' => 'perl-Net-OAuth',
-      'Net::SMTP' => 'perl',
-      'Opcode' => 'perl',
-      'PadWalker' => 'perl-PadWalker',
-      'PHP::Serialization' => 'CPAN',
-      'Pod::Usage' => 'perl',
-      'Pod::WSDL' => 'CPAN',
-      'Safe' => 'perl',
-      'Scalar::Util' => 'perl',
-      'SOAP::Lite' => 'perl-SOAP-Lite',
-      'Socket' => 'perl',
-      'SQL::Abstract' => 'perl-SQL-Abstract',
-      'String::ShellQuote' => 'perl-String-ShellQuote',
-      'Term::UI' => 'perl-Term-UI',
-      'Text::CSV' => 'perl-Text-CSV',
-      'Text::Wrap' => 'perl',
-      'Tie::IxHash' => 'perl-Tie-IxHash',
-      'Time::HiRes' => 'perl-Time-HiRes',
-      'Time::Zone' => 'perl-TimeDate',
-      'URI::Escape' => 'perl',
-      'UUID::Tiny' => 'CPAN',
-      'XML::Parser' => 'perl-XML-Parser',
-      'XML::Parser::EasyTree' => 'CPAN',
-      'XML::Writer' => 'perl-XML-Writer',
-      'XMLRPC::Lite' => 'perl-SOAP-Lite',
-    }
-  },
-  debian =>
-  {
-    common => {
-      mkdir => 'coreutils',
-      mv => 'coreutils',
-      gcc => 'gcc',
-      make => 'make',
-      tar => 'tar',
-      gzip => 'gzip',
-      unzip => 'unzip',
-      dvipng => 'dvipng',
-      netpbm => 'netpbm',  #provides giftopnm, ppmtopgm, pnmtops, pnmtopng, 
-                          #and pgntopnm
-      git => 'git',
-      svn => 'subversion',
-
-      apache2 => 'apache2',
-      mysql => 'mysql-client',
-      mysql_server => 'mysql-server',
-      ssh_server => 'openssh-server',
-
-      preview_latex => 'preview-latex-style',
-      texlive => 'texlive-latex-base', 
-      'Apache2::Request' => 'libapache2-request-perl',
-      'Apache2::Cookie' => 'libapache2-request-perl',
-      'Apache2::ServerRec' => 'libapache2-mod-perl2',
-      'Apache2::ServerUtil' => 'libapache2-mod-perl2',
-      'Benchmark' => 'perl-modules',
-      'Carp' => 'perl-base',
-      'CGI' => 'perl-modules',
-      'Data::Dumper' => 'perl',
-      'Data::UUID' => 'libossp-uuid-perl',
-      'Date::Format' => 'libtimedate-perl',
-      'Date::Parse' => 'libtimedate-perl',
-      'DateTime' => 'libdatetime-perl',
-      'DBD::mysql' => 'libdbd-mysql-perl',
-      'DBI' => 'libdbi-perl',
-      'Digest::MD5' => 'perl',
-      'Email::Address' => 'libemail-address-perl',
-      'Errno' => 'perl-base',
-      'Exception::Class' => 'libexception-class-perl',
-      'ExtUtils::XSBuilder' => 'libextutils-xsbuilder-perl',
-      'File::Copy' => 'perl-modules',
-      'File::Find' => 'perl-modules',
-      'File::Find::Rule' => 'libfile-find-rule-perl',
-      'File::Path' => 'perl-modules',
-      'File::Spec' => 'perl-modules',
-      'File::stat' => 'perl-modules',
-      'File::Temp' => 'perl-modules',
-      'GD' => 'libgd-gd2-perl',
-      'Getopt::Long' => 'perl-base',
-      'Getopt::Std' => 'perl-modules',
-      'HTML::Entities' => '',
-      'HTML::Scrubber' => 'libhtml-scrubber-perl',
-      'HTML::Tagset' => '',
-      'HTML::Template' => 'CPAN',
-      'IO::File' => '',
-      'Iterator' => 'CPAN',
-      'Iterator::Util' => 'CPAN',
-      'JSON' => 'libjson-perl',
-      'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
-      'Locale::Maketext::Simple' => '',
-      'Mail::Sender' => 'libmail-sender-perl',
-      'MIME::Base64' => 'libmime-tools-perl',
-      'Net::IP' => 'libnet-ip-perl',
-      'Net::LDAPS' => 'libnet-ldap-perl',
-      'Net::OAuth' => 'libnet-oauth-perl',
-      'Net::SMTP' => 'perl-modules',
-      'Opcode' => 'perl',
-      'PadWalker' => 'libpadwalker-perl',
-      'PHP::Serialization' => 'libphp-serialization-perl',
-      'Pod::Usage' => 'perl-modules',
-      'Pod::WSDL' => 'libpod-wsdl-perl',
-      'Safe' => 'perl-modules',
-      'Scalar::Util' => 'perl-base',
-      'SOAP::Lite' => 'libsoap-lite-perl',
-      'Socket' => 'perl-base',
-      'SQL::Abstract' => 'libsql-abstract-perl',
-      'String::ShellQuote' => 'libstring-shellquote-perl',
-      'Text::CSV' => 'libtext-csv-perl',
-      'Text::Wrap' => 'perl-base',
-      'Tie::IxHash' => 'libtie-ixhash-perl',
-      'Time::HiRes' => 'perl',
-      'Time::Zone' => 'libtimedate-perl',
-      'URI::Escape' => 'liburi-perl',
-      'UUID::Tiny' => 'libuuid-tiny-perl',
-      'XML::Parser' => 'libxml-parser-perl',
-      'XML::Parser::EasyTree' => 'CPAN',
-      'XML::Writer' => 'libxml-writer-perl',
-      'XMLRPC::Lite' => 'libsoap-lite-perl',
-    },
-  },
-};
-
-$prerequisites-> {fedora} = {
-  common => $prerequisites->{redhat}->{common},
-};
-
-$prerequisites->{ubuntu} = {
-  common => $prerequisites->{debian}->{common},
-  12.04 => {
-    prefork_mpm => 'apache2-mpm-prefork',
-  },
-  13.04 => {
-    prefork_mpm => 'apache2-mpm-prefork',
-  },
-};
 
 ###########################################################
 #
@@ -404,26 +202,12 @@ if (!open(LOG,">> ../webwork_install.log")) {
     print LOG 'This is ww_install.pl '.localtime."\n\n";
 }
 
-sub writelog {
-    while ($_ = shift) {
-        chomp();
-        print LOG "$_\n";
-    }
-}
 
-sub print_and_log {
-    while ($_=shift) {
-        chomp();
-        print "$_\n";
-        print LOG "$_\n";
-    }
-}
-
-#######################################################################################
+######################################################################
 #
 # Constants that control behavior IPC::Cmd::run
 #
-# ####################################################################################
+######################################################################
 
 use constant IPC_CMD_TIMEOUT =>
   6000;    #Sets maximum time system commands will be allowed to run
@@ -472,14 +256,15 @@ sub run_command {
       }
 }
 
-####################################################################################################
+######################################################################
 #
-# Platform specific data - these data structures are to help with identifying our platform and
-# eventually will be used for specifying prerequisite packages, likely locations of binaries we can't find
+# Platform specific data - these data structures are to help with 
+# identifying our platform and eventually will be used for specifying 
+# prerequisite packages, likely locations of binaries we can't find
 # with can_run(), and doing other platform specific processing. Such as
 # (1) Disabling SELinux on RH/Fedora
 # Others....
-# ##################################################################################################
+######################################################################
 
 
 #Apache 2.2 locations for various operating systems
@@ -695,11 +480,12 @@ sub slurp_file {
   close($fh);
   return $string;
 }
-############################################################################################
+#####################################################################
 #
-# Script Util Subroutines:  The script is based on Term::Readline to interact with user
+# Script Util Subroutines:  The script is based on Term::Readline 
+# to interact with user
 #
-###########################################################################################
+######################################################################
 sub get_reply {
   my $defaults = {
    print_me => '',
@@ -774,7 +560,7 @@ sub apt_get_install {
   my @packages = @_;
   run_command(['apt-get','-y','update']);
   run_command(['apt-get','-y','upgrade']);
-  run_command(['apt-get','install','-y --allow-unauthenticated',@packages]);
+  run_command(['apt-get','install','-y','--allow-unauthenticated',@packages]);
 }
 
 sub add_epel {
@@ -859,6 +645,7 @@ sub install_prerequisites {
     run_command(['/usr/bin/mysql_secure_installation']);
   } elsif(-e '/etc/debian_version') {
     apt_get_install(@packages_to_install);
+    install_cpanm();
     cpanm_install(@cpan_to_install);
     run_command(['a2enmod','apreq']);
     run_command(['apache2ctl', 'restart']);
@@ -886,7 +673,7 @@ sub install_prerequisites {
 #
 # Check if user is ready to install
 #
-# ###################################################
+####################################################
 
 sub get_ready {
 
@@ -914,9 +701,10 @@ EOF
 #
 # Check if the user is root
 #
-# We probably need to be root. The effective user id of the user running the script
-# is held in the perl special variable $>.  In particular,
-# if $> = 0 user is root, works with sudo too.
+# We probably need to be root. The effective user id of the user 
+# running the script is held in the perl special variable $>.  In 
+# particular, if $> = 0 user is root, works with sudo too.
+#
 ####################################################################
 
 sub check_root {
@@ -954,7 +742,7 @@ sub get_selinux {
      }
     if($enabled) {
 	my $print_me=<<END;
-######################################
+################################################
 #
 # This machine appears to have SELinux
 # enabled.  We strongly recommend disabling
@@ -970,7 +758,7 @@ sub get_selinux {
 # with a config file that will disable
 # SELinux permanently after a reboot.
 #
-#######################################
+#################################################
 END
        $disable = $term->ask_yn(
   	    print_me => $print_me,
@@ -1004,7 +792,7 @@ sub disable_selinux {
 # After this installation completes, you must reboot the
 # machine to permanently disable SELinux
 #
-# ###################################################### 
+####################################################### 
 END
 }
 
@@ -1027,7 +815,8 @@ sub get_wwadmin_user {
 # to maintain webwork.  One approach, depending on your OS, is to give 
 # that user root access by either addiing that user to the wheel group 
 # or the sudoers file. This gives the webwork administrator complete
-# access to the system, but if that's fine with you then it's fine with me too.
+# access to the system, but if that's fine with you then it's fine with 
+# me too.
 #
 # The approach offered here is to create a webwork admin user and group. 
 # All of the webwork code will be owned by this user.  The only webwork 
@@ -1161,32 +950,33 @@ sub create_wwadmin_user {
 sub get_wwdata_group {
     my ( $envir, $apache, $wwadmin ) = @_;
     my $print_me = <<END;
-#############################################################################
-# Certain data directories need to be writable by the webserver.  These 
-# are the webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, webwork2/tmp, 
-# and the courses/ directories.
+########################################################################
 #
-# It can convenient to give WeBWorK system administrators access to these 
-# directories as well, so they can permform administrative tasks such as 
-# removing temporary files, creating and editing courses from the command 
-# line, managing logs, and so on.
+# Certain data directories need to be writable by the webserver.  These 
+# are the webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, 
+# webwork2/tmp, and the courses/ directories.
+#
+# It can convenient to give WeBWorK system administrators access to 
+# these directories as well, so they can permform administrative tasks 
+# such as removing temporary files, creating and editing courses from 
+# the command line, managing logs, and so on.
 #
 # While it can be convenient to allow the WeBWorK administrator(s) to 
-# manipulate the webwork files writable by the webserver, we may not want 
-# to give him or her rights to manipulate other files writable by the 
-# webserver.
+# manipulate the webwork files writable by the webserver, we may not 
+# want to give him or her rights to manipulate other files writable by 
+# the webserver.
 #
-# We can accomplish this by adding a new webwork data group to the system 
-# containing any WeBWorK administrators and also containing the web server. 
-# We will then recursively give the directories listed above permissions 
-# g+sw and files in those directories g+w.
+# We can accomplish this by adding a new webwork data group to the 
+# system containing any WeBWorK administrators and also containing 
+# the web server. We will then recursively give the directories listed 
+# above permissions g+sw and files in those directories g+w.
 # 
 # If you choose not to create the webwork data group, the webwork 
 # directories listed above will be put into the same group as the 
 # webserver. We will then recursively give those directories permissions 
 # g+sw and the files in those directories permissions g+w.
 #
-###########################################################################
+########################################################################
 END
     my $answer    = undef;
     my $confirmed = undef;
@@ -1352,7 +1142,7 @@ sub check_environment {
 #
 # Getting basic information about your environment 
 #
-# #################################################################
+##################################################################
 EOF
 
     my $envir;
@@ -1384,7 +1174,7 @@ sub check_apache {
 #
 # Gathering information about Apache
 #
-# #################################################################
+##################################################################
 EOF
 
     my $apache;
@@ -1450,7 +1240,7 @@ EOF
 #
 # Check for perl modules
 #
-# ##################################################################
+###################################################################
 # do we really want to eval "use $module;"?
 
 sub check_modules {
@@ -1480,7 +1270,7 @@ sub check_modules {
 
 ######################################################
 #
-#Check for prerequisites and get paths for binaries
+# Check for prerequisites and get paths for binaries
 #
 ######################################################
 
@@ -1524,20 +1314,23 @@ sub configure_externalPrograms {
 sub get_webwork2_repo {
     my $default  = shift;
     my $print_me = <<END;
-##########################################################################################
+#########################################################################
 #
-# There are two bundles of code to download that comprise webwork: The 'webwork2'
-# code constitutes the web application, and the 'pg' code which defines the language in
-# which webwork problems are written and is responsible for translating webwork problem
-# for display on the web or in print, answer checking, etc.
+# There are two bundles of code to download that comprise webwork: The 
+# 'webwork2' code constitutes the web application, and the 'pg' code 
+# which defines the language in which webwork problems are written and 
+# is responsible for translating webwork problem for display on the web 
+# or in print, answer checking, etc.
 #
-# We're about to download that code and the WeBWorK Open Problem Library.  Most users
-# will want to download the code from the standard github repositories.  But some users
-# will want to use their own custom repositories.  Here we ask where you would like to
-# download webwork2, pg, and the OPL from.  To accept the defaults, and download the code 
-# from the standard repositories, just hit enter. Otherwise, enter your custom urls.  
+# We're about to download that code and the WeBWorK Open Problem 
+# Library.  Most users will want to download the code from the standard 
+# github repositories.  But some users will want to use their own custom
+# repositories.  Here we ask where you would like to download webwork2, 
+# pg, and the OPL from.  To accept the defaults, and download the code 
+# from the standard repositories, just hit enter. Otherwise, enter your 
+# custom urls.  
 #
-###########################################################################################
+#########################################################################
 END
 
     my $repo = $term->get_reply(
@@ -1653,11 +1446,12 @@ sub get_WW_PREFIX {
 #
 # PREFIX/webwork2 - for the core code for the web-applcation
 # PREFIX/pg - for the webwork problem generating language PG
-# PREFIX/libraries - for the Open Problem Library and other problem libraries
+# PREFIX/libraries - for the Open Problem Library and other problem 
+# libraries
 # PREFIX/courses - for the individual webwork courses on your server
 #
-# Note that we will also set a new system wide environment variable WEBWORK_ROOT 
-# to PREFIX/webwork2/
+# Note that we will also set a new system wide environment variable 
+# WEBWORK_ROOT to PREFIX/webwork2/
 #################################################################
 END
     prompt => 'Where should I install webwork?',
@@ -1744,11 +1538,11 @@ END
     }
 }
 
-############################################################################
+########################################################################
 #
 #Configure the %mail hash
 #
-############################################################################
+########################################################################
 
 sub get_smtp_server {
     my $default  = shift;
@@ -1778,10 +1572,13 @@ END
 sub get_smtp_sender {
     my $default  = shift;
     my $print_me = <<END;
-##############################################################################
-# SMTP Sender:  Maybe something like 'webwork\@yourserver.yourschool.edu'. If
-# you're not setting this up right now, 'webwork\@localhost' is fine.
-##############################################################################
+########################################################################
+#
+# SMTP Sender:  Maybe something like 
+#       'webwork\@yourserver.yourschool.edu'. 
+# If you're not setting this up right now, 'webwork\@localhost' is fine.
+#
+#########################################################################
 END
     my $prompt = "SMTP sender:";
     my $answer = $term->get_reply(
@@ -1800,49 +1597,72 @@ END
     }
 }
 
-############################################################################
+#####################################################################
 #
 #Configure the database
 #
-############################################################################
+#####################################################################
 
-sub database_exists {
-  my ($root_password,$database,$server) = @_;
-  my $dbh = DBI->connect("dbi:mysql:database=information_schema;host=$server", 'root', $root_password, { 'RaiseError' => 1 } );
-  my $databases = $dbh->selectcol_arrayref('show databases');
-  $dbh->disconnect();
-  foreach(@$databases) {
-    return 1 if $database eq $_;
-  }
-  return 0;
+
+sub get_database_password {
+    my $print_me = <<END;
+######################################################################
+#
+# Now we need a password to identify the webwork database user.  Note 
+# that this password will be written into one of the (plain text) 
+# config files in webwork2/conf/.  So, it's important for security 
+# that this password not be the same as the mysql root password.
+#
+# If you created a new database and a new database user, then you can 
+# enter any password you like here.
+#
+# If you are using an existing database and db user, then we are 
+# expecting you to use the existing password for that user.
+#
+######################################################################
+END
+    my $prompt = "Please enter webwork database password:";
+    my $answer = get_reply({
+      print_me => $print_me,
+      prompt => $prompt,
+    });
 }
 
-sub connect_to_database {
-  my ( $server, $ww_db, $ww_user, $ww_pw ) = @_;
-  eval {
-    my $dbh = DBI->connect("dbi:mysql:database=$ww_db;host=$server", $ww_user, $ww_pw, { 'RaiseError' => 1 } );
-  };
-  if($@) {
-    print_and_log("Something's wrong: $@");
-    return 0;
-  } else {
-    print_and_log("Connected to $ww_db on $server as $ww_user...\n");
-    return 1;
-  }
+sub get_database_username {
+    my $default  = shift;
+    my $print_me = <<END;
+######################################################################
+#
+# Now we need new mysql user with the necessary privileges on the 
+# webwork database. For maximum security, this user should have no 
+# privileges on other tables.  So, 'root' is a bad choice. 
+#
+# If you created a new webwork database, we suggest creating a new 
+# user for that database. In that case, we will give that user the 
+# appropriate privileges. 
+#
+# If you are using an existing database, we are expecting you to 
+# also use an existing database user here and we are expecting that 
+# this database user has appropriate privileges on that database.
+#
+#####################################################################
+END
+    my $prompt = "webwork database username:";
+    my $answer = get_reply({
+        print_me => $print_me,
+        prompt => $prompt,
+        default => $default,
+      });
 }
-
-############################################################################
-#
-#Configure the database
-#
-############################################################################
 
 sub get_mysql_root_password {
 
   print_and_log(<<END);
-############################################################################
+####################################################################
+#
 # Please enter the root mysql password. 
-#############################################################################
+#
+####################################################################
 
 END
     my $password;
@@ -1889,22 +1709,6 @@ END
         print_and_log("OK. We won't modify MySQL's default storage engine");
       }
 }
-
-sub change_storage_engine {
-  my $my_cnf = shift; 
-  my (undef,$dir,$file) = File::Spec->splitpath($my_cnf);
-  my $engine = 'myisam';
-  open(my $fh,'<',$my_cnf) or print_and_log("Couldn't find $my_cnf: $!");
-  return unless $fh;
-  copy($my_cnf,$dir."/".$file.".bak");
-  my $string = do { local($/); <$fh> };
-  close($fh);
-  open(my $new,'>',$my_cnf);
-  $string =~ s/\[mysqld\]/\[mysqld\]\n#\n# webwork wants this:\n#\n\ndefault-storage-engine = $engine\n/;
-  print $new $string;
-  print_and_log("Modified $my_cnf to set MyISAM to be default MySQL storage engine");
-}
-
 # Is there an existing webwork db or would you like me to create one?
 
 sub get_webwork_database {
@@ -1929,6 +1733,7 @@ END
       });
     $print_me = <<END;
 ##############################################################
+#
 #  If you would like me to create a new database and user for 
 #  webwork, you will need ot know the root mysql password.
 #
@@ -1936,6 +1741,7 @@ END
 #  you will need to know (a) the name of the database, (b) the 
 #  name and password of the mysql user with the appropriate 
 #  privileges on that database.
+#
 ###############################################################
 END
     $prompt = "Create a new database or use an existing one? ";
@@ -1950,20 +1756,24 @@ END
     if($new_or_existing eq 'Create a new database') {
       print_and_log(<<END);
 ###################################################################
+#
 # Great, we'll create a new mysql database for webwork. To do so
 # we'll need the root mysql password.
-# ##################################################################
+#
+###################################################################
 END
       my $mysql_root_password = get_mysql_root_password();
       my $print_me =<<END;
-########################################################################
+######################################################################
+#
 # Thanks. I'll keep it secret. Please choose a name for the webwork 
 # database. It can be anything that conforms to mysql's rules for 
-# database names.  If you don't know those, just be sensible and things 
-# will probably be ok. (Or look up the rules if you are inclined to 
-# be unsensible.)  Also, you can't choose something that is the name of
-# an existing mysql database.
-########################################################################
+# database names.  If you don't know those, just be sensible and 
+# things will probably be ok. (Or look up the rules if you are 
+# inclined to be unsensible.)  Also, you can't choose something 
+# that is the name of an existing mysql database.
+#
+######################################################################
 END
       my $prompt = "Name for the webwork database:";
       my $database = get_reply({
@@ -2006,70 +1816,17 @@ END
     }
 }
 
-sub get_dsn {
-    my ($database,$server) = @_;
-    return "dbi:mysql:$database:$server";
-}
-
-sub get_database_username {
-    my $default  = shift;
-    my $print_me = <<END;
-#############################################################################
-# Now we need new mysql user with the necessary privileges on the 
-# webwork database. For maximum security, this user should have no 
-# privileges on other tables.  So, 'root' is a bad choice. 
-#
-# If you created a new webwork database, we suggest creating a new user 
-# for that database. In that case, we will give that user the appropriate
-# privileges. 
-#
-# If you are using an existing database, we are expecting you to 
-# also use an existing database user here and we are expecting that this 
-# database user has appropriate privileges on that database.
-###############################################################################
-END
-    my $prompt = "webwork database username:";
-    my $answer = get_reply({
-        print_me => $print_me,
-        prompt => $prompt,
-        default => $default,
-      });
-}
-
-sub get_database_password {
-    my $print_me = <<END;
-##############################################################################
-# Now we need a password to identify the webwork database user.  Note that
-# this password will be written into one of the (plain text) config files
-# in webwork2/conf/.  So, it's important for security that this password not be
-# the same as the mysql root password.
-#
-# If you created a new database and a new database user, then you can enter
-# any password you like here.
-#
-# If you are using an existing database and db user, then we are expecting you
-# to use the existing password for that user.
-##############################################################################
-END
-    my $prompt = "Please enter webwork database password:";
-    my $answer = get_reply({
-      print_me => $print_me,
-      prompt => $prompt,
-    });
-}
-
-
 #############################################################
 #
 # Put software in correct location, write configuration files
 #
 #############################################################
 
-###########################################################################
+#####################################################################
 #
 # Create prefix path
 #
-# ########################################################################
+######################################################################
 
 sub create_prefix_path {
     my $dir = shift;
@@ -2091,11 +1848,11 @@ sub create_prefix_path {
          }
 }
 
-############################################################################
+########################################################################
 #
 # Get the software, put it in the correct location
 #
-############################################################################
+########################################################################
 
 sub get_webwork {
     my ( $prefix, $apps, $wwadmin ) = @_;
@@ -2212,27 +1969,6 @@ sub symlink_model_course {
     }
 }
 
-#############################################################
-#
-# Create webwork database...
-#
-############################################################
-
-sub create_database {
-    my ( $dsn, $root_pw, $ww_db, $ww_user, $ww_pw ) = @_;
-    my $dbh = DBI->connect( 'DBI:mysql:database=mysql', 'root', $root_pw );
-    print_and_log("Connected to mysql as root...");
-    $dbh->do("CREATE DATABASE IF NOT EXISTS $ww_db")
-      or die "Could not create $ww_db database: $!\n";
-    print_and_log("Created $ww_db database...");
-    $dbh->do(
-"GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, LOCK TABLES ON $ww_db.* TO $ww_user\@localhost IDENTIFIED BY '$ww_pw'"
-      )
-      or (print_and_log("Could not grant privileges to $ww_user on $ww_db database: $!") && die);
-      
-    print_and_log("Granted privileges...");
-    $dbh->disconnect();
-}
 
 #############################################################
 #
@@ -2566,8 +2302,12 @@ my %siteDefaults;
 
 #Install Prerequisites
 my $os = $envir->{os};
-my %version_packages = %{$prerequisites->{$os->{name}}->{$os->{version}}} if $prerequisites->{$os->{name}}->{$os->{version}};
-my %packages = (%{$prerequisites->{$os->{name}}->{common}}, %version_packages);
+my $os_name = $os->{name};
+no strict 'refs';
+require "$os_name".".pm";
+
+my %version_packages = %{${$os_name.'::prerequisites'}->{$os->{version}}} if ${$os_name.'::prerequisites'}->{$os->{version}};
+my %packages = (%{${$os_name.'::prerequisites'}->{common}},%version_packages);
 
 my %packages_seen = ();
 foreach (values %packages) {
@@ -2616,7 +2356,8 @@ my $webwork_htdocs_dir  = "$webwork_dir/htdocs";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 
 print_and_log(<<EOF);
-#########################################################################
+########################################################################
+#
 #  At this point we need to make some access control decisions. 
 #  These decisions are important because they directly impact 
 #  application and system security.  But, the right answers often 
@@ -2634,7 +2375,8 @@ print_and_log(<<EOF);
 #
 #  Let's first deal with the webwork admin user, and then the webwork 
 #  data group.  
-############################################################################
+#
+#########################################################################
 EOF
 
 my $wwadmin = get_wwadmin_user($envir);
@@ -2659,6 +2401,8 @@ $mail{smtpSender} = get_smtp_sender(SMTP_SENDER);    #constant defined at top
 #(7) $database_dsn = "dbi:mysql:webwork";
 #(8) $database_username = "webworkWrite";
 #(9) $database_password = "";
+require WeBWorK::Install::Database;
+
 my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database(WW_DB);  #constant defined at top
 
 my $database_dsn        = get_dsn($ww_db,$database_server);
@@ -2704,9 +2448,11 @@ get_MathJax($WW_PREFIX);
 print_and_log(<<EOF);
 #######################################################################
 #
-#  Now I'm going to copy some classlist files and the modelCourse/ dir from
-#  webwork2/courses.dist to $webwork_courses_dir.  
-#  modelCourse/ will serve as a default template for WeBWorK courses you create.
+# Now I'm going to copy some classlist files and the modelCourse/ dir 
+# from webwork2/courses.dist to $webwork_courses_dir.  
+#
+# modelCourse/ will serve as a default template for WeBWorK courses 
+# you create.
 #   
 ######################################################################
 EOF
@@ -2838,10 +2584,10 @@ EOF
 print_and_log(<<EOF);
 #######################################################################
 #
-#  Now I'm going to change the ownship and permissions of some directories
-#  under $webwork_dir and $webwork_courses_dir that should be web accessible.  
-#  Faulty permissions is one of the most common cause of problems, especially
-#  after upgrades. 
+# Now I'm going to change the ownship and permissions of some 
+# directories under $webwork_dir and $webwork_courses_dir that should 
+# be web accessible. Faulty permissions is one of the most common cause 
+# of problems, especially after upgrades. 
 # 
 ######################################################################
 EOF
