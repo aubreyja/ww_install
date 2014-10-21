@@ -39,10 +39,40 @@ use IO::Handle qw();
 STDOUT->autoflush(1);
 STDERR->autoflush(1);
 
-###############################################################################################
+#########################################################
+#
+# Process Options
+#
+#########################################################
+
+my $interactive = 1;
+my $mysql_root_password = '';
+my $webwork_db_password = '';
+
+GetOptions(
+  'interactive!'=>\$interactive,
+  'mysql_root_pw=s' => \$mysql_root_password,
+  'webwork_db_pw=s' => \$webwork_db_password,
+);
+
+print_and_log("Interactive mode: $interactive and !$interactive");
+$Term::UI::AUTOREPLY = !$interactive;
+
+if(!$interactive) {
+  die "To run non-interactively you must specify both the mysql root ".
+      "password (--mysql_root_pw) and the webwork database password ".
+      "(--webwork_db_pw)"
+      unless $mysql_root_password && $webwork_db_password;
+}
+
+
+#########################################################
+#
 # Create a new Term::Readline object for interactivity
 #Don't worry people with spurious warnings.
-###############################################################################################
+#
+#########################################################
+
 $Term::UI::VERBOSE = 0;
 my $term = Term::ReadLine->new('');
 
@@ -458,21 +488,6 @@ my $apache24Layouts = {
         User         => '',
         Group        => '',
     },
-    debian => {    #Checked Jessie
-        MPMDir       => '',
-	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
-        ServerRoot   => '/etc/apache2',
-        DocumentRoot => '/var/www',
-        ConfigFile   => '/etc/apache2/apache2.conf',
-        OtherConfig  => '/etc/apache2/conf-enabled',
-        SSLConfig    => '',
-        Modules      => '/etc/apache2/mods-enabled',
-        ErrorLog     => '/var/log/apache2/error.log',
-        AccessLog    => '/var/log/apache2/access.log',
-        Binary       => '/usr/sbin/apache2ctl',
-        User         => 'www-data',
-        Group        => 'www-data',
-    },
     ubuntu => {    #Checked 13.10
         MPMDir       => '',
 	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
@@ -488,7 +503,7 @@ my $apache24Layouts = {
         User         => 'www-data',
         Group        => 'www-data',
     },
-    centos => {    #Checked CentOS 7
+    centos => {    
         MPMDir       => 'server/mpm/prefork',
       	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
         ServerRoot   => '/etc/httpd',
@@ -1485,6 +1500,49 @@ sub configure_externalPrograms {
     return $apps;
 }
 
+sub github_or_mount {
+    my $repo_name = shift;
+    print $repo_name;
+    my $print_me = <<END;
+##########################################################################################
+#
+# Here you decide weather to mount $repo_name files or to obtain them from github.  
+#
+###########################################################################################
+END
+
+    my $github_or_mount = $term->get_reply(
+        print_me => $print_me,
+        prompt   => 'Would you like to download the '.$repo_name.' files from github or mount a shared folder?',
+        choices  => [
+            "download from github",
+            "mount a shared folder"
+        ],        
+        default => "download from github", 
+    );
+
+	my $confirmed = 0;
+	$confirmed = confirm_answer($github_or_mount);
+	
+	if ($confirmed->{status} && ($github_or_mount eq "download from github")){
+		return 1;
+	} else {
+		run_command(['touch', 'rc.local.mount']);
+		open( my $in, "<", "/etc/rc.local" );
+		open( my $out, ">", "rc.local.mount" );
+		while(<$in>){
+        	if (/^exit 0/) {
+            	print $out "mount -t vboxsf -o uid=www-data,gid=wwdata ".$repo_name." /opt/webwork/".$repo_name."\nexit 0;";
+	        } else {
+				print $out $_;
+			}      
+		}
+		mkdir "/opt/webwork/".$repo_name;
+		run_command(['cp','-f','rc.local.mount','/etc/rc.local']);
+		run_command(['/etc/rc.local']);
+	}    
+}
+
 sub get_webwork2_repo {
     my $default  = shift;
     my $print_me = <<END;
@@ -1803,13 +1861,15 @@ sub connect_to_database {
 
 sub get_mysql_root_password {
 
+  my $password = shift;
+  return $password if $password;
+
   print_and_log(<<END);
 ############################################################################
 # Please enter the root mysql password. 
 #############################################################################
 
 END
-    my $password;
     while(1) {
       my $double_check;
       $password = read_password('MySQL root password: ');
@@ -1872,6 +1932,9 @@ sub change_storage_engine {
 # Is there an existing webwork db or would you like me to create one?
 
 sub get_webwork_database {
+    
+    my ($mysql_root_password, $webwork_db_password) = @_;
+
     my $print_me = <<END;
 #############################################################
 #  We now need to designate a MySQL database and database user
@@ -1918,7 +1981,7 @@ END
 # we'll need the root mysql password.
 # ##################################################################
 END
-      my $mysql_root_password = get_mysql_root_password();
+      my $mysql_root_password = get_mysql_root_password($mysql_root_password);
       my $print_me =<<END;
 ########################################################################
 # Thanks. I'll keep it secret. Please choose a name for the webwork 
@@ -1940,10 +2003,10 @@ END
         print_and_log("\n\nSorry, Charlie. That database already exists. Let's try".
           " this again.\n\n");
         sleep(2);
-        get_webwork_database();
+        get_webwork_database($mysql_root_password, $webwork_db_password);
       } else {
         my $username = get_database_username(WWDB_USER);
-        my $password = get_database_password();
+        my $password = get_database_password($webwork_db_password);
         create_database( $server, $mysql_root_password, $database,
             $username, $password );
         return ($database,$server,$username,$password);
@@ -1961,12 +2024,12 @@ END
         default => WW_DB,
       });
       my $username = get_database_username(WWDB_USER);
-      my $password = get_database_password();
+      my $password = get_database_password($webwork_db_password);
       my $can_connect = connect_to_database($server,$database,$username,$password);
       return ($database,$server,$username,$password) if $can_connect;
-      get_webwork_database(WW_DB);
+      get_webwork_database($mysql_root_password, $webwork_db_password);
     } else {
-      get_webwork_database(WW_DB);
+      get_webwork_database(W$mysql_root_password, $webwork_db_password);
     }
 }
 
@@ -2001,6 +2064,10 @@ END
 }
 
 sub get_database_password {
+    
+    my $password = shift;
+    return $password if $password;
+
     my $print_me = <<END;
 ##############################################################################
 # Now we need a password to identify the webwork database user.  Note that
@@ -2065,33 +2132,38 @@ sub get_webwork {
     my ( $prefix, $apps, $wwadmin ) = @_;
     create_prefix_path($prefix);
     chdir $prefix or die "Can't chdir to $prefix";
-    my $ww2_repo =
-      get_webwork2_repo(WEBWORK2_REPO);   #WEBWORK2_REPO constant defined at top
-    my $ww2_cmd = [$apps->{git},'clone',$ww2_repo];
+    my $github_or_mountQ = github_or_mount('webwork2');   
+    if ($github_or_mountQ eq "download from github"){
+    	my $ww2_repo =
+      		get_webwork2_repo(WEBWORK2_REPO);   #WEBWORK2_REPO constant defined at top
+    	my $ww2_cmd = [$apps->{git},'clone',$ww2_repo];
+    	my $ww2_success = run_command($ww2_cmd);
 
-    my $pg_repo = get_pg_repo(PG_REPO);    #PG_REPO constant defined at top
-    my $pg_cmd = [$apps->{git},'clone',$pg_repo];
-
+    	if ($ww2_success) {
+        	print_and_log("Fetched webwork2 successfully.\n");
+        	chdir "$prefix/webwork2";
+#        	run_command(['git','checkout','-b','ww3','origin/ww3']);
+        	chdir $prefix;
+    	} else {
+        	print_and_log("Couldn't get webwork2!");
+    	}    	
+	}
+    my $github_or_mountQ = github_or_mount('pg');
+    if ($github_or_mountQ eq "download from github"){    	
+    	my $pg_repo = get_pg_repo(PG_REPO);    #PG_REPO constant defined at top
+	    my $pg_cmd = [$apps->{git},'clone',$pg_repo];
+    	my $pg_success = run_command($pg_cmd);
+    	if ($pg_success) {
+        	print_and_log("Fetched pg successfully!");
+    	} else {
+        	print_and_log("Couldn't get pg!");
+    	}	       
+	}   
+    my $buffer; 
     my $opl_repo = get_opl_repo(OPL_REPO);    #OPL_REPO constant defined at top
     my $opl_cmd = [$apps->{git},'clone',$opl_repo];
 
-    my $buffer;
-    my $ww2_success = run_command($ww2_cmd);
 
-    if ($ww2_success) {
-        print_and_log("Fetched webwork2 successfully.\n");
-        chdir "$prefix/webwork2";
-#        run_command(['git','checkout','-b','ww3','origin/ww3']);
-        chdir $prefix;
-    } else {
-        print_and_log("Couldn't get webwork2!");
-    }
-    my $pg_success = run_command($pg_cmd);
-    if ($pg_success) {
-        print_and_log("Fetched pg successfully!");
-    } else {
-        print_and_log("Couldn't get pg!");
-    }
 
     make_path( 'libraries', { owner => $wwadmin, group => $wwadmin } );
     make_path( 'courses',   { owner => $wwadmin, group => $wwadmin } );
@@ -2689,7 +2761,7 @@ $mail{smtpSender} = get_smtp_sender(SMTP_SENDER);    #constant defined at top
 #(7) $database_dsn = "dbi:mysql:webwork";
 #(8) $database_username = "webworkWrite";
 #(9) $database_password = "";
-my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database(WW_DB);  #constant defined at top
+my ($ww_db,$database_server,$database_username,$database_password) = get_webwork_database($mysql_root_password, $webwork_db_password);  #constant defined at top
 
 my $database_dsn        = get_dsn($ww_db,$database_server);
 
