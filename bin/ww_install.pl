@@ -2709,19 +2709,6 @@ print_and_log(<<EOF);
 #######################################################################
 #
 #
-# Now we will unpack the jsMath font files.
-#
-# This may take awhile
-#
-# 
-######################################################################
-EOF
-unpack_jsMath_fonts($webwork_dir);
-
-print_and_log(<<EOF);
-#######################################################################
-#
-#
 # Now we will download MathJax.
 #
 # This too may take awhile
