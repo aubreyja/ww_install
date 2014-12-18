@@ -2091,6 +2091,7 @@ sub get_webwork {
         print_and_log("Fetched pg successfully!");
 	chdir "$prefix/pg";
 	run_command(['git','checkout','-b','release/2.10','origin/release/2.10']);
+	chdir $prefix;
     } else {
         print_and_log("Couldn't get pg!");
     }
