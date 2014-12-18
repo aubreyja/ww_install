@@ -28,7 +28,8 @@ yum_install () {
      yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
      yum -y install perl-File-Find-Rule #ww2.8
      yum -y install mod_fcgid
-     yum -y install texlive-epsf
+     #note texlive-path is for fedora, but not availabe or necc on centos
+     yum -y install texlive-epsf texlive-path
 }
 
 apt_get_install () {
