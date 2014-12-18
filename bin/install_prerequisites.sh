@@ -16,7 +16,7 @@ EOM
 }
 
 yum_install () {
-     yum -y install make patch gcc libapreq2 mod_perl mysql-server 
+     yum -y install make patch gcc libapreq2 mod_perl mariadb-server 
      yum -y install dvipng netpbm netpbm-progs tex-preview git subversion system-config-services
      yum -y install perl-CPAN perl-YAML perl-DateTime perl-Email-Address
      yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
