@@ -72,8 +72,8 @@ then
     CPANOPT='-j lib/cpan_config.pm'
   else 
     printf "%b\n" "# We've got a relative of RedHat which is not Fedora"
-    MYSQLSTART='service mysqld start'
-    MYSQLENABLE='chkconfig mysqld on'
+    MYSQLSTART='service mariadb start'
+    MYSQLENABLE='chkconfig mariadb on'
     APACHESTART='service httpd start'
     APACHEENABLE='chkconfig httpd on'
     #CPAN on centos isn't new enough to have the -j so we do it manually
