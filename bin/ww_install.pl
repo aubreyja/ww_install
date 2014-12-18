@@ -2081,7 +2081,7 @@ sub get_webwork {
     if ($ww2_success) {
         print_and_log("Fetched webwork2 successfully.\n");
         chdir "$prefix/webwork2";
-#        run_command(['git','checkout','-b','ww3','origin/ww3']);
+        run_command(['git','checkout','-b','release/2.10','origin/release/2.10']);
         chdir $prefix;
     } else {
         print_and_log("Couldn't get webwork2!");
@@ -2089,6 +2089,8 @@ sub get_webwork {
     my $pg_success = run_command($pg_cmd);
     if ($pg_success) {
         print_and_log("Fetched pg successfully!");
+	chdir "$prefix/pg";
+	run_command(['git','checkout','-b','release/2.10','origin/release/2.10']);
     } else {
         print_and_log("Couldn't get pg!");
     }
