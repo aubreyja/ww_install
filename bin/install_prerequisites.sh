@@ -65,8 +65,8 @@ then
   if [ -e "/etc/fedora-release" ]
   then
     printf "%b\n" "# We've got Fedora"
-    MYSQLSTART='systemctl start mysqld.service'
-    MYSQLENABLE='systemctl enable mysqld.service'
+    MYSQLSTART='systemctl start mariadb.service'
+    MYSQLENABLE='systemctl enable mariadb.service'
     APACHESTART='systemctl start httpd.service'
     APACHEENABLE='systemctl enable httpd.service'
     CPANOPT='-j lib/cpan_config.pm'
