@@ -5,7 +5,7 @@ This repository consists of a perl script `ww_install.pl`, along with some suppo
 config files, and perl modules designed to work together install the open source online homework system 
 [WeBWorK](https://github.com/openwebwork).
 
-The script has been updated to install WeBWorK 2.9 as of 6/22/2014.
+The script has been updated to install WeBWorK 2.10 as of 12/22/2014.
 
 It has been tested and supported on 
 *  Debian Wheezy
@@ -14,9 +14,6 @@ It has been tested and supported on
 *  CentOs 7
 
 On these systems it did install webwork. 
-
-Note that at this time (12/2013) WeBWorK does not work on Fedora 18+ or Ubuntu 13.10 due to
-the change to Apache 2.4.  We hope to fix this soon.
 
 Usage
 -------

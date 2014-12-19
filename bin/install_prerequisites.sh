@@ -83,6 +83,19 @@ then
   fi
    yum -y update
   yum_install
+
+  # Right now there isn't a package which provides the latex path.sty file
+  # in CentOS 7.  Since its a noarch kind of package we can just steal it from
+  # Fedora.  This is an ugly hack
+if [ -e "/etc/redhat-release" ]
+then
+    if grep -q "CentOS Linux Release 7" "/etc/redhat-release"
+    then
+	curl -ksSO ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm
+	yum install texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm
+    fi
+fi
+
   # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL and Test::XML is broken
    cpan $CPANOPT Module::Build Fatal XML::SAX 
    cpan $CPANOPT -f Test::XML    
