@@ -28,7 +28,8 @@ yum_install () {
      yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
      yum -y install perl-File-Find-Rule #ww2.8
      yum -y install mod_fcgid
-     #note texlive-path is for fedora, but not availabe or necc on centos
+     #note texlive-path is for fedora, but not available on centos\
+     #so there is an ugly hack below
      yum -y install texlive-epsf texlive-path
 }
 
@@ -89,10 +90,10 @@ then
   # Fedora.  This is an ugly hack
 if [ -e "/etc/redhat-release" ]
 then
-    if grep -q "CentOS Linux Release 7" "/etc/redhat-release"
+    if grep -q "CentOS Linux release 7" "/etc/redhat-release"
     then
 	curl -ksSO ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm
-	yum install texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm
+	yum -y install texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm
     fi
 fi
 
@@ -102,6 +103,7 @@ fi
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny PHP::Serialization Env Pod::WSDL
    cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite
    #ww3
+   cpan $CPANOPT AppConfig #used to install Template 
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
    cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
     #This needs to be last because of some sort of prereq issue. 

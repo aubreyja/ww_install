@@ -9,7 +9,7 @@ The script has been updated to install WeBWorK 2.10 as of 12/22/2014.
 
 It has been tested and supported on 
 *  Debian Wheezy
-*  Fedora 20
+*  Fedora 21
 *  Ubuntu 14.04
 *  CentOs 7
 
