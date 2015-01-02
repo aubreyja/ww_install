@@ -9,11 +9,16 @@ The script has been updated to install WeBWorK 2.10 as of 12/22/2014.
 
 It has been tested and supported on 
 *  Debian Wheezy
-*  Fedora 21
+*  Fedora 20
 *  Ubuntu 14.04
-*  CentOs 7
+*  CentOS 7
 
 On these systems it did install webwork. 
+
+Gotchas
+-------
+
+-  There is currently no package in Fedora 21 which provides the pnmtops program.  The installer will fail when checking for required modules and programs.  Once [this](https://bugzilla.redhat.com/show_bug.cgi?id=1171903) bug is fixed the installer '''should''' work.  
 
 Usage
 -------
