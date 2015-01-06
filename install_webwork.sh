@@ -214,7 +214,7 @@ echo "## Extracting the installer"
 tar -xzf $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
-#mv $TMPDIR/webwork_install.log .
+mv $TMPDIR/webwork_install.log .
 
 if [ $PREREQUISITES -eq 1 ]; then
   echo "Installing prerequisites..."
@@ -232,13 +232,12 @@ fi
 
 move_install_log () {
 if [ -d "$WEBWORK_ROOT" ]; then
-    mv webwork_install.log $WEBWORK_ROOT/logs
+    mv $TMPDIR/webwork_install.log $WEBWORK_ROOT/logs
     echo "webwork_install.log can be found in $WEBWORK_ROOT/logs"
 elif [ -d "$HOME" ]; then
-    cp webwork_install.log $HOME
+    cp  $TMPDIR/webwork_install.log $HOME
     echo "webwork_install.log can be found in $HOME"
 else
-    mv webwork_install.log $TMPDIR
     echo "webwork_install.log can be found in $TMPDIR"
 fi
 }

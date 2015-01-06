@@ -16,7 +16,7 @@ EOM
 }
 
 yum_install () {
-     yum -y install make patch gcc libapreq2 mod_perl mysql-server 
+     yum -y install make patch gcc libapreq2 mod_perl mariadb-server 
      yum -y install dvipng netpbm netpbm-progs tex-preview git subversion system-config-services
      yum -y install perl-CPAN perl-YAML perl-DateTime perl-Email-Address
      yum -y install perl-GD perl-GDGraph perl-LDAP perl-libapreq2 
@@ -28,7 +28,9 @@ yum_install () {
      yum -y install perl-JSON perl-HTML-Scrubber perl-Net-OAuth perl-Text-CSV
      yum -y install perl-File-Find-Rule #ww2.8
      yum -y install mod_fcgid
-     yum -y install texlive-epsf
+     #note texlive-path is for fedora, but not available on centos\
+     #so there is an ugly hack below
+     yum -y install texlive-epsf texlive-path
 }
 
 apt_get_install () {
@@ -44,7 +46,7 @@ apt_get_install () {
      apt-get $APTOPTS install git subversion
      apt-get $APTOPTS install perl perl-modules 
      apt-get $APTOPTS install dvipng netpbm unzip
-     apt-get $APTOPTS install preview-latex-style texlive-latex-base 
+     apt-get $APTOPTS install preview-latex-style texlive-latex-base texlive-latex-recommended
      apt-get $APTOPTS install mysql-server openssh-server
      apt-get $APTOPTS install apache2-mpm-prefork libapache2-request-perl 
      apt-get $APTOPTS install libdatetime-perl libdbi-perl libdbd-mysql-perl libemail-address-perl 
@@ -64,15 +66,15 @@ then
   if [ -e "/etc/fedora-release" ]
   then
     printf "%b\n" "# We've got Fedora"
-    MYSQLSTART='systemctl start mysqld.service'
-    MYSQLENABLE='systemctl enable mysqld.service'
+    MYSQLSTART='systemctl start mariadb.service'
+    MYSQLENABLE='systemctl enable mariadb.service'
     APACHESTART='systemctl start httpd.service'
     APACHEENABLE='systemctl enable httpd.service'
     CPANOPT='-j lib/cpan_config.pm'
   else 
     printf "%b\n" "# We've got a relative of RedHat which is not Fedora"
-    MYSQLSTART='service mysqld start'
-    MYSQLENABLE='chkconfig mysqld on'
+    MYSQLSTART='service mariadb start'
+    MYSQLENABLE='chkconfig mariadb on'
     APACHESTART='service httpd start'
     APACHEENABLE='chkconfig httpd on'
     #CPAN on centos isn't new enough to have the -j so we do it manually
@@ -82,12 +84,26 @@ then
   fi
    yum -y update
   yum_install
+
+  # Right now there isn't a package which provides the latex path.sty file
+  # in CentOS 7.  Since its a noarch kind of package we can just steal it from
+  # Fedora.  This is an ugly hack
+if [ -e "/etc/redhat-release" ]
+then
+    if grep -q "CentOS Linux release 7" "/etc/redhat-release"
+    then
+	curl -ksSO ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm
+	yum -y install texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm
+    fi
+fi
+
   # currently needed bcause cpan doesnt find these prerequsities for Pod::WSDL and Test::XML is broken
-   cpan $CPANOPT Module::Build Fatal XML::SAX 
+   cpan $CPANOPT Module::Build Fatal XML::SAX XML::Twig
    cpan $CPANOPT -f Test::XML    
    cpan $CPANOPT XML::Parser::EasyTree Iterator Iterator::Util UUID::Tiny PHP::Serialization Env Pod::WSDL
    cpan $CPANOPT Locale::Maketext::Lexicon SQL::Abstract XMLRPC::Lite
    #ww3
+   cpan $CPANOPT AppConfig #used to install Template 
    cpan $CPANOPT Dancer Dancer::Plugin::Database Plack::Runner Plack::Handler::FCGI Path::Class Array::Utils Template
    cpan $CPANOPT File::Find::Rule Path::Class FCGI File::Slurp
     #This needs to be last because of some sort of prereq issue. 
