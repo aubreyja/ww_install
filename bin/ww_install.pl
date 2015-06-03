@@ -902,7 +902,7 @@ sub get_wwadmin_user {
 ###########################################################################
 #
 # The first decision is whether or not to create a webwork admin user. 
-# The purpose ofdoing this would be to allow the webwork admin user to 
+# The purpose of doing this would be to allow the webwork admin user to 
 # edit the webwork system code (e.g. for updates) while restricting 
 # that user from having write access to other files outside of his 
 # home directory.  If the system administrator(s) and webwork
@@ -1638,7 +1638,7 @@ sub get_root_url {
     my $print_me = <<END;
 #################################################################
 # Server root url: Please enter the url of your webwork server. If you
-# are just installing it locally for testing, you probabably want
+# are just installing it locally for testing, you probably want
 #
 # http://localhost
 #
@@ -1894,7 +1894,7 @@ END
     $print_me = <<END;
 ##############################################################
 #  If you would like me to create a new database and user for 
-#  webwork, you will need ot know the root mysql password.
+#  webwork, you will need to know the root mysql password.
 #
 #  If such a database and mysql user has already been created, 
 #  you will need to know (a) the name of the database, (b) the 
