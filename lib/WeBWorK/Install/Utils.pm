@@ -82,13 +82,13 @@ if (!open($LOG,"> ../webwork_install.log")) {
 
 sub print_and_log {
   my $msg = shift;
-  print $LOG "$msg\n";
-  print "$msg\n";
+  print $LOG "$msg";
+  print "$msg";
 }
 
 sub writelog {
   my $msg = shift;
-  print $LOG "$msg\n";
+  print $LOG "$msg";
 }
 
 sub run_command {
@@ -106,8 +106,8 @@ sub run_command {
         timeout => IPC_CMD_TIMEOUT
       );
       my $cmd_string = join(' ',@$cmd);
-      writelog("Running [".$cmd_string."]");
-      writelog("OUTPUT: ".$output) if defined($output);
+      writelog("Running [".$cmd_string."]\n");
+      writelog("OUTPUT: ".$output."\n") if defined($output);
   
       if (!$success) {
         writelog($error_message) if $error_message;
@@ -212,7 +212,7 @@ sub get_reply {
     choices => $options->{choices},
     default => $options->{default},
   );
-  writelog($term->history_as_string());
+  writelog($term->history_as_string()."\n");
   Term::UI::History->flush();
 
   my $checked = { answer => $answer, status => 0};

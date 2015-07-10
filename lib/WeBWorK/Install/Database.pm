@@ -1,10 +1,12 @@
 package WeBWorK::Install::Database;
 
-use WeBWorK::Install::Utils qw(print_and_log log);
+use WeBWorK::Install::Utils;
 use DBI;
 
+use File::Copy;
+
 use Exporter 'import'; # gives you Exporter's import() method directly
-@EXPORT_OK = qw(database_exists connect_to_database change_storage_engine get_dsn create_database); # symbols to export on request
+@EXPORT = qw(database_exists connect_to_database change_storage_engine get_dsn create_database); # symbols to export (I'm a bad person.)
 
 sub database_exists {
   my ($root_password,$database,$server) = @_;

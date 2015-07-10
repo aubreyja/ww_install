@@ -5,7 +5,7 @@ use base qw(blankdistro);
 use strict;
 use warnings;
 
-use install_utils;
+use WeBWorK::Install::Utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
@@ -46,6 +46,7 @@ my $binary_prerequisites = {
     preview_latex => 'preview-latex-style',
     texlive => 'texlive-latex-base',
     texlive_recommended => 'texlive-latex-recommended',
+    texlive_fonts_recommended => 'texlive-fonts-recommended',
 };
 
 sub get_binary_prerequisites {

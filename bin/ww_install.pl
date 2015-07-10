@@ -226,13 +226,13 @@ sub get_os {
         $os->{name} = "darwin";
         chomp( $os->{version} = `sw_vers -productVersion` );
         chomp( $os->{arch}    = `uname -m` );
-        print_and_log("Great, you're on Mac running OS X $$os{version} on $$os{arch} hardware.");
+        print_and_log("Great, you're on Mac running OS X $$os{version} on $$os{arch} hardware.\n");
     } elsif ( $^O eq "freebsd" ) {
         $os->{type} = "unix";
         $os->{name} = "freebsd";
         chomp( $os->{version} = `uname -r` );
         chomp( $os->{arch}    = `uname -m` );
-        print_and_log("I see - rocking it on FreeBSD $$os{version} on $$os{arch} hardware.");
+        print_and_log("I see - rocking it on FreeBSD $$os{version} on $$os{arch} hardware.\n");
     } elsif ( $^O eq "linux" )
     {    #Now we're going to have to look more closely to get specific distro
         $os->{type}    = "linux";
@@ -240,16 +240,16 @@ sub get_os {
         $os->{version} = distribution_version();
         chomp( $os->{arch} = `uname -m` );
         print_and_log("Linux, yay! That's my favorite. I see you're running $$os{name} "
-          . "version $$os{version} on $$os{arch} hardware. This will be easy.\n");
+          . "version $$os{version} on $$os{arch} hardware. This will be easy.\n\n");
     } elsif ( $^O eq "MSWin32" ) {
-        print_and_log("Installing WeBWorK on Windows is, afaik, currently impossible.");
-        print_and_log("If you get it working, please let us know. Good luck!");
+        print_and_log("Installing WeBWorK on Windows is, afaik, currently impossible.\n");
+        print_and_log("If you get it working, please let us know. Good luck!\n");
     } else {
         $os->{type}    = $^O;
         $os->{name}    = distribution_name();
         $os->{version} = distribution_version();
         chomp( $os->{arch} = `uname -m` );
-        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware. This script is not set up to support your operating system.  Configuring the script for new operating system isnt too difficult.  It would be very helpful if you could send a report to webwork\@maa.org. We can help you get it working if it doesn't work, and if it does we would like to add it to the list of supported systems.");
+        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware. This script is not set up to support your operating system.  Configuring the script for new operating system isnt too difficult.  It would be very helpful if you could send a report to webwork\@maa.org. We can help you get it working if it doesn't work, and if it does we would like to add it to the list of supported systems.\n");
     }
 
     #Package name is distro::version with any dots removed from version. 
@@ -270,12 +270,51 @@ sub get_os_package {
     use strict;
 
     if ($@ =~ /Can't locate ${osPackage}/) {
-        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  The package you will have to create is ${osPackage} in the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.");
+        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  The package you will have to create is ${osPackage} in the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.\n");
 	die "Couldn't load distro package: $@";
     } elsif ($@) {
 	die "Couldn't load distro package: $@";
     }
     
+    require blankdistro;
+
+    #Check to see that the main data arrays are fully fleshed out when
+    # comparied to the blank distro. 
+
+    my $packageFile = $osPackage;
+    $packageFile =~ s/::/\//g;
+    $packageFile = '/distros/'.$packageFile.'.pm';
+
+    my $blankbinary = blankdistro->get_binary_prerequisites();
+    my $packagebinary = $osPackage->get_binary_prerequisites();
+
+    foreach my $key (keys %$blankbinary) {
+	if (!defined($packagebinary->{$key})) {
+	    print_and_log("WeBWorK requires a package which provides $key, and this package is missing from your distro file $osPackage.  To continue the installation add this package to the \$binary_prerequisites hash in $packageFile.\n");
+	    die("Missing package definition, can't continue.\n");
+	}
+    }
+
+    my $blankperl = blankdistro->get_perl_prerequisites();
+    my $packageperl = $osPackage->get_perl_prerequisites();
+    
+    foreach my $key (keys %$blankperl) {
+	if (!defined($packageperl->{$key})) {
+	    print_and_log("WeBWorK requires the perl package $key, and this package is missing from your distro file $osPackage.  To continue the installation add this package to the \$perl_prerequisites hash in $packageFile.\n");
+	    die("Missing package definition, can't continue.\n");
+	}
+    }
+ 
+    my $blankapache = blankdistro->get_apacheLayout();
+    my $packageapache = $osPackage->get_apacheLayout();
+    
+    foreach my $key (keys %$blankapache) {
+	if (!defined($packageapache->{$key})) {
+	    print_and_log("WeBWorK requires information about apache relating to $key, and this missing from your distro file $osPackage.  To continue the installation add this information to the \$apacheyLayout hash in $packageFile.\n");
+	    die("Missing apache layout, can't continue.\n");
+	}
+    }
+
     return;
 
 }
@@ -380,7 +419,7 @@ EOF
 
 sub check_root {
     if ( $> == 0 ) {
-        print_and_log("Running as root....");
+        print_and_log("Running as root....\n");
         return 1;
     } else {
 
@@ -450,7 +489,7 @@ END
 }
 
 sub disable_selinux {
-    print_and_log("You've chosen to disable SELinux. Good choice."); 
+    print_and_log("You've chosen to disable SELinux. Good choice.\n"); 
     my $full_path = can_run('setenforce');
     my $cmd = [$full_path,"0"]; #set SELinux in permissive mode
     my $success = run_command($cmd);      
@@ -558,14 +597,14 @@ END
         if ( $confirmed->{status} && $exists ) {
             return $ww_admin;
         } elsif ( !$exists ) {
-            print_and_log("Hey, silly goose, that user doesn't exist!");
+            print_and_log("Hey, silly goose, that user doesn't exist!\n");
             get_wwadmin_user($envir);
         } else {
-            print_and_log("You didn't cofirm your last answer so let's try again.");
+            print_and_log("You didn't cofirm your last answer so let's try again.\n");
             get_wwadmin_user($envir);
         }
     } else {
-        print_and_log("Let's try again.");
+        print_and_log("Let's try again.\n");
         get_wwadmin_user($envir);
     }
 }
@@ -582,7 +621,7 @@ sub create_wwadmin_user {
 
     my $exists_already = user_exists( $envir, $wwadmin );
     if ($exists_already) {
-        print_and_log("Sorry, that user already exists. Try again.");
+        print_and_log("Sorry, that user already exists. Try again.\n");
         get_wwadmin_user($envir);
     } else {
 
@@ -626,14 +665,14 @@ sub create_wwadmin_user {
             if ($success) {
                 print_and_log("Created webwork admin user $wwadmin ".
                               "with initial password $wwadmin_pw and ".
-                              "default shell $wwadmin_shell.");
+                              "default shell $wwadmin_shell.\n");
                 return $wwadmin;
             } else {
-                print_and_log("There was an error creating $wwadmin");
+                print_and_log("There was an error creating $wwadmin\n");
                 get_wwadmin_user($envir);
             }
         } else {
-            print_and_log("Let's try again.");
+            print_and_log("Let's try again.\n");
             get_wwadmin_user($envir);
         }
     }
@@ -791,9 +830,9 @@ sub change_owner {
     my $cmd       = [ $full_path, '-R', $owner, @dirs ];
     my $success = run_command($cmd);
     if ($success) {
-        print_and_log("Changed ownership of @dirs and below to $owner.");
+        print_and_log("Changed ownership of @dirs and below to $owner.\n");
     } else {
-        print_and_log("There was an error changing ownership of @dirs to $owner.");
+        print_and_log("There was an error changing ownership of @dirs to $owner.\n");
     }
     
 }
@@ -810,7 +849,7 @@ sub change_data_dir_permissions {
         print_and_log("Made the directories \n $courses,\n $data,\n $htdocs_tmp,\n".
                       " $logs,\n $tmp\n group writable.\n");
     } else {
-        print_and_log("Could not make the directories group writable!");
+        print_and_log("Could not make the directories group writable!\n");
     }
     my $find = can_run('find');
     $cmd = [
@@ -824,7 +863,7 @@ sub change_data_dir_permissions {
         print_and_log("Added group sticky bit to \n $courses,\n $data,\n $htdocs_tmp,\n $logs,\n".
                       " $tmp\n and subdirectories (except .git's).\n");
     } else {
-        print_and_log("Error. Could not add sticky bit.");
+        print_and_log("Error. Could not add sticky bit.\n");
     }
 }
 
@@ -836,9 +875,9 @@ sub change_webwork3_log_permissions {
     my $cmd       = [ $full_path, '-R', $owner, $webwork3log ];
     my $success = run_command($cmd);
     if ($success) {
-        print_and_log("Changed ownership of $webwork3log to $owner.");
+        print_and_log("Changed ownership of $webwork3log to $owner.\n");
     } else {
-        print_and_log("There was an error changing ownership $webwork3log to $owner.");
+        print_and_log("There was an error changing ownership $webwork3log to $owner.\n");
     }
 
     $full_path = can_run('chmod');
@@ -965,8 +1004,8 @@ sub get_apache_user_group {
 	
     }
 
-    print_and_log("Apache runs as user " . $apache->{User});
-    print_and_log("Apache runs in group " . $apache->{Group});
+    print_and_log("Apache runs as user " . $apache->{User} ."\n");
+    print_and_log("Apache runs in group " . $apache->{Group}."\n");
     return $apache;
 }
 
@@ -1036,7 +1075,7 @@ sub check_modules {
             if ( $@ =~ /Can't locate $file in \@INC/ ) {
                 print_and_log("** $module not found in \@INC\n");
             } else {
-                print_and_log("** $module found, but failed to load: $@");
+                print_and_log("** $module found, but failed to load: $@\n");
             }
         } else {
             print_and_log("   $module found and loaded\n");
@@ -1504,7 +1543,7 @@ END
     if($confirmed->{answer} && $confirmed->{status}) {
         change_storage_engine('/etc/mysql/my.cnf'); #this should be searched for
     } else {
-        print_and_log("OK. We won't modify MySQL's default storage engine");
+        print_and_log("OK. We won't modify MySQL's default storage engine\n");
     }
 }
 # Is there an existing webwork db or would you like me to create one?
@@ -1634,15 +1673,15 @@ sub create_prefix_path {
              for my $diag (@$err) {
                  my ($file, $message) = %$diag;
                  if ($file eq '') {
-                     print_and_log("General error: $message");
+                     print_and_log("General error: $message\n");
                  }
                  else {
-                     print_and_log("Problem creating $file: $message");
+                     print_and_log("Problem creating $file: $message\n");
                  }
              }
          }
          else {
-             print_and_log("Created $dir. No error encountered.");
+             print_and_log("Created $dir. No error encountered.\n");
          }
 }
 
@@ -1673,22 +1712,22 @@ sub get_webwork {
         print_and_log("Fetched webwork2 successfully.\n");
         chdir "$prefix/webwork2";
 	if (CHECKOUT_BRANCH) {
-	    run_command(['git','checkout','-b','WW_BRANCH','origin/WW_BRANCH']);
+	    run_command(['git','checkout','-b',WW_BRANCH,'origin/'.WW_BRANCH]);
 	}
         chdir $prefix;
     } else {
-        print_and_log("Couldn't get webwork2!");
+        print_and_log("Couldn't get webwork2!\n");
     }
     my $pg_success = run_command($pg_cmd);
     if ($pg_success) {
-        print_and_log("Fetched pg successfully!");
+        print_and_log("Fetched pg successfully!\n");
 	chdir "$prefix/pg";
 	if (CHECKOUT_BRANCH) {
-	    run_command(['git','checkout','-b','PG_BRANCH','origin/PG_BRANCH']);
+	    run_command(['git','checkout','-b',PG_BRANCH],'origin/'.PG_BRANCH);
 	}
 	chdir $prefix;
     } else {
-        print_and_log("Couldn't get pg!");
+        print_and_log("Couldn't get pg!\n");
     }
 
     make_path( 'libraries', { owner => $wwadmin, group => $wwadmin } );
@@ -1697,9 +1736,9 @@ sub get_webwork {
 
     my $opl_success = run_command($opl_cmd);;
     if ($opl_success) {
-        print_and_log("Fetched OPL successfully");
+        print_and_log("Fetched OPL successfully\n");
     } else {
-        print_and_log("Couldn't get OPL!");
+        print_and_log("Couldn't get OPL!\n");
     }
 }
 
@@ -1721,9 +1760,9 @@ sub unpack_jsMath_fonts {
     my $cmd = ["tar","vfxz","jsMath-fonts.tar.gz"];
     my $success = run_command($cmd);
     if ($success) {
-        print_and_log("Unpacked jsMath fonts successfully!");
+        print_and_log("Unpacked jsMath fonts successfully!\n");
     } else {
-        print_and_log("Could not unpack jsMath fonts! Maybe it doesn't matter.");
+        print_and_log("Could not unpack jsMath fonts! Maybe it doesn't matter.\n");
     }
     
 }
@@ -1743,7 +1782,7 @@ sub get_MathJax {
     if ($success) {
         print_and_log("Downloaded MathJax to $WW_PREFIX/MathJax\n");
     } else {
-        print_and_log("Could not download MathJax. You'll have to do this manually.");
+        print_and_log("Could not download MathJax. You'll have to do this manually.\n");
     }
 }
 
@@ -1756,7 +1795,7 @@ sub copy_classlist_files {
       or warn
 "Couldn't copy $webwork_dir/courses.dist/adminClasslist.lst to $courses_dir."
       . " You'll have to copy this over manually: $!";
-    print_and_log("Copied adminClasslist.lst to $courses_dir");
+    print_and_log("Copied adminClasslist.lst to $courses_dir\n");
     copy( "$webwork_dir/courses.dist/defaultClasslist.lst", "$courses_dir" )
       or warn
 "Couldn't copy $webwork_dir/courses.dist/defaultClasslist.lst to $courses_dir."
@@ -1773,10 +1812,10 @@ sub symlink_model_course {
     my $cmd = [ $full_path, '-s', $dist_path, $link_path ];
     my $success = run_command($cmd);
     if ($success) {
-        print_and_log("Symlinked $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse");
+        print_and_log("Symlinked $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse\n");
     } else {
         print_and_log("Could not symlink $webwork_dir/courses.dist/modelCourse to $courses_dir/modelCourse. ".
-                      "You'll have to do this manually: $!");
+                      "You'll have to do this manually: $!\n");
     }
 }
 
@@ -1913,7 +1952,7 @@ END
   #Make a backup copy of the apache config file
   copy($httpd_conf,$dir."/".$file.".bak")
     or die "Couldn't copy $httpd_conf to ".$dir.$file.".bak: $!\n";
-  print_and_log("Backed up $httpd_conf to ".$dir.$file.".bak");
+  print_and_log("Backed up $httpd_conf to ".$dir.$file.".bak\n");
 
   #Open apache config file for reading 
   open(my $fh, '<',$httpd_conf)
@@ -1931,7 +1970,7 @@ END
   open($fh, '>',$httpd_conf)
     or die "Couldn't open $httpd_conf for writing: $!\n";
   print $fh $string;
-  print_and_log("Set Timeout $timeout in $httpd_conf");
+  print_and_log("Set Timeout $timeout in $httpd_conf\n");
   close($fh);
 }
 
@@ -1950,9 +1989,9 @@ sub edit_mpm_conf {
 # settings MaxClients and MaxRequestsPerChild. By default I'll change 
 # MaxClients from 150 to 20 and MaxRequestsPerChild from 0 to 100.
 #
-# For WeBWorK a rough rule of thumb is 20 MaxClients per 1 GB of 
+# For WeBWorK a rough rule of thumb is 5 MaxClients per 1 GB of 
 # memory.  So, e.g., if you have 4GB of RAM you may want to use
-# MaxClients 80.
+# MaxClients 20.
 # 
 ######################################################################
 END
@@ -1974,7 +2013,7 @@ END
   #Make a backup copy of the apache config file
   copy($httpd_conf,$dir."/".$file.".bak")
     or die "Couldn't copy $httpd_conf to ".$dir.$file.".bak: $!\n";
-  print_and_log("Backed up $httpd_conf to ".$dir.$file.".bak");
+  print_and_log("Backed up $httpd_conf to ".$dir.$file.".bak\n");
 
   #Open apache config file for reading 
   open(my $fh, '<',$httpd_conf)
@@ -2006,8 +2045,8 @@ END
   open($fh, '>',$httpd_conf)
     or die "Couldn't open $httpd_conf for writing: $!\n";
   print $fh $string;
-  print_and_log("Set prefork $clients_directive $max_clients in $httpd_conf");
-  print_and_log("Set prefork $request_directive $max_requests_per_child in $httpd_conf");
+  print_and_log("Set prefork $clients_directive $max_clients in $httpd_conf\n");
+  print_and_log("Set prefork $request_directive $max_requests_per_child in $httpd_conf\n");
   close($fh);
 }
 
@@ -2026,19 +2065,21 @@ sub configure_shell {
     #export WEBWORK_ROOT=/opt/webwork/webwork2
     
     my @users = ('root',$wwadmin);
-    @users = push(@users,$ENV{SUDO_USER}) if $ENV{SUDO_USER};
+
+    push(@users,$ENV{SUDO_USER}) if $ENV{SUDO_USER};
+    
     my @unique = do { my %seen; grep { !$seen{$_}++ } @users };
     foreach(@unique) {
-        #Remember that we used User::pwent which overrides the builtin pw* functions.
+        #Remember that we used User::pwent which overrides the builtin pw* functions. 
         my $pw  = getpwnam($_);
         my $dir = $pw->dir;
         if (-f "$dir/.bashrc") {
             copy("$dir/.bashrc","$dir/.bashrc.bak");
             open(my $bashrc,'>>',"$dir/.bashrc" ) or warn "Couldn't open $dir/.bashrc: $!";
             print $bashrc "export PATH=\$PATH:$WW_PREFIX/webwork2/bin\n";
-            print_and_log("Added 'export PATH=\$PATH:$WW_PREFIX/webwork2/bin' to $dir/.bashrc");
+            print_and_log("Added 'export PATH=\$PATH:$WW_PREFIX/webwork2/bin' to $dir/.bashrc\n");
             print $bashrc "export WEBWORK_ROOT=$WW_PREFIX/webwork2\n";
-            print_and_log("Added 'export WEBWORK_ROOT=$WW_PREFIX/webwork2' to $dir/.bashrc");
+            print_and_log("Added 'export WEBWORK_ROOT=$WW_PREFIX/webwork2' to $dir/.bashrc\n");
             close($bashrc);
         }
         $ENV{'WEBWORK_ROOT'}="$WW_PREFIX/webwork2";
@@ -2094,9 +2135,9 @@ sub install_chromatic {
 
   my $success = run_command($cmd);
   if ($success) {
-    print_and_log("Compiled $color_dot_c."); 
+    print_and_log("Compiled $color_dot_c.\n"); 
   } else {
-      print_and_log("Couldn't compile $color_dot_c.");
+      print_and_log("Couldn't compile $color_dot_c.\n");
   }
 }
 
@@ -2111,9 +2152,9 @@ sub restart_apache {
     my $cmd = [ $apache->{binary}, 'restart' ];
     my $success = run_command($cmd);;
     if ($success) {
-        print_and_log("Apache successfully restarted.");
+        print_and_log("Apache successfully restarted.\n");
     } else {
-        print_and_log("Could not restart apache.");
+        print_and_log("Could not restart apache.\n");
     }
 }
 
@@ -2391,10 +2432,10 @@ my $success = run_command($cmd);;
 
 if ($success) {
 
-    print_and_log("Added webwork's apache config file to apache.");
+    print_and_log("Added webwork's apache config file to apache.\n");
 
 } else {
-    print_and_log("Couldn't add webwork's apache config file to apache.");
+    print_and_log("Couldn't add webwork's apache config file to apache.\n");
 }
 
 edit_httpd_conf($apache);
@@ -2466,7 +2507,7 @@ EOF
                       "everything under it to $wwadmin:$wwadmin ".
                       "with permissions u+rwX,go+rwX\n");
     } else {
-        print_and_log("Couldn't change ownership of $WW_PREFIX.");
+        print_and_log("Couldn't change ownership of $WW_PREFIX.\n");
     }
 }
 
