@@ -45,7 +45,7 @@ my $binary_prerequisites = {
     
     preview_latex => 'preview-latex-style',
     texlive => 'texlive-latex-base',
-    texlive_recommended => 'textlive-latex-recommended',
+    texlive_recommended => 'texlive-latex-recommended',
 };
 
 sub get_binary_prerequisites {
@@ -95,7 +95,7 @@ my $perl_prerequisites = {
     'Iterator::Util' => 'CPAN',
     'JSON' => 'libjson-perl',
     'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
-    'Locale::Maketext::Simple' => 'liblocale-maketext-simple-perl',
+    'Locale::Maketext::Simple' => 'perl-modules',
     'LWP::Protocol::https' => 'liblwp-protocol-https-perl',
     'Mail::Sender' => 'libmail-sender-perl',
     'MIME::Base64' => 'libmime-tools-perl',
@@ -154,6 +154,12 @@ my $apacheLayout = {
 sub get_apacheLayout {
     return $apacheLayout;
 }
+
+# A command for updating the package sources
+sub update_sources {
+    run_command(['sed','-i','-e','s/^# deb \(.*\) partner/deb \1 partner/','/etc/apt/sources.list']);
+    run_command(['sed','-i','-e','s/^# deb-src \(.*\) partner/deb-src \1 partner/','/etc/apt/sources.list']);
+};
 
 # A command for updating the system
 sub update_packages {

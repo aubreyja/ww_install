@@ -13,15 +13,19 @@ use Term::UI;
 use Term::ReadLine;
 use File::Copy;
 
+use User::pwent;
+
+use IO::Handle qw();
+
 use IPC::Cmd qw(can_run run);
-use IPC::Run;
+$IPC::Cmd::USE_IPC_OPEN3 = 1;
 
 use Config;
 use CPAN;
 
 our @EXPORT = qw(
 print_and_log
-write_log
+writelog
 run_command
 get_existing_users
 get_existing_groups
@@ -60,31 +64,51 @@ use constant IPC_CMD_TIMEOUT =>
   6000;    #Sets maximum time system commands will be allowed to run
 use constant IPC_CMD_VERBOSE => 1;    #Controls whether all output of a command
                                       #should be printed to STDOUT/STDERR
+
+###########################################################
+#
+# Logging
+#
+###########################################################
+
+
+# Globals: filehandle LOG is global.
+my $LOG;
+if (!open($LOG,"> ../webwork_install.log")) {
+    die "Unable to open log file.\n";
+} else {
+    print $LOG 'This is ww_install.pl '.localtime."\n\n";
+}
+
 sub print_and_log {
   my $msg = shift;
+  print $LOG "$msg\n";
   print "$msg\n";
 }
 
 sub writelog {
   my $msg = shift;
-  print "$msg\n";
+  print $LOG "$msg\n";
 }
 
 sub run_command {
     my $cmd = shift; #should be an array reference
+
+    my $output;
     my (
         $success, $error_message, $full_buf,
         $stdout_buf, $stderr_buf
       )
       = run(
         command => $cmd,
+        buffer => \$output,
         verbose => IPC_CMD_VERBOSE,
         timeout => IPC_CMD_TIMEOUT
       );
       my $cmd_string = join(' ',@$cmd);
-      writelog("Running [".$cmd_string."]:\n");
-      writelog("STDOUT: ",@$stdout_buf) if @$stdout_buf;
-      writelog("STDERR: ",@$stderr_buf) if @$stderr_buf;
+      writelog("Running [".$cmd_string."]");
+      writelog("OUTPUT: ".$output) if defined($output);
+  
       if (!$success) {
         writelog($error_message) if $error_message;
         my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
@@ -188,6 +212,9 @@ sub get_reply {
     choices => $options->{choices},
     default => $options->{default},
   );
+  writelog($term->history_as_string());
+  Term::UI::History->flush();
+
   my $checked = { answer => $answer, status => 0};
   foreach my $checker (@{$options -> {checkers}}) {
     $checked = $checker->($checked->{answer});

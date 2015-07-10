@@ -10,7 +10,6 @@ use lib "$FindBin::Bin/../distros";
 use cpan_config;
 use Term::ReadPassword; 
 use Linux::Distribution qw(distribution_name distribution_version);
-use WeBWorK::Install::Utils qw(writelog print_and_log);
 
 #Core Perl Modules
 use Config;
@@ -41,8 +40,6 @@ use Term::ReadLine;
 use User::pwent;
 
 use IO::Handle qw();
-STDOUT->autoflush(1);
-STDERR->autoflush(1);
 
 use install_utils;
 
@@ -221,20 +218,6 @@ my @modulesList = qw(
 	YAML
 );
 
-
-###########################################################
-#
-# Logging
-#
-###########################################################
-
-# Globals: filehandle LOG is global.
-if (!open(LOG,">> ../webwork_install.log")) {
-    die "Unable to open log file.\n";
-} else {
-    print LOG 'This is ww_install.pl '.localtime."\n\n";
-}
-
 sub get_os {
     my $os;
     if ( $^O eq "darwin" ) {
@@ -283,6 +266,8 @@ sub get_os_package {
 
     eval "require $osPackage";
 
+    use strict;
+
     if ($@ =~ /Can't locate ${osPackage}/) {
         print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  The package you will have to create is ${osPackage} in the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.");
 	die "Couldn't load distro package: $@";
@@ -314,10 +299,15 @@ EOF
         prompt   => 'Ready to install prerequisites?',
         default  => 'y',
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
     die "Come back soon!" unless $ready;
 
+    print_and_log("Updating system sources.\n");
+    $osPackage->update_sources();
+  
     print_and_log("Updating system packages.\n");
-#    $osPackage->update_packages();
+    $osPackage->update_packages();
     
     my $binary_preqs = $osPackage->get_binary_prerequisites();
     my $perl_preqs = $osPackage->get_perl_prerequisites();
@@ -359,18 +349,21 @@ EOF
 ####################################################
 
 sub get_ready {
-
+    
     my $print_me = <<EOF;
 Welcome to the WeBWorK.  This installation script will ask you a few questions and then attempt to install 
 WeBWorK on your system. To complete the installation
-(a) You must be connected to the internet.
-(b) You must have administrative privliges on this machine, and
+(a) You must be connected to the internet, and 
+(b) You must have administrative privliges on this machine.
 EOF
     my $ready = $term->ask_yn(
         print_me => $print_me,
         prompt   => 'Ready to install WeBWorK?',
         default  => 'y',
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
+
     die "Come back soon!" unless $ready;
 }
 
@@ -402,6 +395,8 @@ EOF
 'Are you sure you\'re running the script with the privilges you\'ll need to complete the installation?',
             default => 'n',
         );
+	writelog($term->history_as_string()."\n");
+	Term::UI::History->flush();
     }
 }
 
@@ -442,7 +437,10 @@ END
 	    prompt => 'Disable SELinux?',
 	    default => 'y',
         ); 
-        my $confirmed = confirm_answer($disable);
+	writelog($term->history_as_string()."\n");
+	Term::UI::History->flush();
+	
+	my $confirmed = confirm_answer($disable);
         get_selinux() unless $confirmed->{status};
     }
     disable_selinux() if $disable;
@@ -527,6 +525,8 @@ END
         ],
         default => "Yes, let's do it",
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #has this been confirmed?
     $confirmed = confirm_answer($answer);
@@ -549,7 +549,10 @@ END
             prompt  => 'webwork admin username:',
             default => 'wwadmin',
         );
-        $confirmed = confirm_answer($ww_admin);
+	writelog($term->history_as_string()."\n");
+	Term::UI::History->flush();
+
+	$confirmed = confirm_answer($ww_admin);
         $exists = user_exists( $envir, $ww_admin );
         if ( $confirmed->{status} && $exists ) {
             return $ww_admin;
@@ -573,6 +576,9 @@ sub create_wwadmin_user {
         prompt   => "Please enter a username for the webwork admin user.",
         default  => "wwadmin",
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
+
     my $exists_already = user_exists( $envir, $wwadmin );
     if ($exists_already) {
         print_and_log("Sorry, that user already exists. Try again.");
@@ -584,17 +590,26 @@ sub create_wwadmin_user {
               "Please enter an initial password for the webwork admin user.",
             default => "wwadmin",
         );
-        my $wwadmin_shell = $term->get_reply(
+	writelog($term->history_as_string()."\n");
+	Term::UI::History->flush();
+
+	my $wwadmin_shell = $term->get_reply(
             prompt =>
               "Please enter a default shell for the webwork admin user.",
             default => $ENV{SHELL},
         );
-        my $confirm = $term->ask_yn(
+	writelog($term->history_as_string()."\n");
+	Term::UI::History->flush();
+
+	my $confirm = $term->ask_yn(
             prompt =>
 "Shall I create a webwork admin user with username $wwadmin, initial password"
               . " $wwadmin_pw and default shell $wwadmin_shell?",
             default => 'y',
         );
+	writelog($term->history_as_string()."\n");
+	Term::UI::History->flush();
+
         if ($confirm) {
 
    #useradd  -s /usr/bin/bash -c "WeBWorK Administrator" -p $wwadmin_pw $wwadmin
@@ -671,6 +686,8 @@ END
         ],
         default => "Yes, let's do it",
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #has this been confirmed?
     $confirmed = confirm_answer($answer);
@@ -693,7 +710,10 @@ END
             prompt  => 'webwork data group name: ',
             default => 'wwdata',
         );
-        $confirmed = confirm_answer($group);
+	writelog($term->history_as_string()."\n");
+	Term::UI::History->flush();
+
+	$confirmed = confirm_answer($group);
         $exists = group_exists( $envir, $group );
         if ( $confirmed->{status} && $exists ) {
             return $group;
@@ -718,6 +738,8 @@ sub create_wwdata_group {
         prompt   => "What would you like to call the group?",
         default  => "wwdata",
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #does this group exist?
     my $already_exists = group_exists( $envir, $group );
@@ -1091,7 +1113,9 @@ END
         prompt   => 'Where would you like to download webwork2 from?',
         default => $default,    #constant defined at top
     );
-
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
+ 
     #has this been confirmed?
     my $confirmed = 0;
     $confirmed = confirm_answer($repo);
@@ -1111,6 +1135,8 @@ sub get_pg_repo {
         prompt => 'Where would you like to download pg from?',
         default => $default,    #constant defined at top
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #has this been confirmed?
     my $confirmed = 0;
@@ -1130,6 +1156,8 @@ sub get_opl_repo {
         prompt  => 'Where would you like to download the OPL from?',
         default => $default,
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #has this been confirmed?
     my $confirmed = 0;
@@ -1156,6 +1184,9 @@ sub is_absolute {
        prompt => "How do you want me to fix this? ",
        choices => [ "Go back", "I really meant $abs_dir", "Quit" ],
      );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
+
    if( $fix eq "Go back") {
      return { answer => $dir, status => 0 };
    } elsif( $fix eq "I really meant $abs_dir" ) {
@@ -1168,24 +1199,25 @@ sub is_absolute {
 }
 
 sub check_path {
- chomp(my $given = shift);
- my $exists = -e $given;
- return { answer => $given, status=> 1} unless $exists;
-
- my $reply = $term->get_reply( 
-      print_me => "Error! You gave me a path which already exists on the filesystem.",       
-      choices => ['Enter new location',"Delete existing $given and use that location","Quit"],
-      prompt => 'How would you like to proceed?',
-      default => 'Enter new location',
-    ); 
-
- if($reply eq 'Enter new location') {
-   return { answer=> $given, status => 0 };
- } elsif($reply eq "Delete existing $given and use that location") {
-   return { answer=> $given, status => 1 };
- } elsif($reply eq "Quit") {
-   die "Quitting..."
- }
+    chomp(my $given = shift);
+    my $exists = -e $given;
+    return { answer => $given, status=> 1} unless $exists;
+    
+    my $reply = $term->get_reply( 
+	print_me => "Error! You gave me a path which already exists on the filesystem.",       
+	choices => ['Enter new location',"Delete existing $given and use that location","Quit"],
+	prompt => 'How would you like to proceed?',
+	default => 'Enter new location',
+	); 
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
+    if($reply eq 'Enter new location') {
+	return { answer=> $given, status => 0 };
+    } elsif($reply eq "Delete existing $given and use that location") {
+	return { answer=> $given, status => 1 };
+    } elsif($reply eq "Quit") {
+	die "Quitting..."
+    }
 }
 
 sub get_WW_PREFIX {
@@ -1241,6 +1273,8 @@ END
         prompt   => 'Server root url:',
         default  => $default,
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
@@ -1280,6 +1314,8 @@ END
         prompt   => $prompt,
         default  => $default,
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
@@ -1312,6 +1348,9 @@ END
         default  => $default,
     );
 
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
+
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
     if ($confirmed->{status}) {
@@ -1339,6 +1378,8 @@ END
         prompt   => $prompt,
         default  => $default,
     );
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
 
     #has this been confirmed?
     my $confirmed = confirm_answer($answer);
@@ -1455,12 +1496,15 @@ END
         prompt => $prompt,
         default => 'y',
       );
-      my $confirmed = confirm_answer($engine);
-      if($confirmed->{answer} && $confirmed->{status}) {
+    writelog($term->history_as_string()."\n");
+    Term::UI::History->flush();
+    
+    my $confirmed = confirm_answer($engine);
+    if($confirmed->{answer} && $confirmed->{status}) {
         change_storage_engine('/etc/mysql/my.cnf'); #this should be searched for
-      } else {
+    } else {
         print_and_log("OK. We won't modify MySQL's default storage engine");
-      }
+    }
 }
 # Is there an existing webwork db or would you like me to create one?
 

@@ -54,6 +54,11 @@ sub prepreq_hook {
 
 };
 
+# A command for updating the package sources
+sub update_sources {
+
+};
+
 # A command for updating the system
 sub update_packages {
 
