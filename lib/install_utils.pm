@@ -2,6 +2,7 @@ package install_utils;
 
 use strict;
 use warnings;
+use Exporter 'import';
 
 use FindBin;
 use lib "$FindBin::Bin/../lib";
@@ -13,9 +14,24 @@ use Term::ReadLine;
 use File::Copy;
 
 use IPC::Cmd qw(can_run run);
+use IPC::Run;
 
 use Config;
 use CPAN;
+
+our @EXPORT = qw(
+print_and_log
+write_log
+run_command
+get_existing_users
+get_existing_groups
+user_exists
+group_exists
+backup_file
+slurp_file
+get_reply
+confirm_answer
+);
 
 ###############################################################################################
 # Create a new Term::Readline object for interactivity
@@ -73,7 +89,7 @@ sub run_command {
         writelog($error_message) if $error_message;
         my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
             "We have logged the error message, if any. We suggest that you exit now and ".
-            "report the error at https://github.com/aubreyja/ww_install ".
+            "report the error at https://github.com/openwebwork/ww_install ".
             "If you are certain the error is harmless, then you may continue the installation ".
             "at your own risk.";
         my $choices = ["Continue the installation", "Exit"];

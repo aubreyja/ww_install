@@ -7,29 +7,28 @@ use install_utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
-$ww_versions = [];
+my $ww_versions = [];
 
 sub get_ww_versions {
-
     return $ww_versions;
 }
 
 # A list of packages for various binaries that we need. 
-$binary_prerequisites = {};    
+my $binary_prerequisites = {};    
 
 sub get_binary_prerequisites {
     return $binary_prerequisites;
 }
 
 # A list of perl modules that we need
-$perl_prerequisites = {};
+my $perl_prerequisites = {};
 
 sub get_perl_prerequisites {
     return $perl_prerequisites;
 }
 
 # A hash containing information about the apache webserver
-$apacheLayout = {
+my $apacheLayout = {
     MPMDir       => '',
     MPMConfFile  => '',
     ServerRoot   => '',
@@ -45,7 +44,7 @@ $apacheLayout = {
     Group        => '',
 };
 
-sub get_apacheLayout = {
+sub get_apacheLayout {
     return $apacheLayout;
 }
 

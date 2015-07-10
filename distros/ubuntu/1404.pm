@@ -1,3 +1,4 @@
+# Package for distribution ubuntu version 14.04
 package ubuntu::1404;
 use base qw(blankdistro);
 
@@ -8,10 +9,14 @@ use install_utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
-$ww_versions = ['develop'];
+my $ww_versions = ['develop'];
+
+sub get_ww_versions {
+    return $ww_versions;
+}
 
 # A list of packages for various binaries that we need. 
-our $binary_prerequisites = {
+my $binary_prerequisites = {
     mkdir => 'coreutils',
     mv => 'coreutils',
     gcc => 'gcc',
@@ -43,8 +48,12 @@ our $binary_prerequisites = {
     texlive_recommended => 'textlive-latex-recommended',
 };
 
+sub get_binary_prerequisites {
+    return $binary_prerequisites;
+}
+
 # A list of perl modules that we need
-our $perl_prerequisites = {
+my $perl_prerequisites = {
     'Apache2::Request' => 'libapache2-request-perl',
     'Apache2::Cookie' => 'libapache2-request-perl',
     'Apache2::ServerRec' => 'libapache2-mod-perl2',
@@ -121,8 +130,12 @@ our $perl_prerequisites = {
     'YAML' => 'libyaml-perl'
 };
 
+sub get_perl_prerequisites {
+    return $perl_prerequisites;
+}
+
 # A hash containing information about the apache webserver
-our $apacheLayout = {
+my $apacheLayout = {
     MPMDir       => '',
     MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
     ServerRoot   => '/etc/apache2',
@@ -138,6 +151,10 @@ our $apacheLayout = {
     Group        => 'www-data',
 };
 
+sub get_apacheLayout {
+    return $apacheLayout;
+}
+
 # A command for updating the system
 sub update_packages {
     run_command(['apt-get','-y','update']);
@@ -146,12 +163,14 @@ sub update_packages {
     
 # A command for installing a package given a name
 sub package_install {
+    my $self = shift;
     my @packages = @_;
     run_command(['apt-get','install','-y','--allow-unauthenticated',@packages]);
 };
 
 # A command for installing a cpan package given a name
 sub CPAN_install {
+    my $self = shift;
     my @modules = @_;
     run_command(['cpanm',@modules]);
 };

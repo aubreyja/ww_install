@@ -46,8 +46,6 @@ STDERR->autoflush(1);
 
 use install_utils;
 
-use ldldldl;
-
 #non-core
 #use DateTime::TimeZone; 
 
@@ -57,6 +55,11 @@ use ldldldl;
 ######################################################################
 $Term::UI::VERBOSE = 0;
 my $term = Term::ReadLine->new('');
+
+use constant IPC_CMD_TIMEOUT =>
+  6000;    #Sets maximum time system commands will be allowed to run
+use constant IPC_CMD_VERBOSE => 1;    #Controls whether all output of a command
+                                      #should be printed to STDOUT/STDERR
 
 ##################################################################
 #
@@ -274,21 +277,19 @@ sub get_os {
 
 sub get_os_package {
     my $os = shift;
-    my $osPackage = $os->{package};
+    my $osPackage = $os->{osPackage};
     
     no strict 'refs';
 
-    eval {
-	require "$osPackage";
-    }
+    eval "require $osPackage";
 
-    if ($@ =~ /Can't locate ${osPackage}.pm/) {
-        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.");
-	die "Couldn't load distro package";
+    if ($@ =~ /Can't locate ${osPackage}/) {
+        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  The package you will have to create is ${osPackage} in the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.");
+	die "Couldn't load distro package: $@";
     } elsif ($@) {
-	die "Couldn't load distro package";
+	die "Couldn't load distro package: $@";
     }
-
+    
     return;
 
 }
@@ -302,7 +303,7 @@ sub get_os_package {
 
 sub install_prerequisites {
     my $options = shift;
-    my $osPackage = $options->{os};
+    my $osPackage = $options->{osPackage};
 
     my $print_me = <<EOF;
 We will start by installing the prerequisite packages and perl modules on your machine.  This process can take some time and you may ocassionally be asked a question.  The default answer is almost certainly correct.  
@@ -316,7 +317,7 @@ EOF
     die "Come back soon!" unless $ready;
 
     print_and_log("Updating system packages.\n");
-    $osPackage->update_packages();
+#    $osPackage->update_packages();
     
     my $binary_preqs = $osPackage->get_binary_prerequisites();
     my $perl_preqs = $osPackage->get_perl_prerequisites();
@@ -329,9 +330,9 @@ EOF
 
     foreach my $key (keys %$perl_preqs) {
 	if ($perl_preqs->{$key} eq 'CPAN') {
-	    push @cpanModules, $perl_preqs->{$key};
+	    push @cpanModules, $key;
 	} else {
-	    push @packages, $binary_preqs->{$key};
+	    push @packages, $perl_preqs->{$key};
 	}
     }
     
@@ -364,12 +365,6 @@ Welcome to the WeBWorK.  This installation script will ask you a few questions a
 WeBWorK on your system. To complete the installation
 (a) You must be connected to the internet.
 (b) You must have administrative privliges on this machine, and
-(c) The mysql server must be running, and you should have already gone through the process of setting up the
-root mysql account and securing your mysql server.  If you haven't done this or aren't sure if it has been done
-then exit this script and do
-'sudo service mysqld start' to start mysql, and then
-'mysql_secure_installation' to secure the server and set the root password.
-Once you know the root mysql password then you can come back to this script and install webwork.
 EOF
     my $ready = $term->ask_yn(
         print_me => $print_me,
@@ -2134,7 +2129,7 @@ my %siteDefaults;
 my $osPackage = $envir->{os}->{osPackage};
 
 # get os package
-get_os_package($os);
+get_os_package($envir->{os});
 
 # run hooked code
 $osPackage->prepreq_hook();
@@ -2149,7 +2144,7 @@ $osPackage->postpreq_hook();
 my $apache = check_apache( $envir );
 
 #Put the information from the layout in the apache object;
-my $layout = $osPackage->get_apacheLayout():
+my $layout = $osPackage->get_apacheLayout();
 
 foreach my $key (keys %$layout) {
     $apache->{$key} = $layout->{$key};
