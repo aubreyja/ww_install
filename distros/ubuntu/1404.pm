@@ -190,7 +190,7 @@ sub postpreq_hook {
 # A command for checking if the required services are running
 # and configuring them
 sub configure_services {
-    run_command(['a2enmod','apreq']);
+    run_command(['a2enmod','apreq2']);
     run_command(['a2enmod','fcgid']);
     run_command(['apache2ctl', 'restart']);
 

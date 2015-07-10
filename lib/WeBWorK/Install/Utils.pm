@@ -1,4 +1,4 @@
-package install_utils;
+package WeBWorK::Install::Utils;
 
 use strict;
 use warnings;
