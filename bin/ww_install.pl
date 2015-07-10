@@ -370,6 +370,8 @@ EOF
 		  join(', ',@packages)."\n");
     $osPackage->package_install(@packages);
 
+    $osPackage->midpreq_hook();
+
     print_and_log('Installing the following CPAN modules: '.
 		  join(', ',@cpanModules)."\n");
     $osPackage->CPAN_install(@cpanModules);
@@ -1074,8 +1076,10 @@ sub check_modules {
             $file .= ".pm";
             if ( $@ =~ /Can't locate $file in \@INC/ ) {
                 print_and_log("** $module not found in \@INC\n");
+		die("Missing module.  Sorry!");
             } else {
                 print_and_log("** $module found, but failed to load: $@\n");
+		die("Missing module.  Sorry!");
             }
         } else {
             print_and_log("   $module found and loaded\n");

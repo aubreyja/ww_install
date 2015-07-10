@@ -160,6 +160,10 @@ sub prepreq_hook {
 
 };
 
+sub midpreq_hook {
+ 
+};
+
 # A command for updating the package sources
 sub update_sources {
 

@@ -56,8 +56,9 @@ my $perl_prerequisites = {
     'Test::Requires' => 'perl-Test-Requires',
     'Test::TCP' => 'perl-Test-TCP',
     'HTTP::Tiny' => 'perl-HTTP-Tiny', 
-    'Apache2::Request' => 'lipapreq2',
-    'Apache2::Cookie' => 'libapreq2',
+    'Plack'      => 'perl-Plack',
+    'Apache2::Request' => 'perl-lipapreq2',
+    'Apache2::Cookie' => 'perl-libapreq2',
     'Apache2::ServerRec' => 'mod_perl',
     'Apache2::ServerUtil' => 'mod_perl',
     'Array::Utils' => 'CPAN',
@@ -142,7 +143,7 @@ sub get_perl_prerequisites {
 # A hash containing information about the apache webserver
 my $apacheLayout = {
     MPMDir       => '',
-    MPMConfFile  => '/etc/httpd/conf.modules.d/01-mpm-prefork.conf',
+    MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
     ServerRoot   => '/etc/httpd',
     DocumentRoot => '/var/www/html',
     ConfigFile   => '/etc/httpd/conf/httpd.conf',
@@ -164,6 +165,10 @@ sub get_apacheLayout {
 # before installing prerequisites
 sub prepreq_hook {
 
+};
+
+sub midpreq_hook {
+    run_command(['cpan','Moo']); #moo needs tob e done with cpan not cpanm
 };
 
 # A command for updating the package sources
