@@ -2243,7 +2243,7 @@ sub write_site_conf {
         } elsif (/^\$database_username/) {
             print $out "\$database_username = \"$database_username\";\n";
         } elsif (/^\$database_password/) {
-            print $out "\$database_password = \"$database_password\";\n";
+            print $out "\$database_password = \'$database_password\';\n";
         } elsif (/^\$externalPrograms{(\w+)}/) {
             next if ( $1 =~ /tth/ );
             print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
