@@ -6,7 +6,7 @@ INTERACTIVE=''
 MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
-BRANCH=master
+BRANCH=prereqs_refactor
 WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
@@ -216,11 +216,11 @@ rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
 mv $TMPDIR/webwork_install.log .
 
-if [ $PREREQUISITES -eq 1 ]; then
-  echo "Installing prerequisites..."
-  source ./bin/install_prerequisites.sh 
-  wait
-fi
+#if [ $PREREQUISITES -eq 1 ]; then
+#  echo "Installing prerequisites..."
+#  source ./bin/install_prerequisites.sh 
+#  wait
+#fi
 
 perl ./bin/ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW
 wait
