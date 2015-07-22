@@ -44,6 +44,8 @@ use IO::Handle qw();
 STDOUT->autoflush(1);
 STDERR->autoflush(1);
 
+use install_utils;
+
 #non-core
 #use DateTime::TimeZone; 
 
@@ -80,8 +82,8 @@ use constant WWDB_USER => 'webworkWrite';
 #################################################################
 #
 # Prerequisites - keep in sync with webwork2/bin/check_modules.pl
-#		- right now we die if these aren't present, 
-#                 but later we'll offer to install missing prereqs
+#		- These lists are the masters which are used to check
+#               - the packages installed by the distro files.  
 #
 ################################################################
 
@@ -97,6 +99,7 @@ my @applicationsList = qw(
   mkdir
   tar
   gzip
+  curl
   latex
   pdflatex
   dvipng
@@ -137,67 +140,76 @@ my @apache2SharedModules  = qw(
 );
 
 my @modulesList = qw(
-  Benchmark
-  Carp
-  CGI
-  Data::Dumper
-  Data::UUID
-  Date::Format
-  Date::Parse
-  DateTime
-  DBD::mysql
-  DBI
-  Digest::MD5
-  Email::Address
-  Errno
-  Exception::Class
-  File::Copy
-  File::Find
-  File::Path
-  File::Spec
-  File::stat
-  File::Temp
-  GD
-  Getopt::Long
-  Getopt::Std
-  HTML::Entities
-  HTML::Scrubber
-  HTML::Tagset
-  HTML::Template
-  IO::File
-  Iterator
-  Iterator::Util
-  JSON
-  Locale::Maketext::Lexicon
-  Locale::Maketext::Simple
-  Mail::Sender
-  MIME::Base64
-  Net::IP
-  Net::LDAPS
-  Net::OAuth
-  Net::SMTP
-  Opcode
-  PadWalker
-  PHP::Serialization
-  Pod::Usage
-  Pod::WSDL
-  Safe
-  Scalar::Util
-  SOAP::Lite
-  Socket
-  SQL::Abstract
-  String::ShellQuote
-  Text::CSV
-  Text::Wrap
-  Tie::IxHash
-  Time::HiRes
-  Time::Zone
-  URI::Escape
-  UUID::Tiny
-  XML::Parser
-  XML::Parser::EasyTree
-  XML::Writer
-  XMLRPC::Lite
+	Array::Utils
+	Benchmark
+	Carp
+	CGI
+	Class::Accessor
+	Dancer
+	Dancer::Plugin::Database
+	Data::Dumper
+	Data::UUID 
+	Date::Format
+	Date::Parse
+	DateTime
+	DBD::mysql
+	DBI
+	Digest::MD5
+	Email::Address
+	Errno
+	Exception::Class
+	File::Copy
+	File::Find
+	File::Find::Rule
+	File::Path
+	File::Spec
+	File::stat
+	File::Temp
+	GD
+	Getopt::Long
+	Getopt::Std
+	HTML::Entities
+	HTML::Scrubber
+	HTML::Tagset
+	HTML::Template
+	IO::File
+	Iterator
+	Iterator::Util
+	JSON
+	Locale::Maketext::Lexicon
+	Locale::Maketext::Simple
+        LWP::Protocol::https
+	Mail::Sender
+	MIME::Base64
+	Net::IP
+	Net::LDAPS
+	Net::OAuth
+	Net::SMTP
+	Opcode
+	PadWalker
+	Path::Class
+	PHP::Serialization
+	Pod::Usage
+	Pod::WSDL
+	Safe
+	Scalar::Util
+	SOAP::Lite 
+	Socket
+	SQL::Abstract
+	String::ShellQuote
+	Template
+	Text::CSV
+	Text::Wrap
+	Tie::IxHash
+	Time::HiRes
+	Time::Zone
+	URI::Escape
+	UUID::Tiny
+	XML::Parser
+	XML::Parser::EasyTree
+	XML::Writer
+	XMLRPC::Lite
+	YAML
 );
 
 
@@ -213,266 +225,6 @@ if (!open(LOG,">> ../webwork_install.log")) {
 } else {
     print LOG 'This is ww_install.pl '.localtime."\n\n";
 }
-
-
-######################################################################
-#
-# Constants that control behavior IPC::Cmd::run
-#
-######################################################################
-
-use constant IPC_CMD_TIMEOUT =>
-  6000;    #Sets maximum time system commands will be allowed to run
-use constant IPC_CMD_VERBOSE => 1;    #Controls whether all output of a command
-                                      #should be printed to STDOUT/STDERR
-
-sub run_command {
-    my $cmd = shift; #should be an array reference
-    my (
-        $success, $error_message, $full_buf,
-        $stdout_buf, $stderr_buf
-      )
-      = run(
-        command => $cmd,
-        verbose => IPC_CMD_VERBOSE,
-        timeout => IPC_CMD_TIMEOUT
-      );
-      my $cmd_string = join(' ',@$cmd);
-      writelog("Running [".$cmd_string."]:\n");
-      writelog("STDOUT: ",@$stdout_buf) if @$stdout_buf;
-      writelog("STDERR: ",@$stderr_buf) if @$stderr_buf;
-      if (!$success) {
-        writelog($error_message) if $error_message;
-        my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
-            "We have logged the error message, if any. We suggest that you exit now and ".
-            "report the error at https://github.com/aubreyja/ww_install ".
-            "If you are certain the error is harmless, then you may continue the installation ".
-            "at your own risk.";
-        my $choices = ["Continue the installation", "Exit"];
-        my $prompt = "What would you like to do about this?";
-        my $default = "Exit";
-        my $continue = get_reply({
-            print_me=>$print_me,
-            prompt=>$prompt,
-            default=>$default,
-            });
-        if ($continue eq "Exit") {
-            print_and_log("Bye. Please report this error asap.");
-            die "Exiting..."
-        } else {
-            print_and_log("You chose to continue in spite of an error. There is a very good".
-                          " chance this will end badly.\n");
-        }
-      } else {
-        return 1;
-      }
-}
-
-######################################################################
-#
-# Platform specific data - these data structures are to help with 
-# identifying our platform and eventually will be used for specifying 
-# prerequisite packages, likely locations of binaries we can't find
-# with can_run(), and doing other platform specific processing. Such as
-# (1) Disabling SELinux on RH/Fedora
-# Others....
-######################################################################
-
-
-#Apache 2.2 locations for various operating systems
-#From http://wiki.apache.org/httpd/DistrosDefaultLayout
-#Note that the above url may not contain current information
-#double checking it with the docs for your favorite distro would
-#be helpful
-
-my $apache22Layouts = {
-    httpd22 => {    #Apache 2.2 default layout
-        MPMDir       => 'server/mpm/prefork',
-        ServerRoot   => '/usr/local/apache2',
-        DocumentRoot => '/usr/local/apache2/htdocs',
-        ConfigFile   => '/usr/local/apache2/conf/httpd.conf',
-        OtherConfig  => '/usr/local/apache2/conf/extra',
-        SSLConfig    => '/usr/local/apache2/conf/extra/httpd-ssl.conf',
-        ErrorLog     => '/usr/local/apache2/logs/error_log',
-        AccessLog    => '/usr/local/apache2/logs/access_log',
-        Binary          => '/usr/local/apache2/bin/apachectl',
-        User         => '',
-        Group        => '',
-    },
-    debian => {    #Checked 7.1 (mostly)
-        MPMDir       => 'server/mpm/prefork',
-        ServerRoot   => '/etc/apache2',
-        DocumentRoot => '/var/www',
-        ConfigFile   => '/etc/apache2/apache2.conf',
-        OtherConfig  => '/etc/apache2/conf.d',
-        SSLConfig    => '',
-        Modules      => '/etc/apache2/mods_enabled',
-        ErrorLog     => '/var/log/apache2/error.log',
-        AccessLog    => '/var/log/access.log',
-        Binary       => '/usr/sbin/apache2ctl',
-        User         => 'www-data',
-        Group        => 'www-data',
-    },
-    ubuntu => {    #Checked 12.04
-        MPMDir       => 'server/mpm/prefork',
-        ServerRoot   => '/etc/apache2',
-        DocumentRoot => '/var/www',
-        ConfigFile   => '/etc/apache2/apache2.conf',
-        OtherConfig  => '/etc/apache2/conf.d',
-        SSLConfig    => '',
-        Modules      => '/etc/apache2/mods_enabled',
-        ErrorLog     => '/var/log/apache2/error.log',
-        AccessLog    => '/var/log/access.log',
-        Binary       => '/usr/sbin/apache2ctl',
-        User         => 'www-data',
-        Group        => 'www-data',
-    },
-    rhel => {    
-        MPMDir       => 'server/mpm/prefork',
-        ServerRoot   => '/etc/httpd',
-        DocumentRoot => '/var/www/html',
-        ConfigFile   => '/etc/httpd/conf/httpd.conf',
-        OtherConfig  => '/etc/httpd/conf.d',
-        SSLConfig    => '',
-        Modules      => '/etc/httpd/modules',           #symlink
-        ErrorLog     => '/var/log/httpd/error_log',
-        AccessLog    => '/var/log/httpd/access_log',
-        Binary       => '/usr/sbin/apachectl',
-        User         => 'apache',
-        Group        => 'apache',
-    },
-    centos => {    
-        MPMDir       => 'server/mpm/prefork',
-        ServerRoot   => '/etc/httpd',
-        DocumentRoot => '/var/www/html',
-        ConfigFile   => '/etc/httpd/conf/httpd.conf',
-        OtherConfig  => '/etc/httpd/conf.d',
-        SSLConfig    => '',
-        Modules      => '/etc/httpd/modules',           #symlink
-        ErrorLog     => '/var/log/httpd/error_log',
-        AccessLog    => '/var/log/httpd/access_log',
-        Binary       => '/usr/sbin/apachectl',
-        User         => 'apache',
-        Group        => 'apache',
-    },
-    freebsd => {                                        #Checked on freebsd 8.2
-        MPMDir       => '',
-        ServerRoot   => '/usr/local',
-        DocumentRoot => '/usr/local/www/apache22/data',
-        ConfigFile   => '/usr/local/etc/apache22/httpd.conf',
-        OtherConfig  => '/usr/local/etc/apache22/extra',
-        SSLConfig    => '/usr/local/etc/apache22/extra/httpd-ssl.conf',
-        Modules      => '',
-        ErrorLog     => '/var/log/httpd-error.log',
-        AccessLog    => '/var/log/httpd-access.log',
-        Binary       => '/usr/sbin/apachectl',
-        User         => 'www',
-        Group        => 'www',
-    },
-    osx => {    #Checked on OSX 10.7
-        MPMDir       => 'server/mpm/prefork',
-        ServerRoot   => '/usr',
-        DocumentRoot => '/Library/WebServer/Documents',
-        ConfigFile   => '/etc/apache2/httpd.conf',
-        OtherConfig  => '/etc/apache2/extra',
-        SSLConfig    => '/etc/apache2/extra/httpd-ssl.conf',
-        Modules      => '/usr/libexec/apache2',
-        ErrorLog     => '/var/log/apache2/error_log',
-        AccessLog    => '/var/log/apache2/access_log',
-        Binary       => '/usr/sbin/apachectl',
-        User         => '_www',
-        Group        => '_www',
-    },
-    suse => {
-        MPMDir       => '',
-        ServerRoot   => '/srv/www',
-        DocumentRoot => '/srv/www/htdocs',
-        ConfigFile   => '/etc/apache2/httpd.conf',
-        OtherConfig  => '/etc/sysconfig/apache2',
-        SSLConfig    => '/etc/apache2/ssl-global.conf',
-        ErrorLog     => '/var/log/apache2/httpd-error.log',
-        AccessLog    => '/var/log/apache2/httpd-access.log',
-        Binary       => '/usr/sbin/apachectl',
-        User         => 'wwwrun',
-        Group        => 'www',
-    },
-};
-
-my $apache24Layouts = {
-    httpd24 => {    #Apache 2.4 default layout
-        MPMDir       => '',
-        ServerRoot   => '/usr/local/apache2',
-        DocumentRoot => '/usr/local/apache2/htdocs',
-        ConfigFile   => '/usr/local/apache2/conf/httpd.conf',
-        OtherConfig  => '/usr/local/apache2/conf/extra',
-        SSLConfig    => '/usr/local/apache2/conf/extra/httpd-ssl.conf',
-        ErrorLog     => '/usr/local/apache2/logs/error_log',
-        AccessLog    => '/usr/local/apache2/logs/access_log',
-        Binary          => '/usr/local/apache2/bin/apachectl',
-        User         => '',
-        Group        => '',
-    },
-    debian => {    #Checked Jessie
-        MPMDir       => '',
-	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
-        ServerRoot   => '/etc/apache2',
-        DocumentRoot => '/var/www',
-        ConfigFile   => '/etc/apache2/apache2.conf',
-        OtherConfig  => '/etc/apache2/conf-enabled',
-        SSLConfig    => '',
-        Modules      => '/etc/apache2/mods-enabled',
-        ErrorLog     => '/var/log/apache2/error.log',
-        AccessLog    => '/var/log/apache2/access.log',
-        Binary       => '/usr/sbin/apache2ctl',
-        User         => 'www-data',
-        Group        => 'www-data',
-    },
-    ubuntu => {    #Checked 13.10
-        MPMDir       => '',
-	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
-        ServerRoot   => '/etc/apache2',
-        DocumentRoot => '/var/www',
-        ConfigFile   => '/etc/apache2/apache2.conf',
-        OtherConfig  => '/etc/apache2/conf-enabled',
-        SSLConfig    => '',
-        Modules      => '/etc/apache2/mods-enabled',
-        ErrorLog     => '/var/log/apache2/error.log',
-        AccessLog    => '/var/log/apache2/access.log',
-        Binary       => '/usr/sbin/apache2ctl',
-        User         => 'www-data',
-        Group        => 'www-data',
-    },
-    centos => {    #Checked CentOS 7
-        MPMDir       => 'server/mpm/prefork',
-      	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
-        ServerRoot   => '/etc/httpd',
-        DocumentRoot => '/var/www/html',
-        ConfigFile   => '/etc/httpd/conf/httpd.conf',
-        OtherConfig  => '/etc/httpd/conf.d',
-        SSLConfig    => '',
-        Modules      => '/etc/httpd/modules',           #symlink
-        ErrorLog     => '/var/log/httpd/error_log',
-        AccessLog    => '/var/log/httpd/access_log',
-        Binary       => '/usr/sbin/apachectl',
-        User         => 'apache',
-        Group        => 'apache',
-    },
-    fedora => {
-	MPMDir       => '',
-	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
-        ServerRoot   => '/etc/httpd',
-        DocumentRoot => '/var/www/html',
-        ConfigFile   => '/etc/httpd/conf/httpd.conf',
-        OtherConfig  => '/etc/httpd/conf.d',
-        SSLConfig    => '',
-        Modules      => '/etc/httpd/modules',           #symlink
-        ErrorLog     => '/var/log/httpd/error_log',
-        AccessLog    => '/var/log/httpd/access_log',
-        Binary       => '/usr/sbin/apachectl',
-        User         => 'apache',
-        Group        => 'apache',
-    },
-};
 
 sub get_os {
     my $os;
@@ -504,125 +256,14 @@ sub get_os {
         $os->{name}    = distribution_name();
         $os->{version} = distribution_version();
         chomp( $os->{arch} = `uname -m` );
-        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware. "
-          . "This script mostly finds the information it needs at run time. But, there are a few "
-          . "places where we have hard coded OS specific details into data structures built into the "
-          . "script. We don't have anything for your OS. The script will very likely still work. Either "
-          . "way, it would be very helpful if you could send a report to webwork\@maa.org. We can help you "
-          . "get it working if it doesn't work, and if it does we would like to add it to the list of supported "
-          . "systems.");
+        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware. This script is not set up to support your operating system.  Configuring the script for new operating system isnt too difficult.  It would be very helpful if you could send a report to webwork\@maa.org. We can help you get it working if it doesn't work, and if it does we would like to add it to the list of supported systems.");
     }
+
+    #Package name is distro::version with any dots removed from version. 
+    $os->{package} = $os->{name}.'::'.$os->{version};
+    $os->{package} =~ s/\.//g;
+    
     return $os;
-}
-
-sub get_existing_users {
-    my $envir       = shift;
-    my $passwd_file = $envir->{passwd_file};
-    my $users;
-    open( my $in, '<', $passwd_file );
-    while (<$in>) {
-        push @$users, ( split( ':', $_ ) )[0];
-    }
-    close($in);
-    return $users;
-}
-
-sub get_existing_groups {
-    my $envir      = shift;
-    my $group_file = $envir->{group_file};
-    my $groups;
-    open( my $in, '<', $group_file );
-    while (<$in>) {
-        push @$groups, ( split( ':', $_ ) )[0];
-    }
-    return $groups;
-}
-
-sub user_exists {
-    my ( $envir, $user ) = @_;
-    my %users = map { $_ => 1 } @{ $envir->{existing_users} };
-    return 1 if $users{$user};
-}
-
-sub group_exists {
-    my ( $envir, $group ) = @_;
-    my %groups = map { $_ => 1 } @{ $envir->{existing_groups} };
-    return 1 if $groups{$group};
-}
-
-sub backup_file {
-  my $fullpath = $_;
-  my (undef,$dir,$file) = File::Spec->splitpath($fullpath);
-  copy($fullpath,$dir."/".$file.".bak");
-  #add error handling...
-  #add success reporting
-}
-
-sub slurp_file {
-  my $fullpath = shift;
-  open(my $fh,'<',$fullpath) or print_and_log("Couldn't find $fullpath: $!");
-  return unless $fh;
-  my $string = do { local($/); <$fh> };
-  close($fh);
-  return $string;
-}
-#####################################################################
-#
-# Script Util Subroutines:  The script is based on Term::Readline 
-# to interact with user
-#
-######################################################################
-sub get_reply {
-  my $defaults = {
-   print_me => '',
-   prompt => '',
-   choices => [],
-   default => '',
-   checkers => [\&confirm_answer],
-  }; 
-  my $options = shift;
-  foreach(keys %$defaults) {
-    $options->{$_} = $options->{$_} // $defaults->{$_};
-  }
-
-  my $answer = $term->get_reply(
-    print_me => $options->{print_me},
-    prompt => $options->{prompt},
-    choices => $options->{choices},
-    default => $options->{default},
-  );
-  my $checked = { answer => $answer, status => 0};
-  foreach my $checker (@{$options -> {checkers}}) {
-    $checked = $checker->($checked->{answer});
-    last unless $checked->{status};
-  }
-  $checked->{answer} = get_reply({print_me=> $options->{print_me},
-      prompt => $options->{prompt},
-      choices => $options->{choices},
-      default => $options->{default},
-      checkers =>$options->{checkers}}) unless $checked->{status}; 
-  return $checked->{answer};
-}
-
-
-#For confirming answers
-sub confirm_answer {
-    my $answer  = shift;
-    print "Ok, you entered: $answer. Please confirm.";
-
-    my $confirm = $term->get_reply(
-        print_me => "Ok, you entered: $answer. Please confirm.",
-        prompt   => "Well? ",
-        choices  => [ "Looks good.", "Change my answer.", "Quit." ],
-        default  => "Looks good."
-    );
-    if ( $confirm eq "Quit." ) {
-        die "Exiting...";
-    } elsif ( $confirm eq "Change my answer." ) {
-        return { answer => $answer, status => 0 };
-    } else {
-        return { answer => $answer, status => 1 };
-    }
 }
 
 ######################################################
@@ -631,131 +272,55 @@ sub confirm_answer {
 #
 #######################################################
 
-sub edit_sources_list {
-  #make sure we don't try to get anything off of 
-  #a cdrom. (Allowing it causes script to hang 
-  # on Debian 7)
-  #sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
-  my $sources_list = shift;
-  backup_file($sources_list);
-  my $string = slurp_file($sources_list);
-  open(my $new,'>',$sources_list);
-  $string =~ s/deb\s+cdrom/#deb cdrom/g;
-  print $new $string;
-  print_and_log("Modified $sources_list to remove cdrom from list of package repositories.");
-}
-
-sub apt_get_install {
-  my @packages = @_;
-  run_command(['apt-get','-y','update']);
-  run_command(['apt-get','-y','upgrade']);
-  run_command(['apt-get','install','-y','--allow-unauthenticated',@packages]);
-}
-
-sub add_epel {
-  my $arch = `rpm -q --queryformat "%{ARCH}" \$(rpm -q --whatprovides /etc/redhat-release)`;
-  #or: ARCH=$(uname -m)
-
-  my $ver = `rpm -q --queryformat "%{VERSION}" \$(rpm -q --whatprovides /etc/redhat-release)`;
-  my $majorver = substr($ver,0,1);
-  #or: MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
-  open(my $fh,'>','/etc/yum.repos.d/epel-bootstrap.repo') 
-    or die "Couldn't open /etc/yum.repos.d/epel-bootstrap.repo for writing: $!";
-  print $fh <<EOM;
-[epel]
-name=Bootstrap EPEL
-mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$majorver&arch=$arch
-failovermethod=priority
-enabled=0
-gpgcheck=0
-EOM
-  close($fh);
-  run_command(['yum', '--enablerepo=epel', '-y', 'install', 'epel-release']);
-  #unlink('/etc/yum.repos.d/epel-bootstrap.repo');
-}
-
-sub yum_install {
-  my @packages = @_;
-  run_command(['yum','-y','update']);
-  run_command(['yum','-y','install',@packages]);
-}
-
-sub install_cpanm {
-  CPAN::install('App::cpanminus');
-}
-
-sub cpan_install {
-  my @modules = @_;
-  CPAN::install(@modules); #cpan options loaded above
-}
-
-sub cpanm_install {
-  my @modules = @_;
-  run_command(['cpanm',@modules]);
-}
-
 sub install_prerequisites {
-  my $defaults = {
-   os => '',
-   packages => [],
-   cpan => [],
-  }; 
-  my $options = shift;
-  foreach(keys %$defaults) {
-    $options->{$_} = $options->{$_} // $defaults->{$_};
-  }
-  my $os = $options->{os};
-  my @packages_to_install = @{$options->{packages}};
-  my @cpan_to_install = @{$options->{cpan}};
-  #send in os_name, packages_to_install, cpan_to_install
-  if(-e '/etc/redhat-release') {
-    my $MYSQLSTART=['service', 'mysqld', 'start'];
-    my $MYSQLENABLE=['chkconfig', 'mysqld', 'on'];
-    my $APACHESTART=['service', 'httpd', 'start'];
-    my $APACHEENABLE=['chkconfig', 'httpd', 'on'];
-    if($os->{name} eq 'redhat') {
-      print_and_log("\n# We've got a relative of RedHat which is not Fedora");
-      print_and_log("\n# Adding EPEL repository....");
-      add_epel();
-    } elsif($os->{name} eq 'fedora') {
-      print_and_log("\n# We've got Fedora");
-      $MYSQLSTART=['systemctl','start', 'mysqld.service'];
-      $MYSQLENABLE=['systemctl', 'enable', 'mysqld.service'];
-      $APACHESTART=['systemctl', 'start', 'httpd.service'];
-      $APACHEENABLE=['systemctl', 'enable', 'httpd.service'];
+    my $options = shift;
+    my $osPackage = $options->{os};
+
+    my $print_me = <<EOF;
+We will start by installing the prerequisite packages and perl modules on your machine.  This process can take some time and you may ocassionally be asked a question.  The default answer is almost certainly correct.  
+EOF
+    
+    my $ready = $term->ask_yn(
+        print_me => $print_me,
+        prompt   => 'Ready to install prerequisites?',
+        default  => 'y',
+    );
+    die "Come back soon!" unless $ready;
+
+    print_and_log("Updating system packages.\n");
+    $osPackage->update_packages();
+    
+    my $binary_preqs = $osPackage->get_binary_prerequisites();
+    my $perl_preqs = $osPackage->get_perl_prerequisites();
+    my @packages;
+    my @cpanModules;
+
+    foreach my $key (keys %$binary_preqs) {
+	push @packages, $binary_preqs->{$key};
     }
-    yum_install(@packages_to_install);
-    #install_cpanm();
-    cpan_install(@cpan_to_install);
-    run_command($MYSQLSTART);
-    run_command($MYSQLENABLE);
-    run_command($APACHESTART);
-    run_command($APACHEENABLE);
-    run_command(['/usr/bin/mysql_secure_installation']);
-  } elsif(-e '/etc/debian_version') {
-    apt_get_install(@packages_to_install);
-    install_cpanm();
-    cpanm_install(@cpan_to_install);
-    run_command(['a2enmod','apreq']);
-    run_command(['apache2ctl', 'restart']);
-  } elsif(-e '/etc/SuSE-release') {
-    #zypper install gcc make subversion git wget texlive texlive-latex netpbm gd mysql-community-server mysql-community-server-client apache2 apache2-devel apache2-prefork perl perl-base perl-ExtUtils-XSBuilder perl-libwww-perl perl-GD perl-Tie-IxHash perl-TimeDate perl-DateTime perl-DBI perl-SQL-Abstract perl-DBD-mysql perl-OSSP-uuid perl-Email-Address perl-Exception-Class perl-URI perl-HTML-Parser perl-HTML-Tagset perl-HTML-Template perl-Iterator perl-XML-Parser perl-XML-Writer perl-Iterator-Util perl-JSON perl-Mail-Sender perl-MIME-tools perl-Net-IP perl-Net-SSLeay perl-IO-Socket-SSL perl-ldap-ssl perl-PadWalker perl-PHP-Serialization perl-SOAP-Lite perl-Locale-Maketext-Lexicon apache2-mod_perl apache2-mod_perl-devel
-    #cpan -j lib/cpan_config.pm Apache::Test Pod::WSDL String::ShellQuote UUID::Tiny XML::Parser::EasyTree
-    ##openSUSE doesn't seem to provide a package for libapreq2, meaning no way to get Apache2::Request or Apache2::Cookie without compiling from source
-    ##Once they get this working, wil be able to do add Apache2::Modules repository to get libapreq2 via
-    #zypper ar -f http://download.opensuse.org/repositories/Apache:/Modules/Apache_openSUSE_12.2/Apache:Modules.repo #obviously this will have to be generalized
-    #then add libapreq2 perl-Apache2-Request perl-Apache2-Cookie to install list above. 
-    ##In the meantime, here we go:
-    #wget http://search.cpan.org/CPAN/authors/id/I/IS/ISAAC/libapreq2-2.13.tar.gz
-    #tar -xzf libapreq2-2.13.tar.gz
-    #cd libapreq2-2.13
-    #perl Makefile.PL --with-apache2-apxs=/usr/sbin/apxs2
-    #make
-    #make install
-    #cd ..
-    #rm -rf libapreq2-2.13/
-    #rm libapreq2-2.13.tar.gz
-  } #etc...and more distros!
+
+    foreach my $key (keys %$perl_preqs) {
+	if ($perl_preqs->{$key} eq 'CPAN') {
+	    push @cpanModules, $perl_preqs->{$key};
+	} else {
+	    push @packages, $binary_preqs->{$key};
+	}
+    }
+    
+    print_and_log('Installing the following system packages: '.
+		  join(', ',@packages)."\n");
+    $osPackage->package_install(@packages);
+
+    print_and_log('Installing the following CPAN modules: '.
+		  join(', ',@cpanModules)."\n");
+    $osPackage->CPAN_install(@cpanModules);
+
+    print_and_log("Setting up and enabling services.\n");
+    $osPackage->configure_services();
+    
+    print_and_log("Done installing prerequisites.\n");
+    
+    return 1;
 }
 
 #####################################################
@@ -2534,42 +2099,25 @@ my $envir = check_environment();
 my %siteDefaults;
 #$siteDefaults{timezone} = $envir->{timezone};
 
-#Install Prerequisites
-my $os = $envir->{os};
-my $os_name = $os->{name};
+my $osPackage = $envir->{osPackage};
+
 no strict 'refs';
-require "$os_name".".pm";
+require "$osPackage";
 
-my %version_packages = %{${$os_name.'::prerequisites'}->{$os->{version}}} if ${$os_name.'::prerequisites'}->{$os->{version}};
-my %packages = (%{${$os_name.'::prerequisites'}->{common}},%version_packages);
+# run hooked code
+$osPackage->prepreq_hook();
 
-my %packages_seen = ();
-foreach (values %packages) {
-  $packages_seen{$_}++ unless $_ eq 'CPAN';
-}
-my @packages_to_install = keys %packages_seen;
+#Install Prerequisites
+install_prerequisites({osPackage => $osPackage});
 
-my @cpan_to_install = ();
-foreach(keys %packages) {
-  push(@cpan_to_install, $_) if $packages{$_} eq 'CPAN';
-}
-
-install_prerequisites({
-    os => $os,
-    packages => [@packages_to_install],
-    cpan => [@cpan_to_install]});
-
+# run hooked code
+$osPackage->postpreq_hook();
 
 #Get apache version, path to config file, server user and group;
 my $apache = check_apache( $envir );
 
 #Put the information from the layout in the apache object;
-my $layout;
-if (version->parse($apache->{version}) >= version->parse('2.4.00')) {
-    $layout = $apache24Layouts->{$envir->{os}->{name}}; 
-} else {
-    $layout = $apache22Layouts->{$envir->{os}->{name}};
-}
+my $layout = $osPackage->get_apacheLayout():
 
 foreach my $key (keys %$layout) {
     $apache->{$key} = $layout->{$key};
@@ -2600,6 +2148,9 @@ check_modules(@apache2ModulesList);
 
 #Check binary prerequisites
 my $apps = configure_externalPrograms(@applicationsList);
+
+#run hooked coe
+$osPackage->preconfig_hook();
 
 #Get directory root PREFIX, download software, and configure filesystem locations for webwork software
 my $WW_PREFIX = get_WW_PREFIX(WW_PREFIX);    #constant defined at top
@@ -2788,6 +2339,9 @@ EOF
 
 restart_apache($apache);
 
+#run hooked coe
+$osPackage->postconfig_hook();
+
 print_and_log(<<EOF);
 #######################################################################
 #
@@ -2895,6 +2449,10 @@ write_launch_browser_script( $installer_dir,
     'http://localhost' . $webwork_url );
 
 configure_shell($WW_PREFIX,$wwadmin);
+
+#run hooked code
+$osPackage->postinstall_hook();
+
 copy("webwork_install.log","$WW_PREFIX/webwork_install.log") if -f 'webwork_install.log';
 
 __END__

@@ -1,4 +1,4 @@
-package ubuntu;
+package debian;
 
 $prerequisites =
 {
@@ -91,15 +91,20 @@ $prerequisites =
     'XML::Writer' => 'libxml-writer-perl',
     'XMLRPC::Lite' => 'libsoap-lite-perl',
   },
-  12.04 => {
-    prefork_mpm => 'apache2-mpm-prefork',
-  },
-  13.04 => {
-    prefork_mpm => 'apache2-mpm-prefork',
-  },
-  14.04 => {
-    libapreq2 => 'libapreq2-3',
-  }
 };
 
 1;
+
+sub edit_sources_list {
+  #make sure we don't try to get anything off of 
+  #a cdrom. (Allowing it causes script to hang 
+  # on Debian 7)
+  #sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
+  my $sources_list = shift;
+  backup_file($sources_list);
+  my $string = slurp_file($sources_list);
+  open(my $new,'>',$sources_list);
+  $string =~ s/deb\s+cdrom/#deb cdrom/g;
+  print $new $string;
+  print_and_log("Modified $sources_list to remove cdrom from list of package repositories.");
+}
