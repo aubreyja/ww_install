@@ -269,10 +269,8 @@ sub get_os_package {
 
     use strict;
 
-    if ($@ =~ /Can't locate ${osPackage}/) {
-        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  The package you will have to create is ${osPackage} in the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.\n");
-	die "Couldn't load distro package: $@";
-    } elsif ($@) {
+    if ($@) {
+	print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  The package you will have to create is ${osPackage} in the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.\n");
 	die "Couldn't load distro package: $@";
     }
     
