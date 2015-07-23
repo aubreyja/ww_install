@@ -74,8 +74,8 @@ to webwork2/logs and then deletes the downloaded installation package.
 
   REPORTING BUGS
 
-  View and report bugs at https://github.com/aubreyja/ww_install/issues
-  ww_install home page: https://github.com/aubreyja/ww_install
+  View and report bugs at https://github.com/openwebwork/ww_install/issues
+  ww_install home page: https://github.com/openwebwork/ww_install
 
   COPYRIGHT
 
@@ -175,7 +175,7 @@ This is the WeBWorK installer.
 Please report problems to the issue tracker 
 at
 
-https://github.com/aubreyja/ww_install
+https://github.com/openwebwork/ww_install
 
 When reporting problems, please include any 
 relevant output from the webwork_install.log

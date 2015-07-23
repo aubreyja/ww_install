@@ -1,12 +1,16 @@
 package WeBWorK::Install::Database;
 
 use WeBWorK::Install::Utils;
-use DBI;
 
 use File::Copy;
 
 use Exporter 'import'; # gives you Exporter's import() method directly
 @EXPORT = qw(database_exists connect_to_database change_storage_engine get_dsn create_database); # symbols to export (I'm a bad person.)
+
+sub initialize_dbi {
+
+    require DBI;
+}
 
 sub database_exists {
   my ($root_password,$database,$server) = @_;

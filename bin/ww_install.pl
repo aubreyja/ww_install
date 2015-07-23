@@ -1549,6 +1549,11 @@ END
 # Is there an existing webwork db or would you like me to create one?
 
 sub get_webwork_database {
+
+    # start by initializing the database interface.  We wait until now because
+    # it uses some of the installed prereqs.
+    initialize_dbi();
+    
     my $print_me = <<END;
 #############################################################
 #  We now need to designate a MySQL database and database user
