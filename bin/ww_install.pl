@@ -86,7 +86,7 @@ use constant CHECKOUT_BRANCH => 1;
 use constant WW_BRANCH => 'develop';
 use constant PG_BRANCH => 'develop';
 
-use constant SKIP_INSTALL_PREREQUISITES = 0;
+use constant SKIP_INSTALL_PREREQUISITES => 0;
 
 #################################################################
 #
