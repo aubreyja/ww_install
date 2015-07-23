@@ -46,6 +46,8 @@ STDERR->autoflush(1);
 
 use install_utils;
 
+use ldldldl;
+
 #non-core
 #use DateTime::TimeZone; 
 
@@ -260,11 +262,33 @@ sub get_os {
     }
 
     #Package name is distro::version with any dots removed from version. 
-    $os->{package} = $os->{name}.'::'.$os->{version};
-    $os->{package} =~ s/\.//g;
+    $os->{osPackage} = $os->{name}.'::'.$os->{version};
+    $os->{osPackage} =~ s/\.//g;
     
     return $os;
 }
+
+sub get_os_package {
+    my $os = shift;
+    my $osPackage = $os->{package};
+    
+    no strict 'refs';
+
+    eval {
+	require "$osPackage";
+    }
+
+    if ($@ =~ /Can't locate ${osPackage}.pm/) {
+        print_and_log("I see you're running $$os{name} version $$os{version} on $$os{arch} hardware.  There is no disto specific package for your operating system.  Often setting up such a package is as simple as copying over a simlar package from the distros folder.  If you get your installation running please consider contributing your new distro package file to the git repository.");
+	die "Couldn't load distro package";
+    } elsif ($@) {
+	die "Couldn't load distro package";
+    }
+
+    return;
+
+}
+
 
 ######################################################
 #
@@ -2099,10 +2123,10 @@ my $envir = check_environment();
 my %siteDefaults;
 #$siteDefaults{timezone} = $envir->{timezone};
 
-my $osPackage = $envir->{osPackage};
+my $osPackage = $envir->{os}->{osPackage};
 
-no strict 'refs';
-require "$osPackage";
+# get os package
+get_os_package($os);
 
 # run hooked code
 $osPackage->prepreq_hook();
