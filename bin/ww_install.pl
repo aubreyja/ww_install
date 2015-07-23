@@ -86,6 +86,8 @@ use constant CHECKOUT_BRANCH => 1;
 use constant WW_BRANCH => 'develop';
 use constant PG_BRANCH => 'develop';
 
+use constant SKIP_INSTALL_PREREQUISITES = 0;
+
 #################################################################
 #
 # Prerequisites - keep in sync with webwork2/bin/check_modules.pl
@@ -342,10 +344,10 @@ EOF
     die "Come back soon!" unless $ready;
 
     print_and_log("Updating system sources.\n");
-#    $osPackage->update_sources();
+    $osPackage->update_sources();
   
     print_and_log("Updating system packages.\n");
- #   $osPackage->update_packages();
+    $osPackage->update_packages();
     
     my $binary_preqs = $osPackage->get_binary_prerequisites();
     my $perl_preqs = $osPackage->get_perl_prerequisites();
@@ -366,11 +368,11 @@ EOF
     
     print_and_log('Installing the following system packages: '.
 		  join(', ',@packages)."\n");
- #   $osPackage->package_install(@packages);
+    $osPackage->package_install(@packages);
 
     print_and_log('Installing the following CPAN modules: '.
 		  join(', ',@cpanModules)."\n");
-  #  $osPackage->CPAN_install(@cpanModules);
+    $osPackage->CPAN_install(@cpanModules);
 
     print_and_log("Setting up and enabling services.\n");
     $osPackage->configure_services();
@@ -2224,7 +2226,8 @@ get_os_package($envir->{os});
 $osPackage->prepreq_hook();
 
 #Install Prerequisites
-install_prerequisites({osPackage => $osPackage});
+install_prerequisites({osPackage => $osPackage})
+    unless SKIP_INSTALL_PREREQUISITES;
 
 # run hooked code
 $osPackage->postpreq_hook();
