@@ -18,7 +18,7 @@ use User::pwent;
 use IO::Handle qw();
 
 use IPC::Cmd qw(can_run run);
-$IPC::Cmd::USE_IPC_OPEN3 = 1;
+$IPC::Cmd::USE_IPC_RUN = 1;
 
 use Config;
 use CPAN;
