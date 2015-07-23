@@ -81,6 +81,10 @@ use constant SMTP_SENDER => 'webwork@localhost';
 use constant WW_DB     => 'webwork';
 use constant WWDB_USER => 'webworkWrite';
 
+use constant CHECKOUT_BRANCH => 1;
+use constant WW_BRANCH => 'develop';
+use constant PG_BRANCH => 'develop';
+
 #################################################################
 #
 # Prerequisites - keep in sync with webwork2/bin/check_modules.pl
@@ -1628,7 +1632,9 @@ sub get_webwork {
     if ($ww2_success) {
         print_and_log("Fetched webwork2 successfully.\n");
         chdir "$prefix/webwork2";
-#        run_command(['git','checkout','-b','<branch>','origin/<branch>']);
+	if (CHECKOUT_BRANCH) {
+	    run_command(['git','checkout','-b','WW_BRANCH','origin/WW_BRANCH']);
+	}
         chdir $prefix;
     } else {
         print_and_log("Couldn't get webwork2!");
@@ -1637,7 +1643,9 @@ sub get_webwork {
     if ($pg_success) {
         print_and_log("Fetched pg successfully!");
 	chdir "$prefix/pg";
-#	run_command(['git','checkout','-b','<branch>','origin/<branch>']);
+	if (CHECKOUT_BRANCH) {
+	    run_command(['git','checkout','-b','PG_BRANCH','origin/PG_BRANCH']);
+	}
 	chdir $prefix;
     } else {
         print_and_log("Couldn't get pg!");

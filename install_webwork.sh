@@ -6,8 +6,8 @@ INTERACTIVE=''
 MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
-BRANCH=develop
-WWINSTALLURL=https://github.com/openwebwork/ww_install/archive/$BRANCH.tar.gz
+BRANCH=release2.11
+WWINSTALLURL=https://github.com/goehle/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
 
