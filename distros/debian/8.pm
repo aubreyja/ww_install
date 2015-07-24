@@ -1,5 +1,5 @@
 # Package for distribution debian jessie
-package debian::7;
+package debian::8;
 use base qw(blankdistro);
 
 use strict;
@@ -106,7 +106,7 @@ my $perl_prerequisites = {
     'Net::SMTP' => 'perl-modules',
     'Opcode' => 'perl',
     'PadWalker' => 'libpadwalker-perl',
-    'Path::Class' => 'CPAN',
+    'Path::Class' => 'libpath-class-perl',
     'PHP::Serialization' => 'libphp-serialization-perl',
     'Pod::Usage' => 'perl-modules',
     'Pod::WSDL' => 'libpod-wsdl-perl',
