@@ -1,6 +1,6 @@
 $CPAN::Config = {
                   'cpan_home' => $ENV{"HOME"}."/.cpan",
-                  'version_timeout' => '15',
+                  'version_timeout' => '30',
                   'show_unparsable_versions' => '0',
                   'makepl_arg' => 'INSTALLDIRS=site',
                   'histfile' => $ENV{"HOME"}."/.cpan/histfile",
@@ -32,7 +32,7 @@ $CPAN::Config = {
                   'ftp_proxy' => '',
                   'ftp_passive' => '1',
                   'tar' => '/bin/tar',
-                  'inactivity_timeout' => '5',
+                  'inactivity_timeout' => '30',
                   'use_sqlite' => '0',
                   'scan_cache' => 'atstart',
                   'mbuildpl_arg' => '--installdirs site',

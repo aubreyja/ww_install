@@ -5,26 +5,20 @@ This repository consists of a perl script `ww_install.pl`, along with some suppo
 config files, and perl modules designed to work together install the open source online homework system 
 [WeBWorK](https://github.com/openwebwork).
 
-The script has been updated to install WeBWorK 2.8 as of 12/20/2013.
+The script has been updated to install WeBWorK 2.10 as of 12/22/2014.
 
-It has been tested with WeBWorK 2.8 on
-
-* [Debian 7.3.0 (Wheezy) GNU/Linux](http://www.debian.org/releases/wheezy) (12/2013)
-* [Ubuntu 13.04 (Raring Ringtail)](http://releases.ubuntu.com/raring/) (12/2013)
-
-It was tested with WeBWorK 2.7 on
-
-* [Scientific Linux 6.4 (Carbon)](https://www.scientificlinux.org/distributions/6x/6.4/) (7/2013)
-* [CentOS 6.4](http://wiki.centos.org/Download) (7/2013)
-* [Fedora 17 (Beefy Miracle)](http://docs.fedoraproject.org/en-US/Fedora/17/html/Release_Notes/) (11/2012)
-* [Debian 7.0 (Wheezy) GNU/Linux](http://www.debian.org/releases/wheezy/) (6/2013, 9/2013)
-* [Ubuntu 12.04 (Precise Pangolin)](http://releases.ubuntu.com/precise/) (11/2012, 6/2013)
-* [Ubuntu 13.04 (Raring Ringtail)](http://releases.ubuntu.com/raring/) (6/2013, 9/2013)
+It has been tested and supported on 
+*  Debian Wheezy
+*  Fedora 20
+*  Ubuntu 14.04
+*  CentOS 7
 
 On these systems it did install webwork. 
 
-Note that at this time (12/2013) WeBWorK does not work on Fedora 18+ or Ubuntu 13.10 due to
-the change to Apache 2.4.  We hope to fix this soon.
+Gotchas
+-------
+
+-  There is currently no package in Fedora 21 which provides the pnmtops program.  The installer will fail when checking for required modules and programs.  Once [this](https://bugzilla.redhat.com/show_bug.cgi?id=1171903) bug is fixed the installer '''should''' work.  
 
 Usage
 -------
@@ -33,11 +27,11 @@ To install [WeBWorK](https://github.com/openwebwork):
 
 1. Get the `install_webwork.sh` script:
 
-  `wget --no-check-certificate https://raw.github.com/aubreyja/ww_install/ww3/install_webwork.sh`
+  `wget --no-check-certificate https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
   
   or if you prefer
   
-  `curl -ksSO https://raw.github.com/aubreyja/ww_install/ww3/install_webwork.sh`
+  `curl -ksSO https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
 
 2. As root (or with sudo) do
 

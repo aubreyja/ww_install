@@ -458,6 +458,21 @@ my $apache24Layouts = {
         User         => '',
         Group        => '',
     },
+    debian => {    #Checked Jessie
+        MPMDir       => '',
+	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
+        ServerRoot   => '/etc/apache2',
+        DocumentRoot => '/var/www',
+        ConfigFile   => '/etc/apache2/apache2.conf',
+        OtherConfig  => '/etc/apache2/conf-enabled',
+        SSLConfig    => '',
+        Modules      => '/etc/apache2/mods-enabled',
+        ErrorLog     => '/var/log/apache2/error.log',
+        AccessLog    => '/var/log/apache2/access.log',
+        Binary       => '/usr/sbin/apache2ctl',
+        User         => 'www-data',
+        Group        => 'www-data',
+    },
     ubuntu => {    #Checked 13.10
         MPMDir       => '',
 	MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
@@ -472,6 +487,21 @@ my $apache24Layouts = {
         Binary       => '/usr/sbin/apache2ctl',
         User         => 'www-data',
         Group        => 'www-data',
+    },
+    centos => {    #Checked CentOS 7
+        MPMDir       => 'server/mpm/prefork',
+      	MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
+        ServerRoot   => '/etc/httpd',
+        DocumentRoot => '/var/www/html',
+        ConfigFile   => '/etc/httpd/conf/httpd.conf',
+        OtherConfig  => '/etc/httpd/conf.d',
+        SSLConfig    => '',
+        Modules      => '/etc/httpd/modules',           #symlink
+        ErrorLog     => '/var/log/httpd/error_log',
+        AccessLog    => '/var/log/httpd/access_log',
+        Binary       => '/usr/sbin/apachectl',
+        User         => 'apache',
+        Group        => 'apache',
     },
     fedora => {
 	MPMDir       => '',
@@ -1024,7 +1054,7 @@ sub get_wwdata_group {
 # are the webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, webwork2/tmp, 
 # and the courses/ directories.
 #
-# It can convenient to give WeBWorK system administrators access to these 
+# It can be convenient to give WeBWorK system administrators access to these 
 # directories as well, so they can permform administrative tasks such as 
 # removing temporary files, creating and editing courses from the command 
 # line, managing logs, and so on.
@@ -2051,7 +2081,7 @@ sub get_webwork {
     if ($ww2_success) {
         print_and_log("Fetched webwork2 successfully.\n");
         chdir "$prefix/webwork2";
-        run_command(['git','checkout','-b','ww3','origin/ww3']);
+#        run_command(['git','checkout','-b','<branch>','origin/<branch>']);
         chdir $prefix;
     } else {
         print_and_log("Couldn't get webwork2!");
@@ -2059,6 +2089,9 @@ sub get_webwork {
     my $pg_success = run_command($pg_cmd);
     if ($pg_success) {
         print_and_log("Fetched pg successfully!");
+	chdir "$prefix/pg";
+#	run_command(['git','checkout','-b','<branch>','origin/<branch>']);
+	chdir $prefix;
     } else {
         print_and_log("Couldn't get pg!");
     }
@@ -2679,19 +2712,6 @@ print_and_log(<<EOF);
 #######################################################################
 #
 #
-# Now we will unpack the jsMath font files.
-#
-# This may take awhile
-#
-# 
-######################################################################
-EOF
-unpack_jsMath_fonts($webwork_dir);
-
-print_and_log(<<EOF);
-#######################################################################
-#
-#
 # Now we will download MathJax.
 #
 # This too may take awhile
@@ -2881,13 +2901,7 @@ my $webwork3log = "$webwork_dir/webwork3/logs";
 if (-e $webwork3log) {
     change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
     #temporary hack until logs is in the git repo
-} else {
-    my $full_path = can_run('mkdir');
-    my $cmd = [$full_path,$webwork3log]; #set SELinux in permissive mode
-    my $success = run_command($cmd);  
-    change_webwork3_log_permissions("$wwadmin:$wwdata",$webwork3log);
 }
-    
 
 print_and_log(<<EOF);
 ######################################################
