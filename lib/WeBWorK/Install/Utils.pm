@@ -110,7 +110,7 @@ sub run_command {
       writelog("OUTPUT: ".$output."\n") if defined($output);
   
       if (!$success) {
-        writelog($error_message) if $error_message;
+        writelog($error_message."\n") if $error_message;
         my $print_me = "Warning! The last command exited with an error: $error_message\n\n".
             "We have logged the error message, if any. We suggest that you exit now and ".
             "report the error at https://github.com/openwebwork/ww_install ".
