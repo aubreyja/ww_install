@@ -206,10 +206,10 @@ clean_exit () {
   exit $1
 }
 
-echo "## Installing cpan, just to be sure."  
+echo "## Installing cpan, and IPC::cmd just to be sure."  
 if [ -e "/etc/redhat-release" ]
 then 
-    yum -y install perl-CPAN
+    yum -y install perl-CPAN perl-IPC-Cmd
 elif [ -e "/etc/debian_version" ]
 then 
     apt-get -y --allow-unauthenticated perl-modules
