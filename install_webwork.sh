@@ -206,6 +206,15 @@ clean_exit () {
   exit $1
 }
 
+echo "## Installing cpan, just to be sure.  
+if [ -e "/etc/redhat-release" ]
+then 
+    yum -y install perl-CPAN
+elif [ -e "/etc/debian_version" ]
+then 
+    apt-get -y --allow-unauthenticated perl-modules
+fi    
+
 echo "## Download the latest webwork installer"
 $WWINSTALLDOWNLOAD 
 
