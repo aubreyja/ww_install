@@ -1,5 +1,5 @@
-# Package for distribution debian wheezy
-package debian::6;
+# Package for distribution debian jessie
+package debian::7;
 use base qw(blankdistro);
 
 use strict;
