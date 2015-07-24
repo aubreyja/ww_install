@@ -15,7 +15,7 @@ our $VERSION = '0.14';
 our $standard_release_file = 'lsb-release';
 
 our %release_files = (
-    'centos-release'        => 'centos'
+    'centos-release'        => 'centos',
     'gentoo-release'        => 'gentoo',
     'fedora-release'        => 'fedora',
     'turbolinux-release'    => 'turbolinux',
