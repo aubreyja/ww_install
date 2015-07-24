@@ -2,11 +2,11 @@
 
 use strict;
 use warnings;
-use version; 
 
 use FindBin;
 use lib "$FindBin::Bin/../lib"; 
 use lib "$FindBin::Bin/../distros";
+use version; 
 use cpan_config;
 use Term::ReadPassword; 
 use Linux::Distribution qw(distribution_name distribution_version);
