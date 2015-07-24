@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use version;
 
 use FindBin;
 use lib "$FindBin::Bin/../lib"; 
@@ -2230,8 +2231,6 @@ install_prerequisites({osPackage => $osPackage})
 
 # run hooked code
 $osPackage->postpreq_hook();
-
-require version;
 
 #Get apache version, path to config file, server user and group;
 my $apache = check_apache( $envir );
