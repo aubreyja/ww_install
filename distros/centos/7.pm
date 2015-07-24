@@ -1,49 +1,79 @@
-package redhat;
+package centos::7;
 
-$prerequisites =
-{
-  common => {
+use strict;
+use warnings;
+
+use WeBWorK::Install::Utils;
+
+my $ww_versions = [];
+
+sub get_ww_versions {
+    return $ww_versions;
+}
+
+# A list of packages for various binaries that we need. 
+my $binary_prerequisites = {
     mkdir => 'coreutils',
     mv => 'coreutils',
     gcc => 'gcc',
     make => 'make',
     patch => 'patch',
-    system_config => 'system-config-services',
     tar => 'tar',
+    system_config => 'system-config-services',
     gzip => 'gzip',
     unzip => 'coreutils',
     dvipng => 'dvipng',
-    netpbm => 'netpbm-progs',  #provides giftopnm, ppmtopgm, pnmtops, pnmtopng, 
-                        #and pgntopnm
+    curl => 'curl',
+    perl => 'perl',
+    netpbm => 'netpbm',  #provides giftopnm, ppmtopgm, pnmtops, pnmtopng, 
+    netpbm_progs => 'netpbm-progs',               #and pgntopnm
     git => 'git',
     svn => 'subversion',
 
-    apache2 => 'httpd',
-    mysql => 'mysql',
-    #mysql_server => 'mysql-server',
-    #ssh_server => 'openssh-server',
+    mysql => 'mariadb',
+    mysql_server => 'mariadb-server',
+    ssh_server => 'openssh-server',
 
+    apache2 => 'httpd',
+    mod_mpm => 'httpd',
+    mod_fcgid => 'mod_fcgid',
+    mod_perl => 'mod_perl',
+    mod_apreq => 'libapreq2',
+    
     preview_latex => 'tex-preview',
-    texlive => 'texlive-latex', 
-    'Apache2::Request' => 'perl-libapreq2',#perl-libapreq2, mod_perl?
-    'Apache2::Cookie' => 'perl-libapreq2',
+    texlive => 'texlive-latex',
+    texlive_epsf => 'texlive-epsf',
+};
+
+sub get_binary_prerequisites {
+    return $binary_prerequisites;
+}
+
+# A list of perl modules that we need
+my $perl_prerequisites = {
+    'Apache2::Request' => 'lipapreq2',
+    'Apache2::Cookie' => 'libapreq2',
     'Apache2::ServerRec' => 'mod_perl',
     'Apache2::ServerUtil' => 'mod_perl',
+    'Array::Utils' => 'CPAN',
     'Benchmark' => 'perl',
     'Carp' => 'perl',
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
-    'Data::Dumper' => 'perl',
-    'Data::UUID' => 'uuid-perl',
+    'Dancer' => 'CPAN',
+    'Dancer::Plugin::Database' => 'CPAN',
+    'Data::Dumper' => 'perl-Data-Dumper',
+    'Data::UUID' => 'perl-Data-UUID',
     'Date::Format' => 'perl-TimeDate',
     'Date::Parse' => 'perl-TimeDate',
-    'DateTime' => 'perl-DateTime',
-    'DBD::mysql' => 'perl-DBD-mysql',
+    'DateTime' => 'perl-TimeDate',
+    'DBD::mysql' => 'perl-DBD-MySQL',
     'DBI' => 'perl-DBI',
     'Digest::MD5' => 'perl',
     'Email::Address' => 'perl-Email-Address',
     'Errno' => 'perl',
     'Exception::Class' => 'perl-Exception-Class',
+    'ExtUtils::XSBuilder' => 'perl-ExtUtils-XSBuilder',
     'File::Copy' => 'perl',
     'File::Find' => 'perl',
     'File::Find::Rule' => 'perl-File-Find-Rule',
@@ -51,51 +81,135 @@ $prerequisites =
     'File::Spec' => 'perl',
     'File::stat' => 'perl',
     'File::Temp' => 'perl',
-    'GD' => 'perl-GD perl-GDGraph',
+    'GD' => 'perl-GD',
+    'GDGraph' => 'perl-GDGraph',
     'Getopt::Long' => 'perl',
     'Getopt::Std' => 'perl',
-    'HTML::Entities' => 'perl-HTML-parser',
+    'HTML::Entities' => 'perl-HTML-Parser',
     'HTML::Scrubber' => 'perl-HTML-Scrubber',
     'HTML::Tagset' => 'perl-HTML-Tagset',
-    'HTML::Template' => 'CPAN',
+    'HTML::Template' => 'perl-HTML-Template',
     'IO::File' => 'perl',
-    'IPC::Cmd' => 'perl-IPC-Cmd',
     'Iterator' => 'CPAN',
     'Iterator::Util' => 'CPAN',
     'JSON' => 'perl-JSON',
-    'Locale::Maketext::Lexicon' => 'perl-Locale-Maketext-Lexicon',
+    'Locale::Maketext::Lexicon' => 'CPAN', #is availble for fedora
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
+    'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
     'Mail::Sender' => 'perl-Mail-Sender',
-    'MIME::Base64' => 'perl',
-    'Net::IP' => 'perl-Net-IP',
-    'Net::LDAPS' => 'perl-LDAP',
-    'Net::OAuth' => 'perl-Net-OAuth',
-    'Net::SMTP' => 'perl',
-    'Opcode' => 'perl',
-    'PadWalker' => 'perl-PadWalker',
-    'PHP::Serialization' => 'CPAN',
-    'Pod::Usage' => 'perl',
-    'Pod::WSDL' => 'CPAN',
-    'Safe' => 'perl',
-    'Scalar::Util' => 'perl',
-    'SOAP::Lite' => 'perl-SOAP-Lite',
-    'Socket' => 'perl',
-    'SQL::Abstract' => 'perl-SQL-Abstract',
-    'String::ShellQuote' => 'perl-String-ShellQuote',
-    'Term::UI' => 'perl-Term-UI',
-    'Text::CSV' => 'perl-Text-CSV',
-    'Text::Wrap' => 'perl',
-    'Tie::IxHash' => 'perl-Tie-IxHash',
-    'Time::HiRes' => 'perl-Time-HiRes',
-    'Time::Zone' => 'perl-TimeDate',
-    'URI::Escape' => 'perl',
-    'UUID::Tiny' => 'CPAN',
-    'XML::Parser' => 'perl-XML-Parser',
-    'XML::Parser::EasyTree' => 'CPAN',
-    'XML::Writer' => 'perl-XML-Writer',
-    'XMLRPC::Lite' => 'perl-SOAP-Lite',
-  }
+    'MIME::Base64' => '',
+    'Net::IP' => '',
+    'Net::LDAPS' => '',
+    'Net::OAuth' => '',
+    'Net::SMTP' => '',
+    'Opcode' => '',
+    'PadWalker' => '',
+    'Path::Class' => '',
+    'PHP::Serialization' => '',
+    'Pod::Usage' => '',
+    'Pod::WSDL' => '',
+    'Safe' => '',
+    'Scalar::Util' => '',
+    'SOAP::Lite' => '',
+    'Socket' => '',
+    'SQL::Abstract' => '',
+    'String::ShellQuote' => '',
+    'Template' => '',
+    'Text::CSV' => '',
+    'Text::Wrap' => '',
+    'Tie::IxHash' => '',
+    'Time::HiRes' => '',
+    'Time::Zone' => '',
+    'URI::Escape' => '',
+    'UUID::Tiny' => '',
+    'XML::Parser' => '',
+    'XML::Parser::EasyTree' => '',
+    'XML::Writer' => '',
+    'XMLRPC::Lite' => '',
+    'YAML' => '',
 };
+
+sub get_perl_prerequisites {
+    return $perl_prerequisites;
+}
+
+# A hash containing information about the apache webserver
+my $apacheLayout = {
+    MPMDir       => '',
+    MPMConfFile  => '',
+    ServerRoot   => '',
+    DocumentRoot => '',
+    ConfigFile   => '',
+    OtherConfig  => '',
+    SSLConfig    => '',
+    Modules      => '',
+    ErrorLog     => '',
+    AccessLog    => '',
+    Binary       => '',
+    User         => '',
+    Group        => '',
+};
+
+sub get_apacheLayout {
+    return $apacheLayout;
+}
+
+# A command for any distro specific stuff that needs to be done
+# before installing prerequisites
+sub prepreq_hook {
+
+};
+
+# A command for updating the package sources
+sub update_sources {
+    run_command(['yum', '-y', 'install', 'epel-release']);
+};
+
+# A command for updating the system
+sub update_packages {
+
+};
+
+# A command for installing a package given a name
+sub package_install {
+
+};
+
+# A command for installing a cpan package given a name
+sub CPAN_install {
+
+};
+
+# A command for any distro specific stuff that needs to be done
+# after installing prerequieists
+sub postpreq_hook {
+
+}
+
+# A command for checking if the required services are running and
+# configuring them
+sub configure_services {
+
+}
+
+# A command for any distro specific stuff that needs to be done
+# before the webwork config process begins
+sub preconfig_hook {
+
+}
+
+# A command for any distro specific stuff that needs to be done
+# after webwork has been configured
+sub postconfig_hook {
+
+}
+
+# A comand for any distro specific stuff that needs to be done
+# after webwork has been fully installed
+sub postinstall_hook {
+
+}
+
 
 1;
 sub add_epel {
@@ -116,7 +230,7 @@ enabled=0
 gpgcheck=0
 EOM
   close($fh);
-  run_command(['yum', '--enablerepo=epel', '-y', 'install', 'epel-release']);
+
   #unlink('/etc/yum.repos.d/epel-bootstrap.repo');
 }
 sub yum_install {

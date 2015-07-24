@@ -5,7 +5,7 @@ use WeBWorK::Install::Utils;
 use File::Copy;
 
 use Exporter 'import'; # gives you Exporter's import() method directly
-@EXPORT = qw(database_exists connect_to_database change_storage_engine get_dsn create_database); # symbols to export (I'm a bad person.)
+@EXPORT = qw(database_exists connect_to_database change_storage_engine get_dsn create_database initialize_dbi); # symbols to export (I'm a bad person.)
 
 sub initialize_dbi {
 

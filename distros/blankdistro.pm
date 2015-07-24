@@ -32,7 +32,6 @@ my $binary_prerequisites = {
                         #and pgntopnm
     git => '',
     svn => '',
-    cpanminus => '',
 
     mysql => '',
     mysql_server => '',
@@ -46,8 +45,6 @@ my $binary_prerequisites = {
     
     preview_latex => '',
     texlive => '',
-    texlive_recommended => '',
-    texlive_fonts_recommended => '',
 };
 
 sub get_binary_prerequisites {

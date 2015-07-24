@@ -61,7 +61,7 @@ $ENV{AUTOMATED_TESTING}=1;
 # ####################################################################################
 
 use constant IPC_CMD_TIMEOUT =>
-  6000;    #Sets maximum time system commands will be allowed to run
+  12000;    #Sets maximum time system commands will be allowed to run
 use constant IPC_CMD_VERBOSE => 1;    #Controls whether all output of a command
                                       #should be printed to STDOUT/STDERR
 
