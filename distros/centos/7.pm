@@ -52,7 +52,8 @@ sub get_binary_prerequisites {
 # A list of perl modules that we need
 my $perl_prerequisites = {
     'Test::XML' => 'perl-Test-XML', # needed in centos 7 for cpan installs
-    'Test::Simple' => 'perl-Test-Simple', 
+    'Test::Simple' => 'perl-Test-Simple',
+    'Test::Requires' => 'perl-Test-Requires', 
     'Apache2::Request' => 'lipapreq2',
     'Apache2::Cookie' => 'libapreq2',
     'Apache2::ServerRec' => 'mod_perl',
