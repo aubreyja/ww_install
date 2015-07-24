@@ -15,6 +15,7 @@ our $VERSION = '0.14';
 our $standard_release_file = 'lsb-release';
 
 our %release_files = (
+    'centos-release'        => 'centos'
     'gentoo-release'        => 'gentoo',
     'fedora-release'        => 'fedora',
     'turbolinux-release'    => 'turbolinux',
@@ -43,6 +44,7 @@ our %release_files = (
 
 our %version_match = (
     'gentoo'                => 'Gentoo Base System version (.*)',
+    'centos'                => 'CentOS Linux release (\d)\..*',
     'debian'                => '(.+)',
     'suse'                  => 'VERSION = (.*)',
     'fedora'                => 'Fedora Core release (\d+) \(',

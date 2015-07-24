@@ -913,9 +913,9 @@ EOF
 
     my $envir;
     $envir->{host} = hostname;
-    print_and_log("And your hostname is " . $envir->{host});
+    print_and_log("And your hostname is " . $envir->{host} ."\n");
     $envir->{perl} = $^V;
-    print_and_log("You're running Perl " . $envir->{perl});
+    print_and_log("You're running Perl " . $envir->{perl} . "\n");
     #my $timezone = DateTime::TimeZone->new( name => 'local' );
     #$envir->{timezone} = $timezone->name;
     #print_and_log("Your timezone is " . $envir->{timezone});
