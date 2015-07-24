@@ -119,7 +119,7 @@ my $perl_prerequisites = {
     'Scalar::Util' => 'perl',
     'SOAP::Lite' => 'perl-SOAP-Lite',
     'Socket' => 'perl',
-    'SQL::Abstract' => 'perl-SQL-Abstract',
+    'SQL::Abstract' => 'CPAN',
     'String::ShellQuote' => 'perl-String-ShellQuote',
     'Template' => 'CPAN',
     'Text::CSV' => 'perl-Text-CSV',
@@ -201,7 +201,7 @@ sub postpreq_hook {
     # For installing missing tex package.  We can safely use the fedora
     # package because its just a latex sytle file. 
     run_command(['curl', '-ksSO', 'ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm']);
-    run_command(['yum','-y','install','texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm'])
+    run_command(['rpm','-Uvh','texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm'])
     
 }
 
