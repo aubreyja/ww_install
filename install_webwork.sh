@@ -206,7 +206,7 @@ clean_exit () {
   exit $1
 }
 
-echo "## Installing cpan, just to be sure.  
+echo "## Installing cpan, just to be sure."  
 if [ -e "/etc/redhat-release" ]
 then 
     yum -y install perl-CPAN
