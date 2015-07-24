@@ -45,7 +45,7 @@ our %release_files = (
 our %version_match = (
     'gentoo'                => 'Gentoo Base System version (.*)',
     'centos'                => 'CentOS Linux release (\d)\..*',
-    'debian'                => '(.+)',
+    'debian'                => '(\d).*',
     'suse'                  => 'VERSION = (.*)',
     'fedora'                => 'Fedora Core release (\d+) \(',
     'redflag'               => 'Red Flag (?:Desktop|Linux) (?:release |\()(.*?)(?: \(.+)?\)',
