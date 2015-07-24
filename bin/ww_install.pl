@@ -6,7 +6,6 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../lib"; 
 use lib "$FindBin::Bin/../distros";
-use version; 
 use cpan_config;
 use Term::ReadPassword; 
 use Linux::Distribution qw(distribution_name distribution_version);
@@ -2231,6 +2230,8 @@ install_prerequisites({osPackage => $osPackage})
 
 # run hooked code
 $osPackage->postpreq_hook();
+
+require version;
 
 #Get apache version, path to config file, server user and group;
 my $apache = check_apache( $envir );
