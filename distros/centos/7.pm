@@ -60,6 +60,7 @@ my $perl_prerequisites = {
     'Carp' => 'perl',
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
+    'CPANMinus' => 'perl-App-cpanminus',
     'Dancer' => 'CPAN',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
@@ -97,36 +98,36 @@ my $perl_prerequisites = {
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
     'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
     'Mail::Sender' => 'perl-Mail-Sender',
-    'MIME::Base64' => '',
-    'Net::IP' => '',
-    'Net::LDAPS' => '',
-    'Net::OAuth' => '',
-    'Net::SMTP' => '',
-    'Opcode' => '',
-    'PadWalker' => '',
-    'Path::Class' => '',
-    'PHP::Serialization' => '',
-    'Pod::Usage' => '',
-    'Pod::WSDL' => '',
-    'Safe' => '',
-    'Scalar::Util' => '',
-    'SOAP::Lite' => '',
-    'Socket' => '',
-    'SQL::Abstract' => '',
-    'String::ShellQuote' => '',
-    'Template' => '',
-    'Text::CSV' => '',
-    'Text::Wrap' => '',
-    'Tie::IxHash' => '',
-    'Time::HiRes' => '',
-    'Time::Zone' => '',
-    'URI::Escape' => '',
-    'UUID::Tiny' => '',
-    'XML::Parser' => '',
-    'XML::Parser::EasyTree' => '',
-    'XML::Writer' => '',
-    'XMLRPC::Lite' => '',
-    'YAML' => '',
+    'MIME::Base64' => 'perl', 
+    'Net::IP' => 'perl-Net-IP',
+    'Net::LDAPS' => 'perl-LDAP',
+    'Net::OAuth' => 'perl-Net-OAuth',
+    'Net::SMTP' => 'perl-Net-SMTP-SSL',
+    'Opcode' => 'perl',
+    'PadWalker' => 'perl-PadWalker',
+    'Path::Class' => 'perl-Path-Class',
+    'PHP::Serialization' => 'CPAN',
+    'Pod::Usage' => 'perl',
+    'Pod::WSDL' => 'CPAN',
+    'Safe' => 'perl',
+    'Scalar::Util' => 'perl',
+    'SOAP::Lite' => 'perl-SOAP-Lite',
+    'Socket' => 'perl',
+    'SQL::Abstract' => 'perl-SQL-Abstract',
+    'String::ShellQuote' => 'perl-String-ShellQuote',
+    'Template' => 'CPAN',
+    'Text::CSV' => 'perl-Text-CSV',
+    'Text::Wrap' => 'perl',
+    'Tie::IxHash' => 'perl-Tie-IxHash',
+    'Time::HiRes' => 'perl-Time-HiRes',
+    'Time::Zone' => 'perl-TimeDate',
+    'URI::Escape' => 'perl',
+    'UUID::Tiny' => 'CPAN',
+    'XML::Parser' => 'perl-XML-Parser',
+    'XML::Parser::EasyTree' => 'CPAN',
+    'XML::Writer' => 'perl-XML-Writer',
+    'XMLRPC::Lite' => 'perl-XMLRPC-Lite',
+    'YAML' => 'perl-YAML',
 };
 
 sub get_perl_prerequisites {
@@ -136,18 +137,18 @@ sub get_perl_prerequisites {
 # A hash containing information about the apache webserver
 my $apacheLayout = {
     MPMDir       => '',
-    MPMConfFile  => '',
-    ServerRoot   => '',
-    DocumentRoot => '',
-    ConfigFile   => '',
-    OtherConfig  => '',
+    MPMConfFile  => '/etc/httpd/conf.modules.d/01-mpm-prefork.conf',
+    ServerRoot   => '/etc/httpd',
+    DocumentRoot => '/var/www/html',
+    ConfigFile   => '/etc/httpd/conf/httpd.conf',
+    OtherConfig  => '/etc/httpd/conf.d',
     SSLConfig    => '',
-    Modules      => '',
-    ErrorLog     => '',
-    AccessLog    => '',
-    Binary       => '',
-    User         => '',
-    Group        => '',
+    Modules      => '/etc/httpd/modules',
+    ErrorLog     => '/var/log/httpd/error_log',
+    AccessLog    => '/var/log/httpd/access_log',
+    Binary       => '/usr/sbin/apachectl',
+    User         => 'apache',
+    Group        => 'apache',
 };
 
 sub get_apacheLayout {
@@ -167,29 +168,41 @@ sub update_sources {
 
 # A command for updating the system
 sub update_packages {
-
+    run_command(['yum', '-y', 'update']);
 };
 
 # A command for installing a package given a name
 sub package_install {
-
+    my $self = shift;
+    my @packages = @_;
+    run_command(['yum','-y','install',@packages]);
 };
 
 # A command for installing a cpan package given a name
 sub CPAN_install {
-
+    my $self = shift;
+    my @modules = @_;
+    run_command(['cpanm',@modules]);
 };
 
 # A command for any distro specific stuff that needs to be done
 # after installing prerequieists
 sub postpreq_hook {
-
+    # For installing missing tex package.  We can safely use the fedora
+    # package because its just a latex sytle file. 
+    run_command(['curl', '-ksSO', 'ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm']);
+    run_command(['yum','-y','install','texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm'])
+    
 }
 
 # A command for checking if the required services are running and
 # configuring them
 sub configure_services {
-
+    run_command(['service','mariadb','start']);
+    run_command(['chkconfig','mariadb','on']);
+    run_command(['service','httpd','start']);
+    run_command(['chkconfig','httpd','on']);
+    run_command(['mysql_secure_installation']);
 }
 
 # A command for any distro specific stuff that needs to be done
@@ -212,30 +225,3 @@ sub postinstall_hook {
 
 
 1;
-sub add_epel {
-  my $arch = `rpm -q --queryformat "%{ARCH}" \$(rpm -q --whatprovides /etc/redhat-release)`;
-  #or: ARCH=$(uname -m)
-
-  my $ver = `rpm -q --queryformat "%{VERSION}" \$(rpm -q --whatprovides /etc/redhat-release)`;
-  my $majorver = substr($ver,0,1);
-  #or: MAJORVER=$(cat /etc/redhat-release | awk -Frelease {'print $2'}  | awk {'print $1'} | awk -F. {'print $1'})
-  open(my $fh,'>','/etc/yum.repos.d/epel-bootstrap.repo') 
-    or die "Couldn't open /etc/yum.repos.d/epel-bootstrap.repo for writing: $!";
-  print $fh <<EOM;
-[epel]
-name=Bootstrap EPEL
-mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-$majorver&arch=$arch
-failovermethod=priority
-enabled=0
-gpgcheck=0
-EOM
-  close($fh);
-
-  #unlink('/etc/yum.repos.d/epel-bootstrap.repo');
-}
-sub yum_install {
-  my @packages = @_;
-  run_command(['yum','-y','update']);
-  run_command(['yum','-y','install',@packages]);
-}
-
