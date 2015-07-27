@@ -43,6 +43,7 @@ my $binary_prerequisites = {
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
     texlive_epsf => 'texlive-epsf',
+    texlive_path => 'texlive-path',
 };
 
 sub get_binary_prerequisites {
@@ -51,10 +52,6 @@ sub get_binary_prerequisites {
 
 # A list of perl modules that we need
 my $perl_prerequisites = {
-    'Test::XML' => 'perl-Test-XML', # needed in centos 7 for cpan installs
-    'Test::Simple' => 'perl-Test-Simple',
-    'Test::Requires' => 'perl-Test-Requires',
-    'Test::TCP' => 'perl-Test-TCP',
     'HTTP::Tiny' => 'perl-HTTP-Tiny', 
     'Plack'      => 'perl-Plack',
     'Apache2::Request' => 'perl-lipapreq2',
@@ -67,7 +64,7 @@ my $perl_prerequisites = {
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
     'CPANMinus' => 'perl-App-cpanminus',
-    'Dancer' => 'CPAN',
+    'Dancer' => 'perl-Dancer',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
     'Data::UUID' => 'perl-Data-UUID',
@@ -100,7 +97,7 @@ my $perl_prerequisites = {
     'Iterator' => 'CPAN',
     'Iterator::Util' => 'CPAN',
     'JSON' => 'perl-JSON',
-    'Locale::Maketext::Lexicon' => 'CPAN', #is availble for fedora
+    'Locale::Maketext::Lexicon' => 'perl-Locale-Maketext-Lexicon'
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
     'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
     'Mail::Sender' => 'perl-Mail-Sender',
@@ -112,14 +109,14 @@ my $perl_prerequisites = {
     'Opcode' => 'perl',
     'PadWalker' => 'perl-PadWalker',
     'Path::Class' => 'perl-Path-Class',
-    'PHP::Serialization' => 'CPAN',
+    'PHP::Serialization' => 'perl-PHP-Serialization',
     'Pod::Usage' => 'perl',
     'Pod::WSDL' => 'CPAN',
     'Safe' => 'perl',
     'Scalar::Util' => 'perl',
     'SOAP::Lite' => 'perl-SOAP-Lite',
     'Socket' => 'perl',
-    'SQL::Abstract' => 'CPAN',
+    'SQL::Abstract' => 'perl-SQL-Abstract',
     'String::ShellQuote' => 'perl-String-ShellQuote',
     'Template' => 'CPAN',
     'Text::CSV' => 'perl-Text-CSV',
@@ -128,7 +125,7 @@ my $perl_prerequisites = {
     'Time::HiRes' => 'perl-Time-HiRes',
     'Time::Zone' => 'perl-TimeDate',
     'URI::Escape' => 'perl',
-    'UUID::Tiny' => 'CPAN',
+    'UUID::Tiny' => 'perl-UUID-Tiny',
     'XML::Parser' => 'perl-XML-Parser',
     'XML::Parser::EasyTree' => 'CPAN',
     'XML::Writer' => 'perl-XML-Writer',
@@ -173,19 +170,19 @@ sub midpreq_hook {
 
 # A command for updating the package sources
 sub update_sources {
-    run_command(['yum', '-y', 'install', 'epel-release']);
+    run_command(['dnf', '-y', 'install', 'epel-release']);
 };
 
 # A command for updating the system
 sub update_packages {
-    run_command(['yum', '-y', 'update']);
+    run_command(['dnf', '-y', 'update']);
 };
 
 # A command for installing a package given a name
 sub package_install {
     my $self = shift;
     my @packages = @_;
-    run_command(['yum','-y','install',@packages]);
+    run_command(['dnf','-y','install',@packages]);
 };
 
 # A command for installing a cpan package given a name
@@ -198,20 +195,16 @@ sub CPAN_install {
 # A command for any distro specific stuff that needs to be done
 # after installing prerequieists
 sub postpreq_hook {
-    # For installing missing tex package.  We can safely use the fedora
-    # package because its just a latex sytle file. 
-    run_command(['curl', '-ksSO', 'ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm']);
-    run_command(['rpm','-ivh','--replacepkgs','texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm'])
-    
+
 }
 
 # A command for checking if the required services are running and
 # configuring them
 sub configure_services {
-    run_command(['service','mariadb','start']);
-    run_command(['chkconfig','mariadb','on']);
-    run_command(['service','httpd','start']);
-    run_command(['chkconfig','httpd','on']);
+    run_command(['systemctl','start','mariadb']);
+    run_command(['systemctl','enable','mariadb']);
+    run_command(['systemctl','start','httpd']);
+    run_command(['systemctl','enable','httpd']);
     run_command(['mysql_secure_installation']);
 }
 
