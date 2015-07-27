@@ -47,7 +47,7 @@ our %version_match = (
     'centos'                => 'CentOS (?:Linux )?release (\d+)\..*',
     'debian'                => '(\d).*',
     'suse'                  => 'VERSION = (.*)',
-    'fedora'                => 'Fedora Core release (\d+) \(',
+    'fedora'                => 'Fedora (?:Core )?release (\d+) \(',
     'redflag'               => 'Red Flag (?:Desktop|Linux) (?:release |\()(.*?)(?: \(.+)?\)',
     'redhat'                => 'Red Hat (?:Enterprise) Linux (?:Server) release (.*) \(',
     'slackware'             => '^Slackware (.+)$'
