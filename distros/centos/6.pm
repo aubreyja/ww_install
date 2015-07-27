@@ -57,7 +57,7 @@ my $perl_prerequisites = {
     'Test::Requires' => 'perl-Test-Requires',
     'Test::TCP' => 'perl-Test-TCP',
     'HTTP::Tiny' => 'perl-HTTP-Tiny', 
-    'Plack'      => 'perl-Plack',
+    'Plack'      => 'CPAN',
     'Apache2::Request' => 'perl-lipapreq2',
     'Apache2::Cookie' => 'perl-libapreq2',
     'Apache2::ServerRec' => 'mod_perl',
@@ -70,7 +70,7 @@ my $perl_prerequisites = {
     'Dancer' => 'CPAN',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
-    'Data::UUID' => 'perl-Data-UUID',
+    'Data::UUID' => 'CPAN',
     'Date::Format' => 'perl-TimeDate',
     'Date::Parse' => 'perl-TimeDate',
     'DateTime' => 'perl-DateTime',
@@ -132,7 +132,7 @@ my $perl_prerequisites = {
     'XML::Parser' => 'perl-XML-Parser',
     'XML::Parser::EasyTree' => 'CPAN',
     'XML::Writer' => 'perl-XML-Writer',
-    'XMLRPC::Lite' => 'perl-XMLRPC-Lite',
+    'XMLRPC::Lite' => 'CPAN',
     'YAML' => 'perl-YAML',
 };
 
@@ -191,7 +191,7 @@ sub package_install {
 sub CPAN_install {
     my $self = shift;
     my @modules = @_;
-    run_command(['cpan','-j lib/cpan_config.pm',@modules]);
+    run_command(['cpan',@modules]);
 };
 
 # A command for any distro specific stuff that needs to be done
@@ -203,8 +203,8 @@ sub postpreq_hook {
 # A command for checking if the required services are running and
 # configuring them
 sub configure_services {
-    run_command(['service','mysql','start']);
-    run_command(['chkconfig','mysql','on']);
+    run_command(['service','mysqld','start']);
+    run_command(['chkconfig','mysqld','on']);
     run_command(['service','httpd','start']);
     run_command(['chkconfig','httpd','on']);
     run_command(['mysql_secure_installation']);
