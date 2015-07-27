@@ -951,16 +951,16 @@ EOF
       or die "Can't find Apache!\n";
 
     open( HTTPD, $apache->{binary} . " -V |" ) or die "Can't do this: $!";
-    print_and_log("Your apache start up script is at " . $apache->{binary});
+    print_and_log("Your apache start up script is at " . $apache->{binary}."\n");
 
     #Get some information from apache2 -V
     while (<HTTPD>) {
         if ( $_ =~ /apache.(\d\.\d\.\d+)/i ) {
             $apache->{version} = $1;
-            print_and_log("Your apache version is " . $apache->{version});
+            print_and_log("Your apache version is " . $apache->{version}."\n");
         } elsif ( $_ =~ /HTTPD_ROOT\=\"((\/\w+)+)\"$/ ) {
             $apache->{root} = File::Spec->canonpath($1);
-            print_and_log("Your apache server root is " . $apache->{root});
+            print_and_log("Your apache server root is " . $apache->{root}."\n");
         } elsif ( $_ =~ /SERVER_CONFIG_FILE\=\"((\/)?(\w+\/)*(\w+\.?)+)\"$/ ) {
             $apache->{conf} = File::Spec->canonpath($1);
             my $is_absolute =
@@ -971,7 +971,7 @@ EOF
                 $apache->{conf} = File::Spec->canonpath(
                     $apache->{root} . "/" . $apache->{conf} );
             }
-            print_and_log("Your apache config file is " . $apache->{conf});
+            print_and_log("Your apache config file is " . $apache->{conf}."\n");
         }
     }
     close(HTTPD);

@@ -1,4 +1,4 @@
-package centos::6;
+package fedora::22;
 
 use strict;
 use warnings;
@@ -30,8 +30,8 @@ my $binary_prerequisites = {
     git => 'git',
     svn => 'subversion',
 
-    mysql => 'mysql',
-    mysql_server => 'mysql-server',
+    mysql => 'mariadb',
+    mysql_server => 'mariadb-server',
     ssh_server => 'openssh-server',
 
     apache2 => 'httpd',
@@ -43,7 +43,6 @@ my $binary_prerequisites = {
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
     texlive_epsf => 'texlive-epsf',
-    txlive_texmf => 'texlive-texmf-latex',
 };
 
 sub get_binary_prerequisites {
@@ -57,8 +56,7 @@ my $perl_prerequisites = {
     'Test::Requires' => 'perl-Test-Requires',
     'Test::TCP' => 'perl-Test-TCP',
     'HTTP::Tiny' => 'perl-HTTP-Tiny', 
-    'Plack'      => 'CPAN',
-    'Plack::Builder' => 'CPAN',
+    'Plack'      => 'perl-Plack',
     'Apache2::Request' => 'perl-lipapreq2',
     'Apache2::Cookie' => 'perl-libapreq2',
     'Apache2::ServerRec' => 'mod_perl',
@@ -68,10 +66,11 @@ my $perl_prerequisites = {
     'Carp' => 'perl',
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
+    'CPANMinus' => 'perl-App-cpanminus',
     'Dancer' => 'CPAN',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
-    'Data::UUID' => 'CPAN',
+    'Data::UUID' => 'perl-Data-UUID',
     'Date::Format' => 'perl-TimeDate',
     'Date::Parse' => 'perl-TimeDate',
     'DateTime' => 'perl-DateTime',
@@ -101,9 +100,9 @@ my $perl_prerequisites = {
     'Iterator' => 'CPAN',
     'Iterator::Util' => 'CPAN',
     'JSON' => 'perl-JSON',
-    'Locale::Maketext::Lexicon' => 'perl-Locale-Maketext-Lexicon',
+    'Locale::Maketext::Lexicon' => 'CPAN', #is availble for fedora
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
-    'LWP::Protocol::https' => '',
+    'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
     'Mail::Sender' => 'perl-Mail-Sender',
     'MIME::Base64' => 'perl', 
     'Net::IP' => 'perl-Net-IP',
@@ -120,7 +119,7 @@ my $perl_prerequisites = {
     'Scalar::Util' => 'perl',
     'SOAP::Lite' => 'perl-SOAP-Lite',
     'Socket' => 'perl',
-    'SQL::Abstract' => 'perl-SQL-Abstract',
+    'SQL::Abstract' => 'CPAN',
     'String::ShellQuote' => 'perl-String-ShellQuote',
     'Template' => 'CPAN',
     'Text::CSV' => 'perl-Text-CSV',
@@ -133,7 +132,7 @@ my $perl_prerequisites = {
     'XML::Parser' => 'perl-XML-Parser',
     'XML::Parser::EasyTree' => 'CPAN',
     'XML::Writer' => 'perl-XML-Writer',
-    'XMLRPC::Lite' => 'CPAN',
+    'XMLRPC::Lite' => 'perl-XMLRPC-Lite',
     'YAML' => 'perl-YAML',
 };
 
@@ -144,7 +143,7 @@ sub get_perl_prerequisites {
 # A hash containing information about the apache webserver
 my $apacheLayout = {
     MPMDir       => '',
-    MPMConfFile  => '/etc/httpd/conf/httpd.conf',
+    MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
     ServerRoot   => '/etc/httpd',
     DocumentRoot => '/var/www/html',
     ConfigFile   => '/etc/httpd/conf/httpd.conf',
@@ -169,11 +168,7 @@ sub prepreq_hook {
 };
 
 sub midpreq_hook {
-    # we need a newer version of LWP::Protocol::https than is installed
-    # which we can get by focing the cpan install (it fails because but 67001
-    run_command(['cpan', '-f', 'LWP::Protocol::https']);
-    run_command(['cpan', '-f', 'SOAP::Lite']);
-    # Unfortunately we need an older version of something installed by CPAN
+    run_command(['cpan','Moo']); #moo needs tob e done with cpan not cpanm
 };
 
 # A command for updating the package sources
@@ -197,20 +192,24 @@ sub package_install {
 sub CPAN_install {
     my $self = shift;
     my @modules = @_;
-    run_command(['cpan',@modules]);
+    run_command(['cpanm',@modules]);
 };
 
 # A command for any distro specific stuff that needs to be done
 # after installing prerequieists
 sub postpreq_hook {
-
+    # For installing missing tex package.  We can safely use the fedora
+    # package because its just a latex sytle file. 
+    run_command(['curl', '-ksSO', 'ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm']);
+    run_command(['rpm','-ivh','--replacepkgs','texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm'])
+    
 }
 
 # A command for checking if the required services are running and
 # configuring them
 sub configure_services {
-    run_command(['service','mysqld','start']);
-    run_command(['chkconfig','mysqld','on']);
+    run_command(['service','mariadb','start']);
+    run_command(['chkconfig','mariadb','on']);
     run_command(['service','httpd','start']);
     run_command(['chkconfig','httpd','on']);
     run_command(['mysql_secure_installation']);
