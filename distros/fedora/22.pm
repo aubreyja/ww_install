@@ -54,7 +54,7 @@ sub get_binary_prerequisites {
 my $perl_prerequisites = {
     'HTTP::Tiny' => 'perl-HTTP-Tiny', 
     'Plack'      => 'perl-Plack',
-    'Apache2::Request' => 'perl-lipapreq2',
+    'Apache2::Request' => 'perl-libapreq2',
     'Apache2::Cookie' => 'perl-libapreq2',
     'Apache2::ServerRec' => 'mod_perl',
     'Apache2::ServerUtil' => 'mod_perl',
@@ -170,7 +170,7 @@ sub midpreq_hook {
 
 # A command for updating the package sources
 sub update_sources {
-    run_command(['dnf', '-y', 'install', 'epel-release']);
+
 };
 
 # A command for updating the system
