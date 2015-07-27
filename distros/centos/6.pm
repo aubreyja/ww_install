@@ -171,6 +171,13 @@ sub midpreq_hook {
     # we need a newer version of LWP::Protocol::https than is installed
     # which we can get by focing the cpan install (it fails because but 67001
     run_command(['cpan', '-f', 'LWP::Protocol::https']);
+    # Unfortunately we need an older version of something installed by CPAN
+    run_command(['wget','http://search.cpan.org/CPAN/authors/id/G/GA/GAAS/HTTP-Message-6.04.tar.gz']);
+    run_command(['tar','zxvf','HTTP-Message-6.04.tar.gz']);
+    run_command(['cd','HTTP-Message-6.04']);
+    run_command(['perl','Makefile.PL']);
+    run_command(['make','install']);
+    run_command(['cd','..']);
 };
 
 # A command for updating the package sources
