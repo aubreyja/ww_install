@@ -1076,10 +1076,10 @@ sub check_modules {
             $file .= ".pm";
             if ( $@ =~ /Can't locate $file in \@INC/ ) {
                 print_and_log("** $module not found in \@INC\n");
-		die("Missing module.  Sorry!");
+		die("Missing module.  Sorry! Try adding this module to your distribution file in distros.");
             } else {
                 print_and_log("** $module found, but failed to load: $@\n");
-		die("Missing module.  Sorry!");
+		die("Missing module.  Sorry!  Try adding this module to your distribution file in distros.");
             }
         } else {
             print_and_log("   $module found and loaded\n");

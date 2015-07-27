@@ -143,7 +143,7 @@ sub get_perl_prerequisites {
 # A hash containing information about the apache webserver
 my $apacheLayout = {
     MPMDir       => '',
-    MPMConfFile  => '/etc/httpd/conf.modules.d/00-mpm.conf',
+    MPMConfFile  => '/etc/httpd/conf/httpd.conf',
     ServerRoot   => '/etc/httpd',
     DocumentRoot => '/var/www/html',
     ConfigFile   => '/etc/httpd/conf/httpd.conf',
