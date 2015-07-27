@@ -102,7 +102,7 @@ my $perl_prerequisites = {
     'JSON' => 'perl-JSON',
     'Locale::Maketext::Lexicon' => 'perl-Locale-Maketext-Lexicon',
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
-    'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
+    'LWP::Protocol::https' => '',
     'Mail::Sender' => 'perl-Mail-Sender',
     'MIME::Base64' => 'perl', 
     'Net::IP' => 'perl-Net-IP',
@@ -168,6 +168,9 @@ sub prepreq_hook {
 };
 
 sub midpreq_hook {
+    # we need a newer version of LWP::Protocol::https than is installed
+    # which we can get by focing the cpan install (it fails because but 67001
+    run_command(['cpan', '-f', 'LWP::Protocol::https']);
 };
 
 # A command for updating the package sources
