@@ -30,8 +30,8 @@ my $binary_prerequisites = {
     git => 'git',
     svn => 'subversion',
 
-    mysql => 'mariadb',
-    mysql_server => 'mariadb-server',
+    mysql => 'mysql',
+    mysql_server => 'mysql-server',
     ssh_server => 'openssh-server',
 
     apache2 => 'httpd',
@@ -43,6 +43,7 @@ my $binary_prerequisites = {
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
     texlive_epsf => 'texlive-epsf',
+    txlive_texmf => 'texlive-texmf-latex',
 };
 
 sub get_binary_prerequisites {
@@ -100,7 +101,7 @@ my $perl_prerequisites = {
     'Iterator' => 'CPAN',
     'Iterator::Util' => 'CPAN',
     'JSON' => 'perl-JSON',
-    'Locale::Maketext::Lexicon' => 'CPAN', #is availble for fedora
+    'Locale::Maketext::Lexicon' => 'perl-Locale-Maketext-Lexicon',
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
     'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
     'Mail::Sender' => 'perl-Mail-Sender',
@@ -119,7 +120,7 @@ my $perl_prerequisites = {
     'Scalar::Util' => 'perl',
     'SOAP::Lite' => 'perl-SOAP-Lite',
     'Socket' => 'perl',
-    'SQL::Abstract' => 'CPAN',
+    'SQL::Abstract' => 'perl-SQL-Abstract',
     'String::ShellQuote' => 'perl-String-ShellQuote',
     'Template' => 'CPAN',
     'Text::CSV' => 'perl-Text-CSV',
@@ -198,18 +199,14 @@ sub CPAN_install {
 # A command for any distro specific stuff that needs to be done
 # after installing prerequieists
 sub postpreq_hook {
-    # For installing missing tex package.  We can safely use the fedora
-    # package because its just a latex sytle file. 
-    run_command(['curl', '-ksSO', 'ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm']);
-    run_command(['rpm','-ivh','--replacepkgs','texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm'])
-    
+
 }
 
 # A command for checking if the required services are running and
 # configuring them
 sub configure_services {
-    run_command(['service','mariadb','start']);
-    run_command(['chkconfig','mariadb','on']);
+    run_command(['service','mysql','start']);
+    run_command(['chkconfig','mysql','on']);
     run_command(['service','httpd','start']);
     run_command(['chkconfig','httpd','on']);
     run_command(['mysql_secure_installation']);
