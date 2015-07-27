@@ -690,10 +690,10 @@ sub get_wwdata_group {
 # are the webwork2/DATA, webwork2/htdocs/tmp, webwork2/logs, 
 # webwork2/tmp, and the courses/ directories.
 #
-# It can convenient to give WeBWorK system administrators access to 
-# these directories as well, so they can permform administrative tasks 
-# such as removing temporary files, creating and editing courses from 
-# the command line, managing logs, and so on.
+# It can be convenient to give WeBWorK system administrators access to these 
+# directories as well, so they can permform administrative tasks such as 
+# removing temporary files, creating and editing courses from the command 
+# line, managing logs, and so on.
 #
 # While it can be convenient to allow the WeBWorK administrator(s) to 
 # manipulate the webwork files writable by the webserver, we may not 
