@@ -67,7 +67,6 @@ my $perl_prerequisites = {
     'Carp' => 'perl',
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
-    'CPANMinus' => 'perl-App-cpanminus',
     'Dancer' => 'CPAN',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
@@ -169,7 +168,6 @@ sub prepreq_hook {
 };
 
 sub midpreq_hook {
-    run_command(['cpan','Moo']); #moo needs tob e done with cpan not cpanm
 };
 
 # A command for updating the package sources
@@ -193,7 +191,7 @@ sub package_install {
 sub CPAN_install {
     my $self = shift;
     my @modules = @_;
-    run_command(['cpanm',@modules]);
+    run_command(['cpan','-j lib/cpan_config.pm',@modules]);
 };
 
 # A command for any distro specific stuff that needs to be done
