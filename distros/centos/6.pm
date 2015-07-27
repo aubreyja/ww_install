@@ -1,4 +1,4 @@
-package centos::7;
+package centos::6;
 
 use strict;
 use warnings;
