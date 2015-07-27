@@ -165,7 +165,7 @@ sub prepreq_hook {
 };
 
 sub midpreq_hook {
-    run_command(['cpan','Moo']); #moo needs tob e done with cpan not cpanm
+
 };
 
 # A command for updating the package sources
