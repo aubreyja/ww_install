@@ -83,8 +83,8 @@ use constant WW_DB     => 'webwork';
 use constant WWDB_USER => 'webworkWrite';
 
 use constant CHECKOUT_BRANCH => 1;
-use constant WW_BRANCH => 'develop';
-use constant PG_BRANCH => 'develop';
+use constant WW_BRANCH => 'release-2.11';
+use constant PG_BRANCH => 'release-2.11';
 
 use constant SKIP_INSTALL_PREREQUISITES => 0;
 
