@@ -105,7 +105,7 @@ will ask to modify.
 Other Resources
 ----------------
 
-Please report any problems on the [issues page](https://github.com/aubreyja/ww_install/issues?state=open) for this
+Please report any problems on the [issues page](https://github.com/openwebwork/ww_install/issues?state=open) for this
 repository.
 
 Questions and comments about this installer can be directed to me on the [webwork-devel](http://webwork.maa.org/mailman/listinfo/webwork-devel)
