@@ -212,7 +212,7 @@ then
     yum -y install perl-CPAN perl-IPC-Cmd
 elif [ -e "/etc/debian_version" ]
 then 
-    apt-get --yes --allow-unauthenticated install perl-modules
+    apt-get --yes --allow-unauthenticated install perl-modules libdatetime-perl
 fi    
 
 echo "## Download the latest webwork installer"
