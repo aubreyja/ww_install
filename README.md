@@ -120,7 +120,7 @@ Jason Aubrey <aubreyja@gmail.com>
 
 If you use the script, please email me to let me know what OS you installed it on so I can add a notation to
 the list of tested distributions above and address any problems you run into. I'd also be happy to hear 
-suggestions for improvement.  Seriously, though.  Send all yoru complaints to this guy.  
+suggestions for improvement.  Seriously, though.  Send all your complaints to this guy.  
 
 Contributors
 ------------
