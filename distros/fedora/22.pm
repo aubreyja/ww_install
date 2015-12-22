@@ -5,7 +5,7 @@ use warnings;
 
 use WeBWorK::Install::Utils;
 
-my $ww_versions = [];
+my $ww_versions = ['2.11'];
 
 sub get_ww_versions {
     return $ww_versions;

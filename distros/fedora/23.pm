@@ -1,5 +1,8 @@
 package fedora::23;
 
+#NOTE:  This distro does not work.  It uses perl 5.22 which is incompatible
+# with mod perl.  
+
 use strict;
 use warnings;
 

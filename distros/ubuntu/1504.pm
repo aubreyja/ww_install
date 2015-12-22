@@ -9,7 +9,7 @@ use WeBWorK::Install::Utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
-my $ww_versions = ['develop'];
+my $ww_versions = ['2.11'];
 
 sub get_ww_versions {
     return $ww_versions;
