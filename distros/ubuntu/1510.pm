@@ -38,7 +38,7 @@ my $binary_prerequisites = {
     ssh_server => 'openssh-server',
 
     apache2 => 'apache2',
-    mod_mpm => 'apache2-mpm-prefork',
+    mod_mpm => 'apache2',
     mod_fcgid => 'libapache2-mod-fcgid',
     mod_perl => 'libapache2-mod-perl2',
     mod_apreq => 'libapache2-mod-apreq2',
