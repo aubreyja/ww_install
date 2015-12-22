@@ -212,7 +212,7 @@ then
     yum -y install perl-CPAN perl-IPC-Cmd
 elif [ -e "/etc/debian_version" ]
 then 
-    apt-get -y --allow-unauthenticated perl-modules
+    apt-get --yes --allow-unauthenticated perl-modules
 fi    
 
 echo "## Download the latest webwork installer"
