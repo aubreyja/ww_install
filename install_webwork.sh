@@ -7,7 +7,7 @@ MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
 BRANCH=master
-WWINSTALLURL=https://github.com/goehle/ww_install/archive/$BRANCH.tar.gz
+WWINSTALLURL=https://github.com/openwebwork/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
 
@@ -212,7 +212,7 @@ then
     yum -y install perl-CPAN perl-IPC-Cmd
 elif [ -e "/etc/debian_version" ]
 then 
-    apt-get --yes --allow-unauthenticated install perl-modules libdatetime-perl
+    apt-get --yes --allow-unauthenticated install perl-modules
 fi    
 
 echo "## Download the latest webwork installer"
