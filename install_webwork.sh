@@ -222,7 +222,7 @@ echo "## Extracting the installer"
 tar -xzf $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
-mv $TMPDIR/webwork_install.log .
+#mv $TMPDIR/webwork_install.log .
 
 perl ./bin/ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW $PREREQUISITES
 wait
