@@ -5,20 +5,20 @@ This repository consists of a perl script `ww_install.pl`, along with some suppo
 config files, and perl modules designed to work together install the open source online homework system 
 [WeBWorK](https://github.com/openwebwork).
 
-The script has been updated to install WeBWorK 2.10 as of 12/22/2014.
+The script has been updated to install WeBWorK 2.11 as of 12/22/2015.
 
 It has been tested and supported on 
-*  Debian Wheezy
-*  Fedora 20
-*  Ubuntu 14.04
-*  CentOS 7
+*  Debian 7, 8
+*  Fedora 22
+*  Ubuntu 14.04, 15.04, 15.10
+*  CentOS 6, 7
 
-On these systems it did install webwork. 
+On these systems it did install WeBWorK. 
 
 Gotchas
 -------
 
--  There is currently no package in Fedora 21 which provides the pnmtops program.  The installer will fail when checking for required modules and programs.  Once [this](https://bugzilla.redhat.com/show_bug.cgi?id=1171903) bug is fixed the installer '''should''' work.  
+-  Fedora 23 uses Perl 5.22 which is incompatible with mod_perl.  Since WeBWorK uses mod_perl this will prevent installation of WeBWorK on Fedora 23.  
 
 Usage
 -------
@@ -27,11 +27,11 @@ To install [WeBWorK](https://github.com/openwebwork):
 
 1. Get the `install_webwork.sh` script:
 
-  `wget --no-check-certificate https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
+  `wget --no-check-certificate https://raw.github.com/openwebwork/ww_install/master/install_webwork.sh`
   
   or if you prefer
   
-  `curl -ksSO https://raw.github.com/aubreyja/ww_install/master/install_webwork.sh`
+  `curl -ksSO https://raw.github.com/openwebwork/ww_install/master/install_webwork.sh`
 
 2. As root (or with sudo) do
 
@@ -42,7 +42,7 @@ Note that if you use sudo, then you must be a sudoer with sufficient administrat
 
 For more control over the process you can clone this repository with
 
-`git clone https://github.com/aubreyja/ww_install.git`
+`git clone https://github.com/openwebwork/ww_install.git`
 
 and then run the scripts individually as needed.
 
@@ -52,25 +52,29 @@ Contents
 ### install_webwork.sh
 
 This script is the 'controller' that ties together the other scripts.  It opens an install log, downloads this
-repo and opens it in (typically) `/tmp`.  Then it runs `install_prerequisites.sh` followed by `ww_install.pl`.
+repo and opens it in (typically) `/tmp`.  Then it installs any files needed to run `ww_install.pl` and then runs `ww_install.pl`.
 When `ww_install.pl` exits, it attempts to open webwork in the system's default web browser, copies 
 webwork_install.log to your top level webwork directory (e.g. `/opt/webwork`) and then deletes the downloaded installation package.
 
-### bin/install_prerequisites.sh
-
-If your system does not have all of the prerequisites installed, then the `install_prerequisites.sh` script 
-might help.  The goal of that script is to install all of the software that WeBWorK depends on. This is also
-the script most likely to be incomplete or fail in some way on your system.  For systems based on Debian 
-(Ubuntu,etc.) and Red Hat (CentOS, Scientific Linux, etc.) it will do everything needed. We're working 
-on getting it to install prereqs on other systems such as OpenSUSE and Magia, but for now other systems will 
-need to have these prerequisites already installed.  If you would like to fill it out for your favorite 
-linux distro or unix system, I will happily accept pull requests.
-
 ### bin/ww_install.pl
 
-The goal of `ww_install.pl` is to install WeBWorK on any system on which the prerequisites are already installed.  
+The goal of `ww_install.pl` is to install WeBWorK on any system with a properly set up distribution file in the `distros` folder.  
 
 It is an interactive script based on the core perl module [Term::UI](http://perldoc.perl.org/Term/UI.html), and is written with the goal of being cross-platform.  It does use some linux built-ins, and work is needed to ensure that this script will work as well on unix machines. Again, contributions of work in this direction would be welcome.
+
+### distros
+
+This folder contains distribution files which `ww_install.pl` uses to install WeBWorK on various systems.  For example the file `distros/centos/7.pm` is used to install WeBWorK on CentOS version 7.  If you are interested in getting the installer working on your favorite distribution you would create the appropriate file in this folder and submit a pull request.  You can base your distro file off of `blankdistro.pm`.  In general you will need to set the following:
+* The array of versions which you have tested the installer on.
+* The list of packages which provide the binaries described by the hash keys
+* The list of packages which provide the perl modules described by the hash keys.  Use 'CPAN' if you intend to get the package from CPAN
+* The `apacheLayout` array which defines where various folders and configuration files are for your apache setup.
+* The command for updating package sources.
+* The command for updating packages.
+* The command for installing packages.
+* The command for installing packages from CPAN.
+* The command for checking and configuring services post install.
+* You can add code in various "hooks" which will be run at various stages of the installation.  This is an opportunity to perform any hacky fixes necessary for your distro.  
 
 ### Other files
 
@@ -98,17 +102,10 @@ on your system for webwork to run.
 The `conf/` subdirectory contains copies of config files or snippets of config files that this installation package
 will ask to modify.
 
-The `deb/` subdirectory contains work (in progress) toward creating a 
-debian archive for installing webwork.
-
-The `rpms/` subdirectory is Mark Hamrick's work toward creating a webwork
-rpm (as a submodule, so I can easily get a hold if it when/if I eventually
-start looking at it).
-
 Other Resources
 ----------------
 
-Please report any problems on the [issues page](https://github.com/aubreyja/ww_install/issues?state=open) for this
+Please report any problems on the [issues page](https://github.com/openwebwork/ww_install/issues?state=open) for this
 repository.
 
 Questions and comments about this installer can be directed to me on the [webwork-devel](http://webwork.maa.org/mailman/listinfo/webwork-devel)
@@ -123,7 +120,7 @@ Jason Aubrey <aubreyja@gmail.com>
 
 If you use the script, please email me to let me know what OS you installed it on so I can add a notation to
 the list of tested distributions above and address any problems you run into. I'd also be happy to hear 
-suggestions for improvement.
+suggestions for improvement.  Seriously, though.  Send all your complaints to this guy.  
 
 Contributors
 ------------
