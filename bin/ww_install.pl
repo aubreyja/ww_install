@@ -2436,6 +2436,11 @@ print_and_log(<<EOF);
 #######################################################################
 EOF
 
+unless ($apache->{OtherConfig}) {
+  print_and_log("The OtherConfig location (defined in the distro file for this linux distribution) is empty. We can't continue.");
+  die('$apache->{OtherConfig} is empty, can\'t continue');
+}
+
 my $ln = can_run('ln');
 my $cmd = [$ln, '-s', "$webwork_dir/conf/$apache_config_file", "$apache->{OtherConfig}/webwork.conf"];
 my $success = run_command($cmd);;
