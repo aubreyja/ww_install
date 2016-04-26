@@ -82,9 +82,9 @@ use constant SMTP_SENDER => 'webwork@localhost';
 use constant WW_DB     => 'webwork';
 use constant WWDB_USER => 'webworkWrite';
 
-use constant CHECKOUT_BRANCH => 0;
-use constant WW_BRANCH => 'master';
-use constant PG_BRANCH => 'master';
+use constant CHECKOUT_BRANCH => 1;
+use constant WW_BRANCH => 'release/2.12';
+use constant PG_BRANCH => 'release/2.12';
 
 use constant SKIP_INSTALL_PREREQUISITES => 0;
 
