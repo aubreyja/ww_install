@@ -2269,10 +2269,10 @@ EOF
 no strict;
 
 check_modules(@{$osPackage.'::modulesList'}
-	      // @modulesList);
+	      || @modulesList);
 
 check_modules(@{$osPackage.'::apache2ModulesList'}
-	      // @apache2ModulesList);
+	      || @apache2ModulesList);
 
 use strict;
 
