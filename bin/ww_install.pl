@@ -2265,11 +2265,16 @@ print_and_log(<<EOF);
 #
 # #################################################################
 EOF
-check_modules(@{$osPackage::modulesList}
+
+no strict;
+
+check_modules(@{$osPackage.'::modulesList'}
 	      // @modulesList);
 
-check_modules(@{$osPackage::apache2ModulesList}
+check_modules(@{$osPackage.'::apache2ModulesList'}
 	      // @apache2ModulesList);
+
+use strict;
 
 #Check binary prerequisites
 my $apps = configure_externalPrograms(@applicationsList);
