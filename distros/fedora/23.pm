@@ -14,7 +14,7 @@ sub get_ww_versions {
     return $ww_versions;
 }
 
-our $apache2ModulesList = qw(
+our @apache2ModulesList = qw(
   Apache2::ServerRec
   Apache2::ServerUtil
   
