@@ -2268,13 +2268,19 @@ EOF
 
 no strict;
 
-check_modules(@{$osPackage.'::modulesList'}
-	      || @modulesList);
+my @modules = @{$osPackage.'::modulesList'};
 
-check_modules(@{$osPackage.'::apache2ModulesList'}
-	      || @apache2ModulesList);
+@modules = @modulesList unless @modules;
+
+my @apacheModules = @{$osPackage.'::apache2ModulesList'};
+
+@apacheModules = @apache2ModulesList unless @apacheModules;
 
 use strict;
+
+check_modules(@modules);
+
+check_modules(@apacheModules);
 
 #Check binary prerequisites
 my $apps = configure_externalPrograms(@applicationsList);
