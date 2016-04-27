@@ -42,7 +42,7 @@ my $binary_prerequisites = {
     
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
-    texlive_preprint => 'texllive-preprint',
+    texlive_preprint => 'texlive-preprint',
     texlive_epsf => 'texlive-epsf',
 };
 
