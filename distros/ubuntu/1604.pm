@@ -64,6 +64,7 @@ my $perl_prerequisites = {
     'Benchmark' => 'perl-modules',
     'Carp' => 'perl-base',
     'CGI' => 'perl-modules',
+    'Crypt::SSLeay' => 'libcrypt-ssleay-perl',
     'Dancer' => 'libdancer-perl',
     'Dancer::Plugin::Database' => 'libdancer-plugin-database-perl',
     'Data::Dumper' => 'perl',
