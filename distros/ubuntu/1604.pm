@@ -1,5 +1,5 @@
 # Package for distribution ubuntu version 16.04
-package ubuntu::1504;
+package ubuntu::1604;
 use base qw(blankdistro);
 
 use strict;
