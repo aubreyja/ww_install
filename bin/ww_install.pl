@@ -1867,16 +1867,16 @@ sub write_site_conf {
             print $out "\$database_username = \"$database_username\";\n";
         } elsif (/^\$database_password/) {
             print $out "\$database_password = \'$database_password\';\n";
-        } elsif (/^\$externalPrograms{(\w+)}/) {
+        } elsif (/^\$externalPrograms\{(\w+)\}/) {
             next if ( $1 =~ /tth/ );
             print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
         } elsif (/^\$pg_dir/) {
             print $out "\$pg_dir = \"$WW_PREFIX/pg\";\n";
         } elsif (/^\$webwork_courses_dir/) {
             print $out "\$webwork_courses_dir = \"$WW_PREFIX/courses\";\n";
-        } elsif (/^\$mail{smtpSender}/) {
+        } elsif (/^\$mail\{smtpSender\}/) {
             print $out "\$mail{smtpSender} = \"$mail->{smtpSender}\";\n";
-        } elsif (/^\$mail{smtpServer}/) {
+        } elsif (/^\$mail\{smtpServer\}/) {
             print $out "\$mail{smtpServer} = \"$mail->{smtpServer}\";\n";
         } else {
             print $out $_;
@@ -1891,11 +1891,11 @@ sub write_localOverrides_conf {
     open( my $out, ">", "$conf_dir/localOverrides.conf" )
       or die "Can't open $conf_dir/localOverrides.conf for writing: $!";
     while (<$in>) {
-        if (/^\$problemLibrary{root}/) {
+        if (/^\$problemLibrary\{root\}/) {
             print $out "\$problemLibrary{version} = \"2.5\";\n";
             print $out
 "\$problemLibrary{root} = \"$WW_PREFIX/libraries/webwork-open-problem-library/OpenProblemLibrary\";\n";
-        } elsif (/^\$pg{options}{displayMode}/) {
+        } elsif (/^\$pg\{options\}\{displayMode\}/) {
             print $out "\$pg{options}{displayMode} = \"MathJax\";\n";
         } else {
             print $out $_;
