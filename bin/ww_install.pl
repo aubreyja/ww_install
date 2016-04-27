@@ -1845,7 +1845,8 @@ sub write_site_conf {
     my (
         $WW_PREFIX,         $conf_dir,          $webwork_url,
         $server_root_url,   $apache,            $database_dsn,
-        $database_username, $database_password, $apps
+        $database_username, $database_password, $apps,
+	$mail
     ) = @_;
     open( my $in, "<", "$conf_dir/site.conf.dist" )
       or die "Can't open $conf_dir/site.conf.dist for reading: $!";
@@ -1873,6 +1874,10 @@ sub write_site_conf {
             print $out "\$pg_dir = \"$WW_PREFIX/pg\";\n";
         } elsif (/^\$webwork_courses_dir/) {
             print $out "\$webwork_courses_dir = \"$WW_PREFIX/courses\";\n";
+        } elsif (/^\$mail{smtpSender}/) {
+            print $out "\$mail{smtpSender} = \"$mail->{smtpSender}\";\n";
+        } elsif (/^\$mail{smtpServer}/) {
+            print $out "\$mail{smtpServer} = \"$mail->{smtpServer}\";\n";
         } else {
             print $out $_;
         }
@@ -2404,7 +2409,8 @@ EOF
 write_site_conf(
     $WW_PREFIX,         "$webwork_dir/conf", $webwork_url,
     $server_root_url,   $apache,             $database_dsn,
-    $database_username, $database_password,  $apps
+    $database_username, $database_password,  $apps,
+    \%mail		
 );
 
 write_localOverrides_conf( $WW_PREFIX, "$webwork_dir/conf" );
