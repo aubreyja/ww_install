@@ -125,14 +125,6 @@ my @applicationsList = qw(
   git
 );
 
-my @apache1ModulesList = qw(
-  Apache
-  Apache::Constants
-  Apache::Cookie
-  Apache::Log
-  Apache::Request
-);
-
 my @apache2ModulesList = qw(
   Apache2::Request
   Apache2::Cookie
@@ -2273,8 +2265,11 @@ print_and_log(<<EOF);
 #
 # #################################################################
 EOF
-check_modules(@modulesList);
-check_modules(@apache2ModulesList);
+check_modules(@{$osPackage::modulesList}
+	      // @modulesList);
+
+check_modules(@{$osPackage::apache2ModulesList}
+	      // @apache2ModulesList);
 
 #Check binary prerequisites
 my $apps = configure_externalPrograms(@applicationsList);

@@ -14,6 +14,12 @@ sub get_ww_versions {
     return $ww_versions;
 }
 
+@apache2ModulesList = qw(
+  Apache2::ServerRec
+  Apache2::ServerUtil
+  
+);
+
 # A list of packages for various binaries that we need. 
 my $binary_prerequisites = {
     mkdir => 'coreutils',
