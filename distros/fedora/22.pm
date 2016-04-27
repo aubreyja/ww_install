@@ -65,6 +65,7 @@ my $perl_prerequisites = {
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
     'CPANMinus' => 'perl-App-cpanminus',
+    'Crypt::SSLeay' => 'perl-Crypt-SSLeay',
     'Dancer' => 'perl-Dancer',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
