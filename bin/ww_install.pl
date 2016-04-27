@@ -1721,7 +1721,7 @@ sub get_webwork {
         print_and_log("Fetched webwork2 successfully.\n");
         chdir "$prefix/webwork2";
 	if (CHECKOUT_BRANCH) {
-	    run_command(['git','checkout','-b',WW_BRANCH,'origin/'.WW_BRANCH]);
+	    run_command(['git','checkout',WW_BRANCH]);
 	}
         chdir $prefix;
     } else {
@@ -1732,7 +1732,7 @@ sub get_webwork {
         print_and_log("Fetched pg successfully!\n");
 	chdir "$prefix/pg";
 	if (CHECKOUT_BRANCH) {
-	    run_command(['git','checkout','-b',PG_BRANCH],'origin/'.PG_BRANCH);
+	    run_command(['git','checkout',PG_BRANCH]);
 	}
 	chdir $prefix;
     } else {
