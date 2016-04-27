@@ -1971,8 +1971,10 @@ END
   close($fh);
 
   #Make replacements
-  if($string =~ /(Timeout\s+\d+)/s) {
+  if ($string =~ /(Timeout\s+\d+)/s) {
    $string =~ s/$1/Timeout $timeout/;
+  } else {
+   $string .= "\nTimeout $timeout\n";
   }
 
   #Open apache config file for writing and write!
