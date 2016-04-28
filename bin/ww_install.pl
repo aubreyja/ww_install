@@ -146,6 +146,7 @@ my @modulesList = qw(
 	Carp
 	CGI
 	Class::Accessor
+        Crypt::SSLeay
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dumper
@@ -156,6 +157,7 @@ my @modulesList = qw(
 	DBD::mysql
 	DBI
 	Digest::MD5
+        Digest::SHA
 	Email::Address
 	Errno
 	Exception::Class
