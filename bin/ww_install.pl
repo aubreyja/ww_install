@@ -1862,8 +1862,12 @@ sub write_site_conf {
         } elsif (/^\$database_password/) {
             print $out "\$database_password = \'$database_password\';\n";
         } elsif (/^\$externalPrograms\{(\w+)\}/) {
-            next if ( $1 =~ /tth/ );
-            print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
+	    next if ( $1 =~ /tth/ );
+	    if ($1 =~ /curl/) {
+	      print $out "\$externalPrograms{curlCommand} = \"$$apps{$1}\";\n";
+	    } else {
+	      print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
+	    }
         } elsif (/^\$pg_dir/) {
             print $out "\$pg_dir = \"$WW_PREFIX/pg\";\n";
         } elsif (/^\$webwork_courses_dir/) {
