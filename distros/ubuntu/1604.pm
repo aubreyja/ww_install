@@ -214,7 +214,7 @@ sub postconfig_hook {
 
   print_and_log("Setting Perl to use JSON::PP in apache config file.\n");
   
-  die $! unless system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
+  die $! if system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
 
 }
 
