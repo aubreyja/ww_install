@@ -188,14 +188,6 @@ sub CPAN_install {
 # after installing prerequieists
 sub postpreq_hook {
 
-  # As of the release of 2.12 the JSON::XS::Boolean package for
-  # ubuntu was kind of borked.  So we use the PP boolean
-  # implementation instead by setting an environment variable.
-
-  system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
-
-  die $! if $!;
-  
 }
 
 # A command for checking if the required services are running
@@ -216,7 +208,18 @@ sub preconfig_hook {
 # A command for any distro specific stuff that needs to be done
 # after webwork has been configured
 sub postconfig_hook {
+  # As of the release of 2.12 the JSON::XS::Boolean package for
+  # ubuntu was kind of borked.  So we use the PP boolean
+  # implementation instead by setting an environment variable.
 
+  print_and_log("Setting Perl to ues JSON::PP in apache config file.\n");
+  
+  system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
+
+  die $! if $!;
+  
+
+  
 }
 
 # A comand for any distro specific stuff that needs to be done

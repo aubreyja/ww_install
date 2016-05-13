@@ -1863,7 +1863,7 @@ sub write_site_conf {
             print $out "\$database_password = \'$database_password\';\n";
         } elsif (/^\$externalPrograms\{(\w+)\}/) {
 	    next if ( $1 =~ /tth/ );
-	    if ($1 =~ /curl/) {
+	    if ($1 =~ /curlCommand/) {
 	      print $out "\$externalPrograms{curlCommand} = \"$$apps{$1}\";\n";
 	    } else {
 	      print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
