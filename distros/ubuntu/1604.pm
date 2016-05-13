@@ -212,14 +212,10 @@ sub postconfig_hook {
   # ubuntu was kind of borked.  So we use the PP boolean
   # implementation instead by setting an environment variable.
 
-  print_and_log("Setting Perl to ues JSON::PP in apache config file.\n");
+  print_and_log("Setting Perl to use JSON::PP in apache config file.\n");
   
-  system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
+  die $! unless system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
 
-  die $! if $!;
-  
-
-  
 }
 
 # A comand for any distro specific stuff that needs to be done
