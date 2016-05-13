@@ -1099,9 +1099,14 @@ sub configure_externalPrograms {
         if ( $apps->{$app} ) {
             print_and_log("   $app found at ${$apps}{$app}\n");
             if ( $app eq 'lwp-request' ) {
-                delete $apps->{$app};
-                $apps->{checkurl} = "$app" . ' -d -mHEAD';
-            }
+	      delete $apps->{$app};
+	      $apps->{checkurl} = "$app" . ' -d -mHEAD';
+	    } elsif ($app eq 'curl' ) {
+	      # why did this get called curlCommand and not just
+	      # curl like every other gd thing. 
+	      $apps->{curlCommand} = $apps->{$app};
+	      delete $apps->{$app}
+	    }		
         } else {
             print_and_log("** $app not found in \$PATH\n");
             die;
@@ -1863,12 +1868,8 @@ sub write_site_conf {
             print $out "\$database_password = \'$database_password\';\n";
         } elsif (/^\$externalPrograms\{(\w+)\}/) {
 	    next if ( $1 =~ /tth/ );
-	    if ($1 =~ /curlCommand/) {
-	      print $out "\$externalPrograms{curlCommand} = \"$$apps{$1}\";\n";
-	    } else {
-	      print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
-	    }
-        } elsif (/^\$pg_dir/) {
+	    print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
+	} elsif (/^\$pg_dir/) {
             print $out "\$pg_dir = \"$WW_PREFIX/pg\";\n";
         } elsif (/^\$webwork_courses_dir/) {
             print $out "\$webwork_courses_dir = \"$WW_PREFIX/courses\";\n";
