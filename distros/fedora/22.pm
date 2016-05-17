@@ -5,7 +5,7 @@ use warnings;
 
 use WeBWorK::Install::Utils;
 
-my $ww_versions = ['2.11'];
+my $ww_versions = ['2.11','2.12'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -42,6 +42,7 @@ my $binary_prerequisites = {
     
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
+    texlive_preprint => 'texlive-preprint',
     texlive_epsf => 'texlive-epsf',
     texlive_path => 'texlive-path',
 };
@@ -64,6 +65,7 @@ my $perl_prerequisites = {
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
     'CPANMinus' => 'perl-App-cpanminus',
+    'Crypt::SSLeay' => 'perl-Crypt-SSLeay',
     'Dancer' => 'perl-Dancer',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',

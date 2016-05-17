@@ -8,11 +8,16 @@ use warnings;
 
 use WeBWorK::Install::Utils;
 
-my $ww_versions = [];
+my $ww_versions = ['2.12'];
 
 sub get_ww_versions {
     return $ww_versions;
 }
+
+our @apache2ModulesList = qw(
+  Apache2::ServerRec
+  Apache2::ServerUtil
+);
 
 # A list of packages for various binaries that we need. 
 my $binary_prerequisites = {
@@ -45,6 +50,7 @@ my $binary_prerequisites = {
     
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
+    texlive_preprint => 'texlive-preprint',
     texlive_epsf => 'texlive-epsf',
     texlive_path => 'texlive-path',
 };
@@ -67,6 +73,7 @@ my $perl_prerequisites = {
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
     'CPANMinus' => 'perl-App-cpanminus',
+    'Crypt::SSLeay' => 'perl-Crypt-SSLeay',
     'Dancer' => 'perl-Dancer',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
