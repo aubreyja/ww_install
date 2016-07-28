@@ -125,14 +125,6 @@ my @applicationsList = qw(
   git
 );
 
-my @apache1ModulesList = qw(
-  Apache
-  Apache::Constants
-  Apache::Cookie
-  Apache::Log
-  Apache::Request
-);
-
 my @apache2ModulesList = qw(
   Apache2::Request
   Apache2::Cookie
@@ -154,6 +146,7 @@ my @modulesList = qw(
 	Carp
 	CGI
 	Class::Accessor
+        Crypt::SSLeay
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dumper
@@ -164,6 +157,7 @@ my @modulesList = qw(
 	DBD::mysql
 	DBI
 	Digest::MD5
+        Digest::SHA
 	Email::Address
 	Errno
 	Exception::Class
@@ -1105,9 +1099,14 @@ sub configure_externalPrograms {
         if ( $apps->{$app} ) {
             print_and_log("   $app found at ${$apps}{$app}\n");
             if ( $app eq 'lwp-request' ) {
-                delete $apps->{$app};
-                $apps->{checkurl} = "$app" . ' -d -mHEAD';
-            }
+	      delete $apps->{$app};
+	      $apps->{checkurl} = "$app" . ' -d -mHEAD';
+	    } elsif ($app eq 'curl' ) {
+	      # why did this get called curlCommand and not just
+	      # curl like every other gd thing. 
+	      $apps->{curlCommand} = $apps->{$app};
+	      delete $apps->{$app}
+	    }		
         } else {
             print_and_log("** $app not found in \$PATH\n");
             die;
@@ -1721,7 +1720,7 @@ sub get_webwork {
         print_and_log("Fetched webwork2 successfully.\n");
         chdir "$prefix/webwork2";
 	if (CHECKOUT_BRANCH) {
-	    run_command(['git','checkout','-b',WW_BRANCH,'origin/'.WW_BRANCH]);
+	    run_command(['git','checkout',WW_BRANCH]);
 	}
         chdir $prefix;
     } else {
@@ -1732,7 +1731,7 @@ sub get_webwork {
         print_and_log("Fetched pg successfully!\n");
 	chdir "$prefix/pg";
 	if (CHECKOUT_BRANCH) {
-	    run_command(['git','checkout','-b',PG_BRANCH],'origin/'.PG_BRANCH);
+	    run_command(['git','checkout',PG_BRANCH]);
 	}
 	chdir $prefix;
     } else {
@@ -1845,7 +1844,8 @@ sub write_site_conf {
     my (
         $WW_PREFIX,         $conf_dir,          $webwork_url,
         $server_root_url,   $apache,            $database_dsn,
-        $database_username, $database_password, $apps
+        $database_username, $database_password, $apps,
+	$mail
     ) = @_;
     open( my $in, "<", "$conf_dir/site.conf.dist" )
       or die "Can't open $conf_dir/site.conf.dist for reading: $!";
@@ -1866,13 +1866,17 @@ sub write_site_conf {
             print $out "\$database_username = \"$database_username\";\n";
         } elsif (/^\$database_password/) {
             print $out "\$database_password = \'$database_password\';\n";
-        } elsif (/^\$externalPrograms{(\w+)}/) {
-            next if ( $1 =~ /tth/ );
-            print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
-        } elsif (/^\$pg_dir/) {
+        } elsif (/^\$externalPrograms\{(\w+)\}/) {
+	    next if ( $1 =~ /tth/ );
+	    print $out "\$externalPrograms{$1} = \"$$apps{$1}\";\n";
+	} elsif (/^\$pg_dir/) {
             print $out "\$pg_dir = \"$WW_PREFIX/pg\";\n";
         } elsif (/^\$webwork_courses_dir/) {
             print $out "\$webwork_courses_dir = \"$WW_PREFIX/courses\";\n";
+        } elsif (/^\$mail\{smtpSender\}/) {
+            print $out "\$mail{smtpSender} = \"$mail->{smtpSender}\";\n";
+        } elsif (/^\$mail\{smtpServer\}/) {
+            print $out "\$mail{smtpServer} = \"$mail->{smtpServer}\";\n";
         } else {
             print $out $_;
         }
@@ -1886,11 +1890,11 @@ sub write_localOverrides_conf {
     open( my $out, ">", "$conf_dir/localOverrides.conf" )
       or die "Can't open $conf_dir/localOverrides.conf for writing: $!";
     while (<$in>) {
-        if (/^\$problemLibrary{root}/) {
+        if (/^\$problemLibrary\{root\}/) {
             print $out "\$problemLibrary{version} = \"2.5\";\n";
             print $out
 "\$problemLibrary{root} = \"$WW_PREFIX/libraries/webwork-open-problem-library/OpenProblemLibrary\";\n";
-        } elsif (/^\$pg{options}{displayMode}/) {
+        } elsif (/^\$pg\{options\}\{displayMode\}/) {
             print $out "\$pg{options}{displayMode} = \"MathJax\";\n";
         } else {
             print $out $_;
@@ -1971,8 +1975,10 @@ END
   close($fh);
 
   #Make replacements
-  if($string =~ /(Timeout\s+\d+)/s) {
+  if ($string =~ /(Timeout\s+\d+)/s) {
    $string =~ s/$1/Timeout $timeout/;
+  } else {
+   $string .= "\nTimeout $timeout\n";
   }
 
   #Open apache config file for writing and write!
@@ -2266,8 +2272,22 @@ print_and_log(<<EOF);
 #
 # #################################################################
 EOF
-check_modules(@modulesList);
-check_modules(@apache2ModulesList);
+
+no strict;
+
+my @modules = @{$osPackage.'::modulesList'};
+
+@modules = @modulesList unless @modules;
+
+my @apacheModules = @{$osPackage.'::apache2ModulesList'};
+
+@apacheModules = @apache2ModulesList unless @apacheModules;
+
+use strict;
+
+check_modules(@modules);
+
+check_modules(@apacheModules);
 
 #Check binary prerequisites
 my $apps = configure_externalPrograms(@applicationsList);
@@ -2402,7 +2422,8 @@ EOF
 write_site_conf(
     $WW_PREFIX,         "$webwork_dir/conf", $webwork_url,
     $server_root_url,   $apache,             $database_dsn,
-    $database_username, $database_password,  $apps
+    $database_username, $database_password,  $apps,
+    \%mail		
 );
 
 write_localOverrides_conf( $WW_PREFIX, "$webwork_dir/conf" );

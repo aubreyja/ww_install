@@ -5,7 +5,7 @@ use warnings;
 
 use WeBWorK::Install::Utils;
 
-my $ww_versions = ['2.11'];
+my $ww_versions = ['2.11','2.12'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -42,6 +42,7 @@ my $binary_prerequisites = {
     
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
+    texlive_preprint => 'texlive-preprint',
     texlive_epsf => 'texlive-epsf',
 };
 
@@ -67,6 +68,7 @@ my $perl_prerequisites = {
     'CGI' => 'perl-CGI',
     'CPAN' => 'perl-CPAN',
     'CPANMinus' => 'perl-App-cpanminus',
+    'Crypt::SSLeay' => 'perl-Crypt-SSLeay',
     'Dancer' => 'CPAN',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dumper' => 'perl-Data-Dumper',
@@ -102,7 +104,7 @@ my $perl_prerequisites = {
     'JSON' => 'perl-JSON',
     'Locale::Maketext::Lexicon' => 'CPAN', #is availble for fedora
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
-    'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
+    'LWP::Protocol::https' => 'CPAN', #need cpan for higher version
     'Mail::Sender' => 'perl-Mail-Sender',
     'MIME::Base64' => 'perl', 
     'Net::IP' => 'perl-Net-IP',
