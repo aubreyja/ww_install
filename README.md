@@ -1,5 +1,9 @@
-[WeBWorK](https://github.com/openwebwork) Installation Script(s)
-===============================================================
+# WARNING:  This repository is out of date.  Use the openwebwork repository for the current installer: [OpenWeBWorK Installation Scripts](https://github.com/openwebwork/ww_install)
+
+
+
+[WeBWorK](https://github.com/openwebwork) Installation Script(s) (Outdated)
+
 
 This repository consists of a perl script `ww_install.pl`, along with some supporting bash scripts, 
 config files, and perl modules designed to work together install the open source online homework system 
