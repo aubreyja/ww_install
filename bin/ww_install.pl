@@ -653,7 +653,7 @@ sub create_wwadmin_user {
             my $full_path = can_run("useradd");
             my $cmd       = [ $full_path, '-m', #create user home dir
               '-s', $wwadmin_shell, #set default shell
-              '-c', "WeBWorK Administrator",  #comment
+              '-c', '"WeBWorK Administrator"',  #comment
               '-p', $wwadmin_pw, #password
               $wwadmin
             ];
