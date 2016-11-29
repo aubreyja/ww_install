@@ -202,8 +202,8 @@ sub CPAN_install {
 sub postpreq_hook {
     # For installing missing tex package.  We can safely use the fedora
     # package because its just a latex sytle file. 
-    run_command(['curl', '-ksSO', 'ftp://211.68.71.80/pub/mirror/fedora/updates/testing/18/i386/texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm']);
-    run_command(['rpm','-ivh','--replacepkgs','texlive-path-svn22045.3.05-0.1.fc18.noarch.rpm'])
+    run_command(['curl', '-ksSO', 'http://dl.fedoraproject.org/pub/fedora/linux/releases/25/Everything/i386/os/Packages/t/texlive-path-svn22045.3.05-17.fc25.1.noarch.rpm']);
+    run_command(['rpm','-ivh','--replacepkgs','texlive-path-svn22045.3.05-17.fc25.1.noarch.rpm'])
     
 }
 
