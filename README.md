@@ -5,12 +5,12 @@ This repository consists of a perl script `ww_install.pl`, along with some suppo
 config files, and perl modules designed to work together install the open source online homework system 
 [WeBWorK](https://github.com/openwebwork).
 
-The script has been updated to install WeBWorK 2.12 as of 5/??/2016.
+The script has been updated to install WeBWorK 2.13 as of 12/1/2017 by Arnold Pizer.
 
 It has been tested and supported on 
-*  Debian 8
-*  Fedora 22, 23
-*  Ubuntu 15.10, 16.04 (LTS)
+*  Debian 9
+*  Fedora 24
+*  Ubuntu 16.04 (LTS)
 *  CentOS 7
 
 On these systems it did install WeBWorK. 
@@ -42,9 +42,9 @@ Note that if you use sudo, then you must be a sudoer with sufficient administrat
 
 For more control over the process you can clone this repository with
 
-`git clone https://github.com/openwebwork/ww_install.git`
+`git clone git://github.com/openwebwork/ww_install.git`
 
-and then run `ww_install.pl`.  
+and then run ` sudo perl ww_install.pl`.  
 
 Contents
 --------
@@ -118,6 +118,8 @@ Author
 
 Jason Aubrey <aubreyja@gmail.com>
 
+Small updates (for WeBWorK 2.13) made by Arnold Pizer <apixer@math.rochester.edu>
+
 If you use the script, please email me to let me know what OS you installed it on so I can add a notation to
 the list of tested distributions above and address any problems you run into. I'd also be happy to hear 
 suggestions for improvement.  Seriously, though.  Send all your complaints to this guy.  
@@ -134,7 +136,7 @@ Valuable feedback and testing has been provided by [Danny Glin](https://github.c
 Copyright and Disclaimer
 -------------------------
 
-This program is Copyright 2016 by Jason Aubrey.  This program is
+This program is Copyright 2016 by Jason Aubrey and in 2017 by Arnold Pizer.  This program is
 free software; you can redistribute it and/or modify it under the terms
 of the Perl Artistic License or the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the
