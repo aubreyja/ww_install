@@ -1,5 +1,5 @@
-# Package for distribution ubuntu version 16.04
-package ubuntu::1604;
+# Package for distribution ubuntu version 14.04
+package ubuntu::1404;
 use base qw(blankdistro);
 
 use strict;
@@ -9,7 +9,7 @@ use WeBWorK::Install::Utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
-my $ww_versions = ['2.13'];
+my $ww_versions = ['2.11'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -38,7 +38,7 @@ my $binary_prerequisites = {
     ssh_server => 'openssh-server',
 
     apache2 => 'apache2',
-    mod_mpm => 'apache2',
+    mod_mpm => 'apache2-mpm-prefork',
     mod_fcgid => 'libapache2-mod-fcgid',
     mod_perl => 'libapache2-mod-perl2',
     mod_apreq => 'libapache2-mod-apreq2',
@@ -46,7 +46,6 @@ my $binary_prerequisites = {
     preview_latex => 'preview-latex-style',
     texlive => 'texlive-latex-base',
     texlive_recommended => 'texlive-latex-recommended',
-    texlive_extra => 'texlive-latex-extra',
     texlive_fonts_recommended => 'texlive-fonts-recommended',
 };
 
@@ -64,10 +63,8 @@ my $perl_prerequisites = {
     'Benchmark' => 'perl-modules',
     'Carp' => 'perl-base',
     'CGI' => 'perl-modules',
-    'Crypt::SSLeay' => 'libcrypt-ssleay-perl',
     'Dancer' => 'libdancer-perl',
     'Dancer::Plugin::Database' => 'libdancer-plugin-database-perl',
-    'Data::Dump' => 'libdata-dump-perl',    
     'Data::Dumper' => 'perl',
     'Data::UUID' => 'libossp-uuid-perl',
     'Date::Format' => 'libtimedate-perl',
@@ -76,10 +73,7 @@ my $perl_prerequisites = {
     'DBD::mysql' => 'libdbd-mysql-perl',
     'DBI' => 'libdbi-perl',
     'Digest::MD5' => 'perl',
-    'Email::Address' => 'libemail-sender-perl',
-    'Email::Simple' => 'libemail-sender-perl',
-    'Email::Sender::Simple' => 'libemail-sender-perl',
-    'Email::Sender::Transport::SMTP' => 'libemail-sender-perl',
+    'Email::Address' => 'libemail-address-perl',
     'Errno' => 'perl-base',
     'Exception::Class' => 'libexception-class-perl',
     'ExtUtils::XSBuilder' => 'libextutils-xsbuilder-perl',
@@ -104,6 +98,7 @@ my $perl_prerequisites = {
     'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
     'Locale::Maketext::Simple' => 'perl-modules',
     'LWP::Protocol::https' => 'liblwp-protocol-https-perl',
+    'Mail::Sender' => 'libmail-sender-perl',
     'MIME::Base64' => 'libmime-tools-perl',
     'Net::IP' => 'libnet-ip-perl',
     'Net::LDAPS' => 'libnet-ldap-perl',
@@ -211,13 +206,6 @@ sub preconfig_hook {
 # A command for any distro specific stuff that needs to be done
 # after webwork has been configured
 sub postconfig_hook {
-  # As of the release of 2.12 the JSON::XS::Boolean package for
-  # ubuntu was kind of borked.  So we use the PP boolean
-  # implementation instead by setting an environment variable.
-
-  print_and_log("Setting Perl to use JSON::PP in apache config file.\n");
-  
-  die $! if system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
 
 }
 

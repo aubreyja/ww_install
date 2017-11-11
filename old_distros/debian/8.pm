@@ -1,5 +1,5 @@
-# Package for distribution ubuntu version 16.04
-package ubuntu::1604;
+# Package for distribution debian jessie
+package debian::8;
 use base qw(blankdistro);
 
 use strict;
@@ -9,7 +9,7 @@ use WeBWorK::Install::Utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
-my $ww_versions = ['2.13'];
+my $ww_versions = ['2.11','2.12'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -38,7 +38,7 @@ my $binary_prerequisites = {
     ssh_server => 'openssh-server',
 
     apache2 => 'apache2',
-    mod_mpm => 'apache2',
+    mod_mpm => 'apache2-mpm-prefork',
     mod_fcgid => 'libapache2-mod-fcgid',
     mod_perl => 'libapache2-mod-perl2',
     mod_apreq => 'libapache2-mod-apreq2',
@@ -64,10 +64,8 @@ my $perl_prerequisites = {
     'Benchmark' => 'perl-modules',
     'Carp' => 'perl-base',
     'CGI' => 'perl-modules',
-    'Crypt::SSLeay' => 'libcrypt-ssleay-perl',
     'Dancer' => 'libdancer-perl',
     'Dancer::Plugin::Database' => 'libdancer-plugin-database-perl',
-    'Data::Dump' => 'libdata-dump-perl',    
     'Data::Dumper' => 'perl',
     'Data::UUID' => 'libossp-uuid-perl',
     'Date::Format' => 'libtimedate-perl',
@@ -76,10 +74,7 @@ my $perl_prerequisites = {
     'DBD::mysql' => 'libdbd-mysql-perl',
     'DBI' => 'libdbi-perl',
     'Digest::MD5' => 'perl',
-    'Email::Address' => 'libemail-sender-perl',
-    'Email::Simple' => 'libemail-sender-perl',
-    'Email::Sender::Simple' => 'libemail-sender-perl',
-    'Email::Sender::Transport::SMTP' => 'libemail-sender-perl',
+    'Email::Address' => 'libemail-address-perl',
     'Errno' => 'perl-base',
     'Exception::Class' => 'libexception-class-perl',
     'ExtUtils::XSBuilder' => 'libextutils-xsbuilder-perl',
@@ -104,6 +99,7 @@ my $perl_prerequisites = {
     'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
     'Locale::Maketext::Simple' => 'perl-modules',
     'LWP::Protocol::https' => 'liblwp-protocol-https-perl',
+    'Mail::Sender' => 'CPAN',
     'MIME::Base64' => 'libmime-tools-perl',
     'Net::IP' => 'libnet-ip-perl',
     'Net::LDAPS' => 'libnet-ldap-perl',
@@ -111,7 +107,7 @@ my $perl_prerequisites = {
     'Net::SMTP' => 'perl-modules',
     'Opcode' => 'perl',
     'PadWalker' => 'libpadwalker-perl',
-    'Path::Class' => 'CPAN',
+    'Path::Class' => 'libpath-class-perl',
     'PHP::Serialization' => 'libphp-serialization-perl',
     'Pod::Usage' => 'perl-modules',
     'Pod::WSDL' => 'libpod-wsdl-perl',
@@ -162,10 +158,20 @@ sub get_apacheLayout {
 }
 
 # A command for updating the package sources
-sub update_sources {
-    run_command(['sed','-i','-e','s/^# deb \(.*\) partner/deb \1 partner/','/etc/apt/sources.list']);
-    run_command(['sed','-i','-e','s/^# deb-src \(.*\) partner/deb-src \1 partner/','/etc/apt/sources.list']);
-};
+
+sub edit_sources_list {
+  #make sure we don't try to get anything off of 
+  #a cdrom. (Allowing it causes script to hang 
+  # on Debian 7)
+  #sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
+  my $sources_list = shift;
+  backup_file($sources_list);
+  my $string = slurp_file($sources_list);
+  open(my $new,'>',$sources_list);
+  $string =~ s/deb\s+cdrom/#deb cdrom/g;
+  print $new $string;
+  print_and_log("Modified $sources_list to remove cdrom from list of package repositories.");
+}
 
 # A command for updating the system
 sub update_packages {
@@ -211,13 +217,6 @@ sub preconfig_hook {
 # A command for any distro specific stuff that needs to be done
 # after webwork has been configured
 sub postconfig_hook {
-  # As of the release of 2.12 the JSON::XS::Boolean package for
-  # ubuntu was kind of borked.  So we use the PP boolean
-  # implementation instead by setting an environment variable.
-
-  print_and_log("Setting Perl to use JSON::PP in apache config file.\n");
-  
-  die $! if system(q|sed --follow-symlinks -i 's/\$ENV{WEBWORK_ROOT} = $webwork_dir;/\$ENV{WEBWORK_ROOT} = $webwork_dir;\n$ENV{PERL_JSON_BACKEND} = '"'JSON::PP';/" /etc/apache2/conf-enabled/webwork.conf|);
 
 }
 
