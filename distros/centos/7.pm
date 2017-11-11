@@ -5,7 +5,7 @@ use warnings;
 
 use WeBWorK::Install::Utils;
 
-my $ww_versions = ['2.11','2.12'];
+my $ww_versions = ['2.13'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -71,6 +71,7 @@ my $perl_prerequisites = {
     'Crypt::SSLeay' => 'perl-Crypt-SSLeay',
     'Dancer' => 'CPAN',
     'Dancer::Plugin::Database' => 'CPAN',
+    'Data::Dump' => 'perl-Data-Dump',    
     'Data::Dumper' => 'perl-Data-Dumper',
     'Data::UUID' => 'perl-Data-UUID',
     'Date::Format' => 'perl-TimeDate',
@@ -80,6 +81,9 @@ my $perl_prerequisites = {
     'DBI' => 'perl-DBI',
     'Digest::MD5' => 'perl',
     'Email::Address' => 'perl-Email-Address',
+    'Email::Simple' => 'perl-Email-Simple',
+    'Email::Sender::Simple' => 'perl-Email::Sender',
+    'Email::Sender::Transport::SMTP' => 'perl-Email::Sender',
     'Errno' => 'perl',
     'Exception::Class' => 'perl-Exception-Class',
     'ExtUtils::XSBuilder' => 'perl-ExtUtils-XSBuilder',
@@ -105,7 +109,6 @@ my $perl_prerequisites = {
     'Locale::Maketext::Lexicon' => 'CPAN', #is availble for fedora
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
     'LWP::Protocol::https' => 'CPAN', #need cpan for higher version
-    'Mail::Sender' => 'perl-Mail-Sender',
     'MIME::Base64' => 'perl', 
     'Net::IP' => 'perl-Net-IP',
     'Net::LDAPS' => 'perl-LDAP',

@@ -1,4 +1,4 @@
-package fedora::23;
+package fedora::24;
 
 #NOTE:  This distro does not work.  It uses perl 5.22 which is incompatible
 # with mod perl.  
@@ -8,7 +8,7 @@ use warnings;
 
 use WeBWorK::Install::Utils;
 
-my $ww_versions = ['2.12'];
+my $ww_versions = ['2.13'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -76,6 +76,7 @@ my $perl_prerequisites = {
     'Crypt::SSLeay' => 'perl-Crypt-SSLeay',
     'Dancer' => 'perl-Dancer',
     'Dancer::Plugin::Database' => 'CPAN',
+    'Data::Dump' => 'perl-Data-Dump',    
     'Data::Dumper' => 'perl-Data-Dumper',
     'Data::UUID' => 'perl-Data-UUID',
     'Date::Format' => 'perl-TimeDate',
@@ -85,6 +86,9 @@ my $perl_prerequisites = {
     'DBI' => 'perl-DBI',
     'Digest::MD5' => 'perl',
     'Email::Address' => 'perl-Email-Address',
+    'Email::Simple' => 'perl-Email-Simple',
+    'Email::Sender::Simple' => 'perl-Email::Sender',
+    'Email::Sender::Transport::SMTP' => 'perl-Email::Sender',
     'Errno' => 'perl',
     'Exception::Class' => 'perl-Exception-Class',
     'ExtUtils::XSBuilder' => 'perl-ExtUtils-XSBuilder',
