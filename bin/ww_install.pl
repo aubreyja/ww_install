@@ -890,7 +890,18 @@ sub change_webwork3_log_permissions {
     }
 }
 
-
+sub reset_tex_hash {
+    $full_path = can_run('texhash');
+     $cmd =
+	 [ $full_path ];
+    my $texhash_success = run_command($cmd);
+    if ($texhash_success) {
+        print_and_log("Successfully ran texhash.\n");
+    } else {
+        print_and_log("Could not run texhash!");
+    }
+}
+    
 ####################################################################
 #
 # Environment Data
@@ -2298,6 +2309,8 @@ my $apps = configure_externalPrograms(@applicationsList);
 #run hooked coe
 $osPackage->preconfig_hook();
 
+
+
 #Get directory root PREFIX, download software, and configure filesystem locations for webwork software
 my $WW_PREFIX = get_WW_PREFIX(WW_PREFIX);    #constant defined at top
 
@@ -2570,6 +2583,8 @@ change_data_dir_permissions(
     "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp",
     "$webwork_dir/logs", "$webwork_dir/tmp"
 );
+
+reset_tex_hash();
 
 my $webwork3log = "$webwork_dir/webwork3/logs";
 
