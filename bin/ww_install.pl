@@ -891,9 +891,8 @@ sub change_webwork3_log_permissions {
 }
 
 sub reset_tex_hash {
-    $full_path = can_run('texhash');
-     $cmd =
-	 [ $full_path ];
+    my $full_path = can_run('texhash');
+    my $cmd = [ $full_path ];
     my $texhash_success = run_command($cmd);
     if ($texhash_success) {
         print_and_log("Successfully ran texhash.\n");
