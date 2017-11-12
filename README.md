@@ -7,17 +7,18 @@ config files, and perl modules designed to work together install the open source
 
 The script has been updated to install WeBWorK 2.13 as of 12/1/2017 by Arnold Pizer.
 
-It has been tested and supported on 
+It has been tested and works on 
 *  Debian 9
 *  Fedora 24
-*  Ubuntu 16.04 (LTS)
-*  CentOS 7
+*  Ubuntu 16.04 LTS (Desktop) 
+*  CentOS 7 (Server with GUI)
       Notes for CentOS. 
          I. Before running the script do the following:
             (1)  Run the command: sudo yum install perl-core
-            (2)  Edit the file /etc/selinus/config to set: SELINUX=disabled and reboot
+            (2)  Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
          II. When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
-             Choose root as the admin and later if you want set up a WEBWorK admin 
+             Choose root as the admin and later if you want set up a WeBWorK admin. 
+
 On these systems it did install WeBWorK. 
 
 Gotchas
