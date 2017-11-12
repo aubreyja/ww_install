@@ -12,13 +12,18 @@ It has been tested and supported on
 *  Fedora 24
 *  Ubuntu 16.04 (LTS)
 *  CentOS 7
-
+      Notes for CentOS. 
+         I. Before running the script do the following:
+            (1)  Run the command: sudo yum install perl-core
+            (2)  Edit the file /etc/selinus/config to set: SELINUX=disabled and reboot
+         II. When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
+             Choose root as the admin and later if you want set up a WEBWorK admin 
 On these systems it did install WeBWorK. 
 
 Gotchas
 -------
 
--  None yet, just wait. 
+-  See the notes above. 
 
 Usage
 -------

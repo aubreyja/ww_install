@@ -42,9 +42,10 @@ my $binary_prerequisites = {
     
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
+    texlive_appendix => 'texlive-appendix',
     texlive_preprint => 'texlive-preprint',
     texlive_epsf => 'texlive-epsf',
-};
+    };
 
 sub get_binary_prerequisites {
     return $binary_prerequisites;
@@ -82,8 +83,8 @@ my $perl_prerequisites = {
     'Digest::MD5' => 'perl',
     'Email::Address' => 'perl-Email-Address',
     'Email::Simple' => 'perl-Email-Simple',
-    'Email::Sender::Simple' => 'perl-Email::Sender',
-    'Email::Sender::Transport::SMTP' => 'perl-Email::Sender',
+    'Email::Sender::Simple' => 'perl-Email-Sender',
+    'Email::Sender::Transport::SMTP' => 'perl-Email-Sender',
     'Errno' => 'perl',
     'Exception::Class' => 'perl-Exception-Class',
     'ExtUtils::XSBuilder' => 'perl-ExtUtils-XSBuilder',
