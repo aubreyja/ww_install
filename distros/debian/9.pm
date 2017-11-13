@@ -15,7 +15,7 @@ sub get_ww_versions {
     return $ww_versions;
 }
 
-# A list of packages for various binaries that we need. 
+# A list of packages for various binaries that we need. 	
 my $binary_prerequisites = {
     mkdir => 'coreutils',
     mv => 'coreutils',
@@ -38,7 +38,7 @@ my $binary_prerequisites = {
     ssh_server => 'openssh-server',
 
     apache2 => 'apache2',
-    mod_mpm => 'apache2-mpm-prefork',
+    mod_mpm => 'apache2',
     mod_fcgid => 'libapache2-mod-fcgid',
     mod_perl => 'libapache2-mod-perl2',
     mod_apreq => 'libapache2-mod-apreq2',
@@ -64,6 +64,7 @@ my $perl_prerequisites = {
     'Benchmark' => 'perl-modules',
     'Carp' => 'perl-base',
     'CGI' => 'perl-modules',
+    'Crypt::SSLeay' => 'libcrypt-ssleay-perl',
     'Dancer' => 'libdancer-perl',
     'Dancer::Plugin::Database' => 'libdancer-plugin-database-perl',
     'Data::Dump' => 'libdata-dump-perl', 
@@ -75,7 +76,7 @@ my $perl_prerequisites = {
     'DBD::mysql' => 'libdbd-mysql-perl',
     'DBI' => 'libdbi-perl',
     'Digest::MD5' => 'perl',
-    'Email::Address' => 'libemail-address-perl',
+    'Email::Address' => 'libemail-sender-perl',
     'Email::Simple' => 'libemail-sender-perl',
     'Email::Sender::Simple' => 'libemail-sender-perl',
     'Email::Sender::Transport::SMTP' => 'libemail-sender-perl',
