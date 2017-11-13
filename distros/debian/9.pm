@@ -1,5 +1,5 @@
-# Package for distribution debian jessie
-package debian::8;
+# Package for distribution debian Stretch
+package debian::9;
 use base qw(blankdistro);
 
 use strict;
@@ -9,7 +9,7 @@ use WeBWorK::Install::Utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
-my $ww_versions = ['2.11','2.12'];
+my $ww_versions = ['2.13'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -66,6 +66,7 @@ my $perl_prerequisites = {
     'CGI' => 'perl-modules',
     'Dancer' => 'libdancer-perl',
     'Dancer::Plugin::Database' => 'libdancer-plugin-database-perl',
+    'Data::Dump' => 'libdata-dump-perl', 
     'Data::Dumper' => 'perl',
     'Data::UUID' => 'libossp-uuid-perl',
     'Date::Format' => 'libtimedate-perl',
@@ -75,6 +76,9 @@ my $perl_prerequisites = {
     'DBI' => 'libdbi-perl',
     'Digest::MD5' => 'perl',
     'Email::Address' => 'libemail-address-perl',
+    'Email::Simple' => 'libemail-sender-perl',
+    'Email::Sender::Simple' => 'libemail-sender-perl',
+    'Email::Sender::Transport::SMTP' => 'libemail-sender-perl',
     'Errno' => 'perl-base',
     'Exception::Class' => 'libexception-class-perl',
     'ExtUtils::XSBuilder' => 'libextutils-xsbuilder-perl',
@@ -99,7 +103,6 @@ my $perl_prerequisites = {
     'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
     'Locale::Maketext::Simple' => 'perl-modules',
     'LWP::Protocol::https' => 'liblwp-protocol-https-perl',
-    'Mail::Sender' => 'CPAN',
     'MIME::Base64' => 'libmime-tools-perl',
     'Net::IP' => 'libnet-ip-perl',
     'Net::LDAPS' => 'libnet-ldap-perl',
