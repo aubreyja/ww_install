@@ -48,6 +48,8 @@ my $binary_prerequisites = {
     texlive_recommended => 'texlive-latex-recommended',
     texlive_extra => 'texlive-latex-extra',
     texlive_fonts_recommended => 'texlive-fonts-recommended',
+
+    libscalar-list-utils-perl => 'libscalar-list-utils-perl',
 };
 
 sub get_binary_prerequisites {
