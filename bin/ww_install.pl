@@ -202,6 +202,7 @@ my @modulesList = qw(
 	SOAP::Lite 
 	Socket
 	SQL::Abstract
+	Statistics::R::IO
 	String::ShellQuote
 	Template
 	Text::CSV

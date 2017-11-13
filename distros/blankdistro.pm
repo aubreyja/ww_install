@@ -116,6 +116,7 @@ my $perl_prerequisites = {
     'SOAP::Lite' => '',
     'Socket' => '',
     'SQL::Abstract' => '',
+    'Statistics::R::IO' => '',
     'String::ShellQuote' => '',
     'Template' => '',
     'Text::CSV' => '',
