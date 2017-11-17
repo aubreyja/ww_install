@@ -8,7 +8,7 @@ config files, and perl modules designed to work together install the open source
 The script has been updated to install WeBWorK 2.13 as of 12/1/2017 by Arnold Pizer.
 
 It has been tested and works on 
-*  Debian 9
+*  Debian 9 (Actually it does not work on Debian 9 yet)
 *  Fedora 24
    - Notes for Fedora 
      - Before running the script do the following:
