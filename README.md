@@ -16,7 +16,7 @@ It has been tested and works on
        2. Run the command: sudo dnf update perl-Errno
        3. Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
      - When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
-       -Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
+       Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
              as the admin and later if you want set up a WeBWorK admin. 
 *  Ubuntu 16.04 LTS (Desktop) 
 *  CentOS 7 (Server with GUI)
@@ -25,7 +25,7 @@ It has been tested and works on
        1. Run the command: sudo yum install perl-core
        2. Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
      - When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
-       -Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
+       Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
              as the admin and later if you want set up a WeBWorK admin. 
 
 On these systems it did install WeBWorK. 
@@ -133,7 +133,7 @@ Author
 
 Jason Aubrey <aubreyja@gmail.com>
 
-Small updates (for WeBWorK 2.13) made by Arnold Pizer <apixer@math.rochester.edu>
+Small updates (for WeBWorK 2.13) made by Arnold Pizer <apizer@math.rochester.edu>
 
 If you use the script, please email me to let me know what OS you installed it on so I can add a notation to
 the list of tested distributions above and address any problems you run into. I'd also be happy to hear 
