@@ -10,22 +10,22 @@ The script has been updated to install WeBWorK 2.13 as of 12/1/2017 by Arnold Pi
 It has been tested and works on 
 *  Debian 9
 *  Fedora 24
-   *Notes for Fedora 
-  I. Before running the script do the following:
-    .1 Run the command: sudo dnf install perl-core
-    .2 Run the command: sudo dnf update perl-Errno
-    .3 Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
-  II. When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
-    .1 Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
+ *Notes for Fedora 
+  .1 Before running the script do the following:
+   .1 Run the command: sudo dnf install perl-core
+   .2 Run the command: sudo dnf update perl-Errno
+   .3 Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
+  .1 When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
+   .1 Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
              as the admin and later if you want set up a WeBWorK admin. 
 *  Ubuntu 16.04 LTS (Desktop) 
 *  CentOS 7 (Server with GUI)
-  *Notes for CentOS. 
-  I. Before running the script do the following:
-    .1 Run the command: sudo yum install perl-core
-    .2 Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
-  II. When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
-    .1 Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
+ *Notes for CentOS. 
+  .1 Before running the script do the following:
+   .1 Run the command: sudo yum install perl-core
+   .2 Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
+  .1 When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
+   .1 Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
              as the admin and later if you want set up a WeBWorK admin. 
 
 On these systems it did install WeBWorK. 
