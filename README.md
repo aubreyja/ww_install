@@ -12,13 +12,12 @@ Temporary General Instructions for installing WeBWorK 2.13 from this repository.
 *  First look at the notes below to see if you need to do anything before running the ww_install.pl script.
 *  After any preliminaries in a working directory run
    - git clone git://github.com/apizer/ww_install.git
-     -Note you will have to install git (e.g. as root, apt-get install git) if it is not on your system
+     * Note you will have to install git (e.g. as root, apt-get install git) if it is not on your system
    - cd to the directory ww_install and run: git checkout ww2.13
    - su (to root) and then cd to the directory bin
    - Run perl ww_install (as root)
    - Accept all defaults
-   - Note the script will stop at installing Email::Sender::Simple with an error.  Just rerun the 
-     script and it will get past that point. I think Email::Sender::Simple does get installed correctly.
+
 
 
 It has been tested and works on 
@@ -30,6 +29,8 @@ It has been tested and works on
        3. Click on: Use CentOS, Fedora, Red Hat, Debian, Ubuntu, openSUSE, or Mageia? See our repository configuration tool.
        4. Select: Debian, Debian 9 Stretch, 10.2. and a mirror
        5. Follow the instrucions for running commands but run them as root as sudo does not work.  Note that coping and pasting the commands works well.
+     - The script ww_install will stop at installing Email::Sender::Simple with an error.  Just rerun the 
+       script and it will get past that point. I think Email::Sender::Simple does get installed correctly.
 *  Fedora 24
    - Notes for Fedora 
      - Before running the script do the following:
