@@ -7,8 +7,29 @@ config files, and perl modules designed to work together install the open source
 
 The script has been updated to install WeBWorK 2.13 as of 12/1/2017 by Arnold Pizer.
 
+Temporary General Instructions for installing WeBWorK 2.13 from this repository. 
+*  You should use the perl script ww_install.pl as the bash shell script install_webwork.sh has not yet been updated.
+*  First look at the notes below to see if you need to do anything before running the ww_install.pl script.
+*  After any preliminaries in a working directory run
+   - git clone git://github.com/apizer/ww_install.git
+     -Note you will have to install git (e.g. as root, apt-get install git) if it is not on your system
+   - cd to the directory ww_install and run: git checkout ww2.13
+   - su (to root) and then cd to the directory bin
+   - Run perl ww_install (as root)
+   - Accept all defaults
+   - Note the script will stop at installing Email::Sender::Simple with an error.  Just rerun the 
+     script and it will get past that point. I think Email::Sender::Simple does get installed correctly.
+
+
 It has been tested and works on 
-*  Debian 9 (**Actually it does not work on Debian 9 yet**)
+*  Debian 9
+   - Notes for Debian
+     - Before running the script do the following:
+       1. For some reason WeBWorK fails to work with MariaDB as installed from the Debian package so we use the package from mariadb.org.
+       2. Open firefox and goto https://downloads.mariadb.org
+       3. Click on: Use CentOS, Fedora, Red Hat, Debian, Ubuntu, openSUSE, or Mageia? See our repository configuration tool.
+       4. Select: Debian, Debian 9 Stretch, 10.2. and a mirror
+       5. Follow the instrucions for running commands but run them as root as sudo does not work.  Note that coping and pasting the commands works well.
 *  Fedora 24
    - Notes for Fedora 
      - Before running the script do the following:
