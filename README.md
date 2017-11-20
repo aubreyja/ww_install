@@ -14,8 +14,8 @@ Temporary General Instructions for installing WeBWorK 2.13 from this repository.
    - git clone git://github.com/apizer/ww_install.git
      * Note you will have to install git (e.g. as root, apt-get install git) if it is not on your system
    - cd to the directory ww_install and run: git checkout ww2.13
-   - su (to root) and then cd to the directory bin
-   - Run perl ww_install (as root)
+   - cd to the directory bin
+   - Run perl ww_install as root. Note either use sudo or su to root depending on the system.
    - Accept all defaults
 
 
