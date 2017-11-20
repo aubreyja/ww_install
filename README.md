@@ -28,7 +28,7 @@ It has been tested and works on
        2. Open firefox and goto https://downloads.mariadb.org
        3. Click on: Use CentOS, Fedora, Red Hat, Debian, Ubuntu, openSUSE, or Mageia? See our repository configuration tool.
        4. Select: Debian, Debian 9 Stretch, 10.2. and a mirror
-       5. Follow the instrucions for running commands but run them as root as sudo does not work.  Note that coping and pasting the commands works well.
+       5. Follow the instrucions for running commands but run them as root as sudo does not work.  Note that using copy and paste works well.
      - Now run the script ww_install as root
      - The script ww_install will stop at installing Email::Sender::Simple with an error.  Just rerun the 
        script and it will get past that point. I think Email::Sender::Simple does get installed correctly.
