@@ -23,32 +23,34 @@ Temporary General Instructions for installing WeBWorK 2.13 from this repository.
 It has been tested and works on 
 *  Debian 9
    - Notes for Debian
-     - Before running the script do the following:
+     - Before running the script ww_install.pl do the following:
        1. For some reason WeBWorK fails to work with MariaDB as installed from the Debian package so we use the package from mariadb.org.
        2. Open firefox and goto https://downloads.mariadb.org
        3. Click on: Use CentOS, Fedora, Red Hat, Debian, Ubuntu, openSUSE, or Mageia? See our repository configuration tool.
        4. Select: Debian, Debian 9 Stretch, 10.2. and a mirror
        5. Follow the instrucions for running commands but run them as root as sudo does not work.  Note that coping and pasting the commands works well.
+     - Now run the script ww_install as root
      - The script ww_install will stop at installing Email::Sender::Simple with an error.  Just rerun the 
        script and it will get past that point. I think Email::Sender::Simple does get installed correctly.
-*  Fedora 24
+
+*  Fedora 24 (Workstation)
    - Notes for Fedora 
-     - Before running the script do the following:
+     - Before running the script ww_install.pl do the following:
        1. Run the command: sudo dnf install perl-core
        2. Run the command: sudo dnf update perl-Errno
        3. Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
-     - When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
-       Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
-             as the admin and later if you want set up a WeBWorK admin. 
+     - Now run the script ww_install as root
+
 *  Ubuntu 16.04 LTS (Desktop) 
+   - Notes for Ubuntu
+     - None 
+
 *  CentOS 7 (Server with GUI)
    - Notes for CentOS. 
-     - Before running the script do the following:
+     - Before running the script ww_install.pl do the following:
        1. Run the command: sudo yum install perl-core
        2. Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
-     - When running the script creating a user (e.g. wwadmin) to administer WeBWorK fails.
-       Either create a user (e.g. wwadmin) when first installing CentOS, or choose root 
-             as the admin and later if you want set up a WeBWorK admin. 
+     - Now run the script ww_install as root
 
 On these systems it did install WeBWorK. 
 
@@ -112,6 +114,9 @@ This folder contains distribution files which `ww_install.pl` uses to install We
 * The command for installing packages from CPAN.
 * The command for checking and configuring services post install.
 * You can add code in various "hooks" which will be run at various stages of the installation.  This is an opportunity to perform any hacky fixes necessary for your distro.  
+
+### old_distros
+This folder contains obsolete distribution files which are no longer being supported.
 
 ### Other files
 
