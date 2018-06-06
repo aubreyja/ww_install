@@ -1,12 +1,22 @@
-package ubuntu::1404;
+# Package for distribution debian Stretch
+package debian::9;
 use base qw(blankdistro);
 
 use strict;
 use warnings;
-use version; 
 
-# A list of packages for various binaries that we need. 
-our $binary_prerequisites = {
+use WeBWorK::Install::Utils;
+
+# This is a list of WeBWorK versions for which the installer has
+# been verified to work for this distro. 
+my $ww_versions = ['2.13'];
+
+sub get_ww_versions {
+    return $ww_versions;
+}
+
+# A list of packages for various binaries that we need. 	
+my $binary_prerequisites = {
     mkdir => 'coreutils',
     mv => 'coreutils',
     gcc => 'gcc',
@@ -23,23 +33,31 @@ our $binary_prerequisites = {
     svn => 'subversion',
     cpanminus => 'cpanminus',
 
-    mysql => 'mysql-client',
-    mysql_server => 'mysql-server',
+    mysql => 'mariadb-client',
+    mysql_server => 'mariadb-server',
     ssh_server => 'openssh-server',
 
     apache2 => 'apache2',
-    mod_mpm => 'apache2-mpm-prefork',
+    mod_mpm => 'apache2',
     mod_fcgid => 'libapache2-mod-fcgid',
     mod_perl => 'libapache2-mod-perl2',
     mod_apreq => 'libapache2-mod-apreq2',
     
     preview_latex => 'preview-latex-style',
     texlive => 'texlive-latex-base',
-    texlive_recommended => 'textlive-latex-recommended',
+    texlive_recommended => 'texlive-latex-recommended',
+    texlive_extra => 'texlive-latex-extra',
+    texlive_fonts_recommended => 'texlive-fonts-recommended',
+
+    libscalar_list_utils_perl => 'libscalar-list-utils-perl',
 };
 
+sub get_binary_prerequisites {
+    return $binary_prerequisites;
+}
+
 # A list of perl modules that we need
-our $perl_prerequisites = {
+my $perl_prerequisites = {
     'Apache2::Request' => 'libapache2-request-perl',
     'Apache2::Cookie' => 'libapache2-request-perl',
     'Apache2::ServerRec' => 'libapache2-mod-perl2',
@@ -48,8 +66,10 @@ our $perl_prerequisites = {
     'Benchmark' => 'perl-modules',
     'Carp' => 'perl-base',
     'CGI' => 'perl-modules',
+    'Crypt::SSLeay' => 'libcrypt-ssleay-perl',
     'Dancer' => 'libdancer-perl',
     'Dancer::Plugin::Database' => 'libdancer-plugin-database-perl',
+    'Data::Dump' => 'libdata-dump-perl', 
     'Data::Dumper' => 'perl',
     'Data::UUID' => 'libossp-uuid-perl',
     'Date::Format' => 'libtimedate-perl',
@@ -59,6 +79,9 @@ our $perl_prerequisites = {
     'DBI' => 'libdbi-perl',
     'Digest::MD5' => 'perl',
     'Email::Address' => 'libemail-address-perl',
+    'Email::Simple' => 'libemail-simple-perl',
+    'Email::Sender::Simple' => 'libemail-sender-perl',
+    'Email::Sender::Transport::SMTP' => 'libemail-sender-perl',
     'Errno' => 'perl-base',
     'Exception::Class' => 'libexception-class-perl',
     'ExtUtils::XSBuilder' => 'libextutils-xsbuilder-perl',
@@ -81,9 +104,8 @@ our $perl_prerequisites = {
     'Iterator::Util' => 'CPAN',
     'JSON' => 'libjson-perl',
     'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
-    'Locale::Maketext::Simple' => 'liblocale-maketext-simple-perl',
+    'Locale::Maketext::Simple' => 'perl-modules',
     'LWP::Protocol::https' => 'liblwp-protocol-https-perl',
-    'Mail::Sender' => 'libmail-sender-perl',
     'MIME::Base64' => 'libmime-tools-perl',
     'Net::IP' => 'libnet-ip-perl',
     'Net::LDAPS' => 'libnet-ldap-perl',
@@ -91,7 +113,7 @@ our $perl_prerequisites = {
     'Net::SMTP' => 'perl-modules',
     'Opcode' => 'perl',
     'PadWalker' => 'libpadwalker-perl',
-    'Path::Class' => 'CPAN',
+    'Path::Class' => 'libpath-class-perl',
     'PHP::Serialization' => 'libphp-serialization-perl',
     'Pod::Usage' => 'perl-modules',
     'Pod::WSDL' => 'libpod-wsdl-perl',
@@ -100,6 +122,7 @@ our $perl_prerequisites = {
     'SOAP::Lite' => 'libsoap-lite-perl',
     'Socket' => 'perl-base',
     'SQL::Abstract' => 'libsql-abstract-perl',
+    'Statistics::R::IO' => 'CPAN',
     'String::ShellQuote' => 'libstring-shellquote-perl',
     'Template' => 'libtemplate-perl',
     'Text::CSV' => 'libtext-csv-perl',
@@ -116,8 +139,12 @@ our $perl_prerequisites = {
     'YAML' => 'libyaml-perl'
 };
 
+sub get_perl_prerequisites {
+    return $perl_prerequisites;
+}
+
 # A hash containing information about the apache webserver
-our $apacheLayouts = {
+my $apacheLayout = {
     MPMDir       => '',
     MPMConfFile  => '/etc/apache2/mods-available/mpm_prefork.conf',
     ServerRoot   => '/etc/apache2',
@@ -133,6 +160,26 @@ our $apacheLayouts = {
     Group        => 'www-data',
 };
 
+sub get_apacheLayout {
+    return $apacheLayout;
+}
+
+# A command for updating the package sources
+
+sub edit_sources_list {
+  #make sure we don't try to get anything off of 
+  #a cdrom. (Allowing it causes script to hang 
+  # on Debian 7)
+  #sed -i -e 's/deb cdrom/#deb cdrom/g' /etc/apt/sources.list
+  my $sources_list = shift;
+  backup_file($sources_list);
+  my $string = slurp_file($sources_list);
+  open(my $new,'>',$sources_list);
+  $string =~ s/deb\s+cdrom/#deb cdrom/g;
+  print $new $string;
+  print_and_log("Modified $sources_list to remove cdrom from list of package repositories.");
+}
+
 # A command for updating the system
 sub update_packages {
     run_command(['apt-get','-y','update']);
@@ -141,12 +188,14 @@ sub update_packages {
     
 # A command for installing a package given a name
 sub package_install {
+    my $self = shift;
     my @packages = @_;
     run_command(['apt-get','install','-y','--allow-unauthenticated',@packages]);
 };
 
 # A command for installing a cpan package given a name
 sub CPAN_install {
+    my $self = shift;
     my @modules = @_;
     run_command(['cpanm',@modules]);
 };
@@ -160,7 +209,7 @@ sub postpreq_hook {
 # A command for checking if the required services are running
 # and configuring them
 sub configure_services {
-    run_command(['a2enmod','apreq']);
+    run_command(['a2enmod','apreq2']);
     run_command(['a2enmod','fcgid']);
     run_command(['apache2ctl', 'restart']);
 
@@ -178,8 +227,10 @@ sub postconfig_hook {
 
 }
 
+# A comand for any distro specific stuff that needs to be done
+# after webwork has been fully installed
+sub postinstall_hook {
 
-
-
+}
 
 1;

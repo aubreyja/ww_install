@@ -5,20 +5,59 @@ This repository consists of a perl script `ww_install.pl`, along with some suppo
 config files, and perl modules designed to work together install the open source online homework system 
 [WeBWorK](https://github.com/openwebwork).
 
-The script has been updated to install WeBWorK 2.12 as of 5/??/2016.
+The script has been updated to install WeBWorK 2.13 as of 12/1/2017 by Arnold Pizer.
 
-It has been tested and supported on 
-*  Debian 8
-*  Fedora 22, 23
-*  Ubuntu 15.10, 16.04 (LTS)
-*  CentOS 7
+Temporary General Instructions for installing WeBWorK 2.13 from this repository. 
+*  You should use the perl script ww_install.pl as the bash shell script install_webwork.sh has not yet been updated.
+*  First look at the notes below to see if you need to do anything before running the ww_install.pl script.
+*  After any preliminaries in a working directory run
+   - git clone git://github.com/apizer/ww_install.git
+     * Note you will have to install git (e.g. as root, apt-get install git) if it is not on your system
+   - cd to the directory ww_install and run: git checkout ww2.13
+   - cd to the directory bin
+   - Run perl ww_install as root. Note either use sudo or su to root depending on the system.
+   - Accept all defaults
+
+
+
+It has been tested and works on 
+*  Debian 9
+   - Notes for Debian
+     - Before running the script ww_install.pl do the following:
+       1. For some reason WeBWorK fails to work with MariaDB as installed from the Debian package so we use the package from mariadb.org.
+       2. Open firefox and goto https://downloads.mariadb.org
+       3. Click on: Use CentOS, Fedora, Red Hat, Debian, Ubuntu, openSUSE, or Mageia? See our repository configuration tool.
+       4. Select: Debian, Debian 9 Stretch, 10.2. and a mirror
+       5. Follow the instrucions for running commands but run them as root as sudo does not work.  Note that using copy and paste works well.
+     - Now run the script ww_install as root
+     - The script ww_install will stop at installing Email::Sender::Simple with an error.  Just rerun the 
+       script and it will get past that point. I think Email::Sender::Simple does get installed correctly.
+
+*  Fedora 24 (Workstation)
+   - Notes for Fedora 
+     - Before running the script ww_install.pl do the following:
+       1. Run the command: sudo dnf install perl-core
+       2. Run the command: sudo dnf update perl-Errno
+       3. Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
+     - Now run the script ww_install as root
+
+*  Ubuntu 16.04 LTS (Desktop) 
+   - Notes for Ubuntu
+     - None 
+
+*  CentOS 7 (Server with GUI)
+   - Notes for CentOS. 
+     - Before running the script ww_install.pl do the following:
+       1. Run the command: sudo yum install perl-core
+       2. Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
+     - Now run the script ww_install as root
 
 On these systems it did install WeBWorK. 
 
 Gotchas
 -------
 
--  None yet, just wait. 
+-  See the notes above. 
 
 Usage
 -------
@@ -42,9 +81,9 @@ Note that if you use sudo, then you must be a sudoer with sufficient administrat
 
 For more control over the process you can clone this repository with
 
-`git clone https://github.com/openwebwork/ww_install.git`
+`git clone git://github.com/openwebwork/ww_install.git`
 
-and then run `ww_install.pl`.  
+and then run ` sudo perl ww_install.pl`.  
 
 Contents
 --------
@@ -75,6 +114,9 @@ This folder contains distribution files which `ww_install.pl` uses to install We
 * The command for installing packages from CPAN.
 * The command for checking and configuring services post install.
 * You can add code in various "hooks" which will be run at various stages of the installation.  This is an opportunity to perform any hacky fixes necessary for your distro.  
+
+### old_distros
+This folder contains obsolete distribution files which are no longer being supported.
 
 ### Other files
 
@@ -118,6 +160,8 @@ Author
 
 Jason Aubrey <aubreyja@gmail.com>
 
+Small updates (for WeBWorK 2.13) made by Arnold Pizer <apizer@math.rochester.edu>
+
 If you use the script, please email me to let me know what OS you installed it on so I can add a notation to
 the list of tested distributions above and address any problems you run into. I'd also be happy to hear 
 suggestions for improvement.  Seriously, though.  Send all your complaints to this guy.  
@@ -134,7 +178,7 @@ Valuable feedback and testing has been provided by [Danny Glin](https://github.c
 Copyright and Disclaimer
 -------------------------
 
-This program is Copyright 2016 by Jason Aubrey.  This program is
+This program is Copyright 2016 by Jason Aubrey and in 2017 by Arnold Pizer.  This program is
 free software; you can redistribute it and/or modify it under the terms
 of the Perl Artistic License or the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the

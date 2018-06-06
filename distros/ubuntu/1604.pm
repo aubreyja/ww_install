@@ -9,7 +9,7 @@ use WeBWorK::Install::Utils;
 
 # This is a list of WeBWorK versions for which the installer has
 # been verified to work for this distro. 
-my $ww_versions = ['2.12'];
+my $ww_versions = ['2.13'];
 
 sub get_ww_versions {
     return $ww_versions;
@@ -67,6 +67,7 @@ my $perl_prerequisites = {
     'Crypt::SSLeay' => 'libcrypt-ssleay-perl',
     'Dancer' => 'libdancer-perl',
     'Dancer::Plugin::Database' => 'libdancer-plugin-database-perl',
+    'Data::Dump' => 'libdata-dump-perl',    
     'Data::Dumper' => 'perl',
     'Data::UUID' => 'libossp-uuid-perl',
     'Date::Format' => 'libtimedate-perl',
@@ -75,7 +76,10 @@ my $perl_prerequisites = {
     'DBD::mysql' => 'libdbd-mysql-perl',
     'DBI' => 'libdbi-perl',
     'Digest::MD5' => 'perl',
-    'Email::Address' => 'libemail-address-perl',
+    'Email::Address' => 'libemail-sender-perl',
+    'Email::Simple' => 'libemail-simple-perl',
+    'Email::Sender::Simple' => 'libemail-sender-perl',
+    'Email::Sender::Transport::SMTP' => 'libemail-sender-perl',
     'Errno' => 'perl-base',
     'Exception::Class' => 'libexception-class-perl',
     'ExtUtils::XSBuilder' => 'libextutils-xsbuilder-perl',
@@ -100,7 +104,6 @@ my $perl_prerequisites = {
     'Locale::Maketext::Lexicon' => 'liblocale-maketext-lexicon-perl',
     'Locale::Maketext::Simple' => 'perl-modules',
     'LWP::Protocol::https' => 'liblwp-protocol-https-perl',
-    'Mail::Sender' => 'CPAN', #the package version doesn't compile
     'MIME::Base64' => 'libmime-tools-perl',
     'Net::IP' => 'libnet-ip-perl',
     'Net::LDAPS' => 'libnet-ldap-perl',
@@ -117,6 +120,7 @@ my $perl_prerequisites = {
     'SOAP::Lite' => 'libsoap-lite-perl',
     'Socket' => 'perl-base',
     'SQL::Abstract' => 'libsql-abstract-perl',
+    'Statistics::R::IO' => 'CPAN',
     'String::ShellQuote' => 'libstring-shellquote-perl',
     'Template' => 'libtemplate-perl',
     'Text::CSV' => 'libtext-csv-perl',

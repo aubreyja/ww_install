@@ -146,9 +146,10 @@ my @modulesList = qw(
 	Carp
 	CGI
 	Class::Accessor
-        Crypt::SSLeay
+	Crypt::SSLeay
 	Dancer
 	Dancer::Plugin::Database
+	Data::Dump
 	Data::Dumper
 	Data::UUID 
 	Date::Format
@@ -157,8 +158,11 @@ my @modulesList = qw(
 	DBD::mysql
 	DBI
 	Digest::MD5
-        Digest::SHA
+	Digest::SHA
 	Email::Address
+	Email::Simple;
+	Email::Sender::Simple
+	Email::Sender::Transport::SMTP
 	Errno
 	Exception::Class
 	File::Copy
@@ -181,8 +185,7 @@ my @modulesList = qw(
 	JSON
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
-        LWP::Protocol::https
-	Mail::Sender
+	LWP::Protocol::https
 	MIME::Base64
 	Net::IP
 	Net::LDAPS
@@ -199,6 +202,7 @@ my @modulesList = qw(
 	SOAP::Lite 
 	Socket
 	SQL::Abstract
+	Statistics::R::IO
 	String::ShellQuote
 	Template
 	Text::CSV
@@ -887,7 +891,17 @@ sub change_webwork3_log_permissions {
     }
 }
 
-
+sub reset_tex_hash {
+    my $full_path = can_run('texhash');
+    my $cmd = [ $full_path ];
+    my $texhash_success = run_command($cmd);
+    if ($texhash_success) {
+        print_and_log("Successfully ran texhash.\n");
+    } else {
+        print_and_log("Could not run texhash!");
+    }
+}
+    
 ####################################################################
 #
 # Environment Data
@@ -2002,7 +2016,7 @@ sub edit_mpm_conf {
 #
 # Now I would like to modify the prefork MPM
 # settings MaxClients and MaxRequestsPerChild. By default I'll change 
-# MaxClients from 150 to 20 and MaxRequestsPerChild from 0 to 100.
+# MaxClients from 150 to 20 and MaxRequestsPerChild from 0 to 50.
 #
 # For WeBWorK a rough rule of thumb is 5 MaxClients per 1 GB of 
 # memory.  So, e.g., if you have 4GB of RAM you may want to use
@@ -2019,7 +2033,7 @@ END
     });
 
   $prompt = "Please enter a value for prefork MaxRequestsPerChild/MaxConnectionsPerChild:";
-  $default = 100;
+  $default = 50;
   my $max_requests_per_child = get_reply({
       prompt => $prompt,
       default => $default,
@@ -2295,6 +2309,8 @@ my $apps = configure_externalPrograms(@applicationsList);
 #run hooked coe
 $osPackage->preconfig_hook();
 
+
+
 #Get directory root PREFIX, download software, and configure filesystem locations for webwork software
 my $WW_PREFIX = get_WW_PREFIX(WW_PREFIX);    #constant defined at top
 
@@ -2567,6 +2583,8 @@ change_data_dir_permissions(
     "$webwork_dir/DATA", "$webwork_dir/htdocs/tmp",
     "$webwork_dir/logs", "$webwork_dir/tmp"
 );
+
+reset_tex_hash();
 
 my $webwork3log = "$webwork_dir/webwork3/logs";
 

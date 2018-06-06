@@ -1,4 +1,7 @@
-package centos::7;
+package fedora::24;
+
+#NOTE:  This distro does not work.  It uses perl 5.22 which is incompatible
+# with mod perl.  
 
 use strict;
 use warnings;
@@ -10,6 +13,11 @@ my $ww_versions = ['2.13'];
 sub get_ww_versions {
     return $ww_versions;
 }
+
+our @apache2ModulesList = qw(
+  Apache2::ServerRec
+  Apache2::ServerUtil
+);
 
 # A list of packages for various binaries that we need. 
 my $binary_prerequisites = {
@@ -42,10 +50,10 @@ my $binary_prerequisites = {
     
     preview_latex => 'tex-preview',
     texlive => 'texlive-latex',
-    texlive_appendix => 'texlive-appendix',
     texlive_preprint => 'texlive-preprint',
     texlive_epsf => 'texlive-epsf',
-    };
+    texlive_path => 'texlive-path',
+};
 
 sub get_binary_prerequisites {
     return $binary_prerequisites;
@@ -53,10 +61,6 @@ sub get_binary_prerequisites {
 
 # A list of perl modules that we need
 my $perl_prerequisites = {
-    'Test::XML' => 'perl-Test-XML', # needed in centos 7 for cpan installs
-    'Test::Simple' => 'perl-Test-Simple',
-    'Test::Requires' => 'perl-Test-Requires',
-    'Test::TCP' => 'perl-Test-TCP',
     'HTTP::Tiny' => 'perl-HTTP-Tiny', 
     'Plack'      => 'perl-Plack',
     'Apache2::Request' => 'perl-libapreq2',
@@ -70,7 +74,7 @@ my $perl_prerequisites = {
     'CPAN' => 'perl-CPAN',
     'CPANMinus' => 'perl-App-cpanminus',
     'Crypt::SSLeay' => 'perl-Crypt-SSLeay',
-    'Dancer' => 'CPAN',
+    'Dancer' => 'perl-Dancer',
     'Dancer::Plugin::Database' => 'CPAN',
     'Data::Dump' => 'perl-Data-Dump',    
     'Data::Dumper' => 'perl-Data-Dumper',
@@ -107,9 +111,9 @@ my $perl_prerequisites = {
     'Iterator' => 'CPAN',
     'Iterator::Util' => 'CPAN',
     'JSON' => 'perl-JSON',
-    'Locale::Maketext::Lexicon' => 'CPAN', #is availble for fedora
+    'Locale::Maketext::Lexicon' => 'perl-Locale-Maketext-Lexicon',
     'Locale::Maketext::Simple' => 'perl-Locale-Maketext-Simple',
-    'LWP::Protocol::https' => 'CPAN', #need cpan for higher version
+    'LWP::Protocol::https' => 'perl-LWP-Protocol-https',
     'MIME::Base64' => 'perl', 
     'Net::IP' => 'perl-Net-IP',
     'Net::LDAPS' => 'perl-LDAP',
@@ -118,14 +122,14 @@ my $perl_prerequisites = {
     'Opcode' => 'perl',
     'PadWalker' => 'perl-PadWalker',
     'Path::Class' => 'perl-Path-Class',
-    'PHP::Serialization' => 'CPAN',
+    'PHP::Serialization' => 'perl-PHP-Serialization',
     'Pod::Usage' => 'perl',
     'Pod::WSDL' => 'CPAN',
     'Safe' => 'perl',
     'Scalar::Util' => 'perl',
     'SOAP::Lite' => 'perl-SOAP-Lite',
     'Socket' => 'perl',
-    'SQL::Abstract' => 'CPAN',
+    'SQL::Abstract' => 'perl-SQL-Abstract',
     'Statistics::R::IO' => 'CPAN',
     'String::ShellQuote' => 'perl-String-ShellQuote',
     'Template' => 'CPAN',
@@ -135,7 +139,7 @@ my $perl_prerequisites = {
     'Time::HiRes' => 'perl-Time-HiRes',
     'Time::Zone' => 'perl-TimeDate',
     'URI::Escape' => 'perl',
-    'UUID::Tiny' => 'CPAN',
+    'UUID::Tiny' => 'perl-UUID-Tiny',
     'XML::Parser' => 'perl-XML-Parser',
     'XML::Parser::EasyTree' => 'CPAN',
     'XML::Writer' => 'perl-XML-Writer',
@@ -175,24 +179,24 @@ sub prepreq_hook {
 };
 
 sub midpreq_hook {
-    run_command(['cpan','Moo']); #moo needs tob e done with cpan not cpanm
+
 };
 
 # A command for updating the package sources
 sub update_sources {
-    run_command(['yum', '-y', 'install', 'epel-release']);
+
 };
 
 # A command for updating the system
 sub update_packages {
-    run_command(['yum', '-y', 'update']);
+    run_command(['dnf', '-y', 'update']);
 };
 
 # A command for installing a package given a name
 sub package_install {
     my $self = shift;
     my @packages = @_;
-    run_command(['yum','-y','install',@packages]);
+    run_command(['dnf','-y','install',@packages]);
 };
 
 # A command for installing a cpan package given a name
@@ -205,20 +209,16 @@ sub CPAN_install {
 # A command for any distro specific stuff that needs to be done
 # after installing prerequieists
 sub postpreq_hook {
-    # For installing missing tex package.  We can safely use the fedora
-    # package because its just a latex sytle file. 
-    run_command(['curl', '-ksSO', 'http://dl.fedoraproject.org/pub/fedora/linux/releases/25/Everything/i386/os/Packages/t/texlive-path-svn22045.3.05-17.fc25.1.noarch.rpm']);
-    run_command(['rpm','-ivh','--replacepkgs','texlive-path-svn22045.3.05-17.fc25.1.noarch.rpm'])
-    
+
 }
 
 # A command for checking if the required services are running and
 # configuring them
 sub configure_services {
-    run_command(['service','mariadb','start']);
-    run_command(['chkconfig','mariadb','on']);
-    run_command(['service','httpd','start']);
-    run_command(['chkconfig','httpd','on']);
+    run_command(['systemctl','start','mariadb']);
+    run_command(['systemctl','enable','mariadb']);
+    run_command(['systemctl','start','httpd']);
+    run_command(['systemctl','enable','httpd']);
     run_command(['mysql_secure_installation']);
 }
 
