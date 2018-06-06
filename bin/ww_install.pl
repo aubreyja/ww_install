@@ -394,7 +394,7 @@ sub get_ready {
 Welcome to the WeBWorK.  This installation script will ask you a few questions and then attempt to install 
 WeBWorK on your system. To complete the installation
 (a) You must be connected to the internet, and 
-(b) You must have administrative privliges on this machine.
+(b) You must have administrative privileges on this machine.
 EOF
     my $ready = $term->ask_yn(
         print_me => $print_me,
@@ -426,13 +426,13 @@ sub check_root {
         #my $term = Term::ReadLine->new('');
         my $print_me = <<EOF;
 IMPORTANT: I see that you are not running this script as root. Some elevated system
-privliges are needed to install WeBWorK.  If you run the script without sufficient privilges then
+privileges are needed to install WeBWorK.  If you run the script without sufficient privileges then
 it will fail in ways that might be hard to track down.    
 EOF
         my $prefix = $term->ask_yn(
             print_me => $print_me,
             prompt =>
-'Are you sure you\'re running the script with the privilges you\'ll need to complete the installation?',
+'Are you sure you\'re running the script with the privileges you\'ll need to complete the installation?',
             default => 'n',
         );
 	writelog($term->history_as_string()."\n");
@@ -657,7 +657,7 @@ sub create_wwadmin_user {
             my $full_path = can_run("useradd");
             my $cmd       = [ $full_path, '-m', #create user home dir
               '-s', $wwadmin_shell, #set default shell
-              '-c', "WeBWorK Administrator",  #comment
+              '-c', '"WeBWorK Administrator"',  #comment
               '-p', $wwadmin_pw, #password
               $wwadmin
             ];
