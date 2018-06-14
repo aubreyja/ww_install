@@ -7,15 +7,14 @@ config files, and perl modules designed to work together install the open source
 
 The script has been updated to install WeBWorK 2.13 as of 12/1/2017 by Arnold Pizer.
 
-Temporary General Instructions for installing WeBWorK 2.13 from this repository. 
+Temporary General Instructions for installing WeBWorK 2.13 using the ww_install script. 
 *  You should use the perl script ww_install.pl as the bash shell script install_webwork.sh has not yet been updated.
 *  First look at the notes below to see if you need to do anything before running the ww_install.pl script.
 *  After any preliminaries in a working directory run
-   - git clone git://github.com/apizer/ww_install.git
+   - git clone git://github.com/openwebwork/ww_install.git
      * Note you will have to install git (e.g. as root, apt-get install git) if it is not on your system
-   - cd to the directory ww_install and run: git checkout ww2.13
-   - cd to the directory bin
-   - Run perl ww_install as root. Note either use sudo or su to root depending on the system.
+   - cd to the directory ww_install
+   - Run perl bin/ww_install as root. Note either use sudo or su to root depending on the system.
    - Accept all defaults
 
 
