@@ -48,7 +48,7 @@ It has been tested and works on
    - Notes for CentOS. 
      - Before running the script ww_install.pl do the following:
        1. Run the command: sudo yum install perl-core
-       2. Edit the file /etc/selinus/config setting: SELINUX=disabled and reboot.
+       2. Edit the file /etc/selinux/config setting: SELINUX=disabled and reboot.
      - Now run the script ww_install as root
 
 On these systems it did install WeBWorK. 
