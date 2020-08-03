@@ -7,7 +7,7 @@ MYSQL_ROOT_PW=''
 WEBWORK_DB_PW=''
 
 BRANCH=master
-WWINSTALLURL=https://github.com/aubreyja/ww_install/archive/$BRANCH.tar.gz
+WWINSTALLURL=https://github.com/openwebwork/ww_install/archive/$BRANCH.tar.gz
 THISDIR="$( pwd )"
 
 
@@ -34,14 +34,14 @@ to webwork2/logs and then deletes the downloaded installation package.
 
   Print this help message.
 
-  -np, --no-prerequisites
+  -np, --no-prerequisites (not implemented)
 
   Do not run install_prerequisites.sh before running ww_install.pl. Note that
   ww_install.pl will fail if WeBWorK's dependencies are not installed so be
   sure that you know all of WeBWorK's prerequisites are installed before using
   this option.
 
-  -nv, --no-verbose
+  -nv, --no-verbose (not implemented)
 
   Turns off vebose output. By default all commands that have the option to provide
   verbose output will produce verbose output. This output goes to stdout and to
@@ -49,20 +49,20 @@ to webwork2/logs and then deletes the downloaded installation package.
   want to be all cowboy and throw caution into the wind, then this option will
   silence verbose output.
 
-  -ni, --no-interactive
+  -ni, --no-interactive (not implemented)
 
   Run ww_install.pl non-interactively. This option requires setting both
   --mysql_root_pw and --webwork_db_pw.  All other webwork configuration 
   questions asked by ww_install.pl will be answered for you with their 
   default replies. 
 
-  --mysql_root_pw PASSWORD
+  --mysql_root_pw PASSWORD (not implemented)
 
   Passes the mysql root password to ww_install.pl. Needed to create the webwork
   database. Only required if --no_interactive is set. Otherwise ww_install.pl
   will ask you for it.
 
-  --webwork_db_pw PASSWORD
+  --webwork_db_pw PASSWORD (not implemented)
 
   Passes the password to use for the webwork database to ww_install.pl. Needed 
   to grant rights to the webwork db to the webwork db user. Only required 
@@ -74,8 +74,8 @@ to webwork2/logs and then deletes the downloaded installation package.
 
   REPORTING BUGS
 
-  View and report bugs at https://github.com/aubreyja/ww_install/issues
-  ww_install home page: https://github.com/aubreyja/ww_install
+  View and report bugs at https://github.com/openwebwork/ww_install/issues
+  ww_install home page: https://github.com/openwebwork/ww_install
 
   COPYRIGHT
 
@@ -175,7 +175,7 @@ This is the WeBWorK installer.
 Please report problems to the issue tracker 
 at
 
-https://github.com/aubreyja/ww_install
+https://github.com/openwebwork/ww_install
 
 When reporting problems, please include any 
 relevant output from the webwork_install.log
@@ -203,9 +203,17 @@ clean_exit () {
   echo "Cleaning up..."
   [ -f $LOCALINSTALLER ] && rm $LOCALINSTALLER
   [ -d $TMPDIR/ww_install-$BRANCH/ ] && rm -rf $TMPDIR/ww_install-$BRANCH/
-  [ -f $THISDIR/install_webwork.sh ] && rm $THISDIR/install_webwork.sh
   exit $1
 }
+
+echo "## Installing cpan, and friends just to be sure."  
+if [ -e "/etc/redhat-release" ]
+then 
+    yum -y install perl-CPAN perl-IPC-Cmd
+elif [ -e "/etc/debian_version" ]
+then 
+    apt-get --yes --allow-unauthenticated install perl-modules
+fi    
 
 echo "## Download the latest webwork installer"
 $WWINSTALLDOWNLOAD 
@@ -214,15 +222,9 @@ echo "## Extracting the installer"
 tar -xzf $LOCALINSTALLER
 rm $LOCALINSTALLER
 cd ww_install-$BRANCH/
-mv $TMPDIR/webwork_install.log .
+#mv $TMPDIR/webwork_install.log .
 
-if [ $PREREQUISITES -eq 1 ]; then
-  echo "Installing prerequisites..."
-  source ./bin/install_prerequisites.sh 
-  wait
-fi
-
-perl ./bin/ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW
+perl ./bin/ww_install.pl $VERBOSE $INTERACTIVE $MYSQL_ROOT_PW $WEBWORK_DB_PW $PREREQUISITES
 wait
 
 if [ -f "launch_browser.sh" ]; then
